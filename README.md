@@ -6,40 +6,40 @@ I needed a way to generate spritesheets on the fly based on canvas drawings. Thi
 
 ## Code Example
 
-    // set up rendersheet
-    var sheet = new RenderSheet();
+        // set up rendersheet
+        var sheet = new RenderSheet();
 
-    // draw triangle textures on rendersheet
-    sheet.add('triangle', triangleDraw, triangleMeasure, {size: 50, 'red'});
+        // draw triangle textures on rendersheet
+        sheet.add('triangle', triangleDraw, triangleMeasure, {size: 50, 'red'});
 
-    // render the sheet
-    sheet.render();
+        // render the sheet
+        sheet.render();
 
-    // show the rendersheet (used for debug purposes)
-    var canvas = sheet.show();
+        // show the rendersheet (used for debug purposes)
+        var canvas = sheet.show();
 
-    // create a sprite using the rendersheet
-    var sprite = new PIXI.Sprite(sheet.getTexture(triangle));
+        // create a sprite using the rendersheet
+        var sprite = new PIXI.Sprite(sheet.getTexture(triangle));
 
-    // drawing function to generate the canvas triangle
-    function triangleDraw(c, params)
-    {
-        var size = params.size;
-        var half = params.size / 2;
-        c.beginPath();
-        c.fillStyle = params.color;
-        c.moveTo(half, 0);
-        c.lineTo(0, size);
-        c.lineTo(size, size);
-        c.closePath();
-        c.fill();
-    }
+        // drawing function to generate the canvas triangle
+        function triangleDraw(c, params)
+        {
+            var size = params.size;
+            var half = params.size / 2;
+            c.beginPath();
+            c.fillStyle = params.color;
+            c.moveTo(half, 0);
+            c.lineTo(0, size);
+            c.lineTo(size, size);
+            c.closePath();
+            c.fill();
+        }
 
-    // measure function to provide dimensions for canvas triangle
-    function triangleMeasure(c, params)
-    {
-        return {width: params.size, height: params.size};
-    }
+        // measure function to provide dimensions for canvas triangle
+        function triangleMeasure(c, params)
+        {
+            return {width: params.size, height: params.size};
+        }
 
 ## Installation
 include rendersheet.js in your project or add to your workflow
