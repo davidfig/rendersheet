@@ -1,27 +1,27 @@
 ## rendersheet.js
 renders a canvas spritesheet for use with pixi.js
 
-## rationale
+## Rationale
 I needed a way to generate spritesheets on the fly based on canvas drawings. This allows me to resize the drawings based on different resolutions. It works by passing the rendersheet two functions: a drawing function and a measure function. It currently uses a rudimentary packing algorithm.
 
 ## Code Example
 
-    set up rendersheet
+    // set up rendersheet
     var sheet = new RenderSheet();
 
-    draw triangle textures on rendersheet
+    // draw triangle textures on rendersheet
     sheet.add('triangle', triangleDraw, triangleMeasure, {size: 50, 'red'});
 
-    render the sheet
+    // render the sheet
     sheet.render();
 
-    show the rendersheet (used for debug purposes)
+    // show the rendersheet (used for debug purposes)
     var canvas = sheet.show();
 
-    create a sprite using the rendersheet
+    // create a sprite using the rendersheet
     var sprite = new PIXI.Sprite(sheet.getTexture(triangle));
 
-    drawing function to generate the canvas triangle
+    // drawing function to generate the canvas triangle
     function triangleDraw(c, params)
     {
         var size = params.size;
@@ -35,7 +35,7 @@ I needed a way to generate spritesheets on the fly based on canvas drawings. Thi
         c.fill();
     }
 
-    measure function to provide dimensions for canvas triangle
+    // measure function to provide dimensions for canvas triangle
     function triangleMeasure(c, params)
     {
         return {width: params.size, height: params.size};
