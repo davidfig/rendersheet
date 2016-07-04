@@ -35,19 +35,34 @@ var buffer = 5;
 //     sheet.getTexture(name)
 function RenderSheet(options)
 {
+    options = options || {};
     maxWidth = options.maxWidth || maxWidth;
 }
+
+// adds a texture to the rendersheeet
+//  name {string}: name of texture (for getting)
+//  funct {function}: drawing function
+//  measure {function}: measure function
+//  params {object} any params to pass the measure and drawing functions
+RenderSheet.prototype.add = function(name, draw, measure, param)
+{
+	textures[name] = { draw: draw, measure: measure, param: param };
+};
 
 // attaches the rendersheet to the DOM for testing purposes
 RenderSheet.prototype.show = function()
 {
     var style = canvas.style;
-    style.position = 'absolute';
+    style.position = 'fixed';
     style.left = '0px';
     style.top = '0px';
     style.zIndex = 1000;
     document.body.appendChild(canvas);
-    debug('rendersheet size: ' + width + ',' + height);
+    if (typeof Debug !== 'undefined')
+    {
+        debug('rendersheet size: ' + width + ',' + height);
+    }
+    return canvas;
 }
 
 RenderSheet.prototype.hasLoaded = function()
@@ -60,7 +75,7 @@ RenderSheet.prototype.render = function(isDone)
     function measure(texture)
     {
         var size = texture.measure(context, texture.param);
-        if (this.x + size.width > maxWidth)
+        if (x + size.width > maxWidth)
         {
             y += rowMaxHeight;
             x = 0;
@@ -118,16 +133,6 @@ RenderSheet.prototype.render = function(isDone)
             current.texture.update();
         }
     }
-};
-
-// adds a texture to the rendersheeet
-//  name {string}: name of texture (for getting)
-//  funct {function}: drawing function
-//  measure {function}: measure function
-//  params {object} any params to pass the measure and drawing functions
-RenderSheet.prototype.add = function(name, draw, measure, param)
-{
-	textures[name] = { draw: draw, measure: measure, param: param };
 };
 
 //  find the index of the texture based on the texture object
