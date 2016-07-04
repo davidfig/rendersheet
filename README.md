@@ -1,10 +1,8 @@
-## rendersheet
+## rendersheet.js
 renders a canvas spritesheet for use with pixi.js
 
 ## rationale
-this generates on the fly spritesheets for use as basetextures in pixi.js.
-you pass functions that draw and measure each texture, and rendersheet combines those into a sheet.
-it currently uses a rudimentary packing algorithm.
+I needed a way to generate spritesheets on the fly based on canvas drawings. This allows me to resize the drawings based on different resolutions. It works by passing the rendersheet two functions: a drawing function and a measure function. It currently uses a rudimentary packing algorithm.
 
 ## Code Example
 
