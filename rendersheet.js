@@ -50,13 +50,17 @@ RenderSheet.prototype.add = function(name, draw, measure, param)
 };
 
 // attaches the rendersheet to the DOM for testing purposes
-RenderSheet.prototype.show = function()
+RenderSheet.prototype.show = function(styles)
 {
     var style = canvas.style;
     style.position = 'fixed';
     style.left = '0px';
     style.top = '0px';
     style.zIndex = 1000;
+    for (var key in styles)
+    {
+        style[key] = styles[key];
+    }
     document.body.appendChild(canvas);
     if (typeof Debug !== 'undefined')
     {
