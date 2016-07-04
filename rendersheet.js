@@ -3,7 +3,7 @@
     License: MIT license <https://github.com/davidfig/rendersheet/license>
     Author: David Figatner
     Copyright (c) 2016 YOPEY YOPEY LLC
-*/  (function(){
+*/  ;(function(){
 
 var canvas = document.createElement('canvas');
 var context = canvas.getContext('2d');
@@ -215,4 +215,4 @@ if (typeof exports !== 'undefined')
 if (typeof window !== 'undefined')
 {
     window.RenderSheet = RenderSheet;
-} })();
+}   })();
