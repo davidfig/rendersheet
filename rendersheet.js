@@ -3,7 +3,7 @@
     License: MIT license <https://github.com/davidfig/rendersheet/license>
     Author: David Figatner
     Copyright (c) 2016 YOPEY YOPEY LLC
-*/  ;(function(){
+*/
 
 var canvas = document.createElement('canvas');
 var context = canvas.getContext('2d');
@@ -212,11 +212,11 @@ if (typeof define === 'function' && define.amd)
 // add support for CommonJS libraries such as browserify.
 if (typeof exports !== 'undefined')
 {
-    exports.RenderSheet = RenderSheet;
+    module.exports = RenderSheet;
 }
 
 // define globally in case AMD is not available or available but not used
 if (typeof window !== 'undefined')
 {
     window.RenderSheet = RenderSheet;
-}   })();
+}
