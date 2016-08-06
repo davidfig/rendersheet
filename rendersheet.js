@@ -5,6 +5,8 @@
     Copyright (c) 2016 YOPEY YOPEY LLC
 */
 
+var testBoxes = false; // show test boxes
+
 var canvas = document.createElement('canvas');
 var context = canvas.getContext('2d');
 
@@ -22,6 +24,8 @@ var sprite = null;
 
 var maxWidth = 1024;
 var buffer = 5;
+
+var scale = 1;
 
 // Creates a spritesheet texture for pixi.js
 // Options:
@@ -79,7 +83,7 @@ RenderSheet.prototype.render = function(isDone)
     function measure(texture)
     {
         var size = texture.measure(context, texture.param);
-        if (x + size.width > maxWidth)
+        if (x + size.width > maxWidth / scale)
         {
             y += rowMaxHeight;
             x = 0;
@@ -106,8 +110,19 @@ RenderSheet.prototype.render = function(isDone)
 
     function draw(texture)
     {
+        function r()
+        {
+            return Math.floor(Math.random() * 255);
+        }
+
         context.save();
         context.translate(texture.x, texture.y);
+        if (testBoxes)
+        {
+            context.fillStyle = 'rgb(' + r() + ',' + r() + ',' + r() + ')';
+            context.rect(0, 0, texture.width, texture.height);
+            context.fill();
+        }
         texture.draw(context, texture.param);
         context.restore();
     }
@@ -117,11 +132,20 @@ RenderSheet.prototype.render = function(isDone)
     {
         measure(textures[key]);
     }
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = Math.ceil(width * scale);
+    canvas.height = Math.ceil(height * scale);
+    if (scale !== 1)
+    {
+        context.save();
+        context.scale(scale, scale);
+    }
     for (var key in textures)
     {
         draw(textures[key]);
+    }
+    if (scale !== 1)
+    {
+        context.restore();
     }
     texture = PIXI.BaseTexture.fromCanvas(canvas);
     for (key in textures)
@@ -129,11 +153,11 @@ RenderSheet.prototype.render = function(isDone)
         var current = textures[key];
         if (!current.texture)
         {
-            current.texture = new PIXI.Texture(texture, new PIXI.Rectangle(current.x, current.y, current.width, current.height));
+            current.texture = new PIXI.Texture(texture, new PIXI.Rectangle(current.x * scale, current.y * scale, current.width * scale, current.height * scale));
         }
         else
         {
-            current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height);
+            current.texture.frame = new PIXI.Rectangle(current.x * scale, current.y * scale, current.width * scale, current.height * scale);
             current.texture.update();
         }
     }
@@ -196,6 +220,11 @@ RenderSheet.prototype.entries = function()
         size++;
     }
 	return size;
+};
+
+RenderSheet.prototype.scale = function(newScale)
+{
+    scale = newScale;
 };
 
 // add support for AMD (Asynchronous Module Definition) libraries such as require.js.
