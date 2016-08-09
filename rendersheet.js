@@ -27,6 +27,11 @@ var buffer = 5;
 
 var scale = 1;
 
+// TODO: not working yet
+var resolution = 1;
+
+var options;
+
 // Creates a spritesheet texture for pixi.js
 // Options:
 //     maxWidth {number}: 1024 (default)
@@ -37,10 +42,11 @@ var scale = 1;
 //     sheet.render()
 //     sheet.get(name)
 //     sheet.getTexture(name)
-function RenderSheet(options)
+function RenderSheet(opts)
 {
-    options = options || {};
+    options = opts || {};
     maxWidth = options.maxWidth || maxWidth;
+    resolution = options.resolution || resolution;
 }
 
 // adds a texture to the rendersheeet
@@ -50,7 +56,7 @@ function RenderSheet(options)
 //  params {object} any params to pass the measure and drawing functions
 RenderSheet.prototype.add = function(name, draw, measure, param)
 {
-	textures[name] = { draw: draw, measure: measure, param: param };
+    textures[name] = { draw: draw, measure: measure, param: param };
 };
 
 // attaches the rendersheet to the DOM for testing purposes
@@ -71,7 +77,7 @@ RenderSheet.prototype.show = function(styles)
         debug('rendersheet size: ' + width + ',' + height);
     }
     return canvas;
-}
+};
 
 RenderSheet.prototype.hasLoaded = function()
 {
@@ -127,17 +133,17 @@ RenderSheet.prototype.render = function(isDone)
         context.restore();
     }
 
-	x = y = width = height = rowMaxHeight = 0;
+    x = y = width = height = rowMaxHeight = 0;
     for (var key in textures)
     {
         measure(textures[key]);
     }
-    canvas.width = Math.ceil(width * scale);
-    canvas.height = Math.ceil(height * scale);
-    if (scale !== 1)
+    canvas.width = Math.ceil(width * scale * resolution);
+    canvas.height = Math.ceil(height * scale * resolution);
+    if (scale !== 1 || resolution !== 1)
     {
         context.save();
-        context.scale(scale, scale);
+        context.scale(scale * resolution, scale * resolution);
     }
     for (var key in textures)
     {
@@ -148,16 +154,17 @@ RenderSheet.prototype.render = function(isDone)
         context.restore();
     }
     texture = PIXI.BaseTexture.fromCanvas(canvas);
+    texture.resolution = resolution;
     for (key in textures)
     {
         var current = textures[key];
         if (!current.texture)
         {
-            current.texture = new PIXI.Texture(texture, new PIXI.Rectangle(current.x * scale, current.y * scale, current.width * scale, current.height * scale));
+            current.texture = new PIXI.Texture(texture, new PIXI.Rectangle(current.x * scale * resolution, current.y * scale * resolution, current.width * scale * resolution, current.height * scale * resolution));
         }
         else
         {
-            current.texture.frame = new PIXI.Rectangle(current.x * scale, current.y * scale, current.width * scale, current.height * scale);
+            current.texture.frame = new PIXI.Rectangle(current.x * scale * resolution, current.y * scale * resolution, current.width * scale * resolution, current.height * scale * resolution);
             current.texture.update();
         }
     }
@@ -182,7 +189,7 @@ RenderSheet.prototype.getIndex = function(find)
 // returns the texture object based on the name
 RenderSheet.prototype.get = function(name)
 {
-	return textures[name];
+    return textures[name];
 };
 
 // returns the PIXI.Texture based on the name
@@ -214,12 +221,12 @@ RenderSheet.prototype.getSprite = function(name)
 // returns the number of textures in the sprite sheet
 RenderSheet.prototype.entries = function()
 {
-	var size = 0;
-	for (var key in textures)
+    var size = 0;
+    for (var key in textures)
     {
         size++;
     }
-	return size;
+    return size;
 };
 
 RenderSheet.prototype.scale = function(newScale)
