@@ -35,12 +35,11 @@
 
         // set up rendersheet
         var resolution = window.devicePixelRatio;
-        var sheet = new RenderSheet({maxWidth: 2048, resolution: resolution});
+        var sheet = new RenderSheet({resolution: resolution});
 
         // number for triangle
         var n = 0;
 
-console.log('resolution: ' + resolution)
         // draw triangle textures on rendersheet
         var count = 500;
         for (var i = 0; i < count; i++)
@@ -62,10 +61,6 @@ console.log('resolution: ' + resolution)
         stage.addChild(sprite);
         sprite.x = window.innerWidth / 2;
         sprite.y = window.innerHeight / 2;
-console.log('sprite: ' + sprite.x+','+sprite.y)
-console.log('window: ' + window.innerWidth+','+window.innerHeight)
-console.log('renderer: ' + renderer.view.width+','+renderer.view.height)
-console.log('renderer style: ' + renderer.view.offsetWidth +','+renderer.view.offsetHeight)
 
         // change the texture of the sprite to a texture from the rendersheet
         setInterval(function()
