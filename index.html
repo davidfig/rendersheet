@@ -2,8 +2,10 @@
     <script src="https://rawgit.com/pixijs/pixi.js/dev/bin/pixi.js"></script>
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/ascetic.min.css">
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script>
+
     <!--<script src="https://rawgit.com/davidfig/rendersheet/master/rendersheet.js"></script>-->
 
+    <!--for local testing-->
     <script src="../rendersheet/rendersheet.js"></script>
     <style>
         body {
@@ -31,6 +33,9 @@
         // set up rendersheet
         var sheet = new RenderSheet();
 
+        var resolution = window.devicePixelRatio;
+        sheet.resolution = resolution;
+
         // draw triangle textures on rendersheet
         var count = 500;
         for (var i = 0; i < count; i++)
@@ -40,9 +45,7 @@
         sheet.render();
 
         // show the rendersheet (for debug purposes)
-        var canvas = sheet.show();
-        canvas.style.opacity = 0.1;
-        canvas.style.pointerEvents = 'none';
+        sheet.show({opacity: 0.1, pointerEvents: 'none'});
 
         // set up pixi
         var renderer, stage;
@@ -55,7 +58,7 @@
         sprite.x = window.innerWidth / 2;
         sprite.y = window.innerHeight / 2;
 
-        // change the texture of the sprite to a texture on from the rendersheet
+        // change the texture of the sprite to a texture from the rendersheet
         setInterval(function()
             {
                 sprite.texture = sheet.getTexture('triangle_' + Math.floor(Math.random() * count));
@@ -65,7 +68,7 @@
         // initialize pixi
         function pixi()
         {
-            renderer = new PIXI.WebGLRenderer(1000, 1000, {transparent: true});
+            renderer = new PIXI.WebGLRenderer(1000, 1000, {transparent: true, resolution: resolution});
             document.body.appendChild(renderer.view);
             renderer.view.style.pointerEvents = 'none';
             stage = new PIXI.Container();
