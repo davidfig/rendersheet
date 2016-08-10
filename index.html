@@ -75,8 +75,8 @@
             renderer = new PIXI.WebGLRenderer(window.innerWidth, window.innerHeight, {transparent: true, resolution: resolution});
             document.body.appendChild(renderer.view);
             renderer.view.style.pointerEvents = 'none';
-            renderer.view.style.width = '100%'//window.innerWidth + 'px';
-            renderer.view.style.height = 'auto'//window.innerHeight + 'px';
+            renderer.view.style.width = window.innerWidth + 'px';
+            renderer.view.style.height = window.innerHeight + 'px';
             stage = new PIXI.Container();
         }
 
