@@ -7,26 +7,18 @@
 
 var testBoxes = false; // show test boxes
 
-var canvas = document.createElement('canvas');
-var context = canvas.getContext('2d');
-
-var baseTexture = null;
-var texture = null;
+var canvases = [];
+var baseTextures = [];
 var textures = {};
-
-var x = 0;
-var y = 0;
-var width = 0;
-var height = 0;
-var rowMaxHeight =0;
 
 var sprite = null;
 
 var maxWidth = 1024;
+var maxHeight = 1024;
+
 var buffer = 5;
 
 var scale = 1;
-
 var resolution = 1;
 
 var options;
@@ -61,21 +53,27 @@ RenderSheet.prototype.add = function(name, draw, measure, param)
 // attaches the rendersheet to the DOM for testing purposes
 RenderSheet.prototype.show = function(styles)
 {
-    var style = canvas.style;
-    style.position = 'fixed';
-    style.left = '0px';
-    style.top = '0px';
-    style.zIndex = 1000;
-    for (var key in styles)
+    var percent = 1 / canvases.length;
+    for (var i = 0; i < canvases.length; i++)
     {
-        style[key] = styles[key];
+        var canvas = canvases[i];
+        var style = canvas.style;
+        style.position = 'fixed';
+        style.left = '0px';
+        style.top = 0;
+        style.width = 'auto';
+        style.height = Math.round(percent * 100) + '%';
+        style.zIndex = 1000;
+        for (var key in styles)
+        {
+            style[key] = styles[key];
+        }
+        document.body.appendChild(canvas);
+        if (typeof Debug !== 'undefined')
+        {
+            debug('rendersheet size: ' + canvas.width + ',' + canvas.height);
+        }
     }
-    document.body.appendChild(canvas);
-    if (typeof Debug !== 'undefined')
-    {
-        debug('rendersheet size: ' + canvas.width + ',' + canvas.height);
-    }
-    return canvas;
 };
 
 RenderSheet.prototype.hasLoaded = function()
@@ -83,87 +81,174 @@ RenderSheet.prototype.hasLoaded = function()
     return texture && texture.hasLoaded;
 };
 
-RenderSheet.prototype.render = function(isDone)
+RenderSheet.prototype.render = function()
 {
-    function measure(texture)
+    function measure()
     {
-        var size = texture.measure(context, texture.param);
-        if (x + size.width + buffer > maxWidth / scale / resolution)
+        var multiplier = scale * resolution;
+        for (var key in textures)
         {
-            y += rowMaxHeight;
-            x = 0;
-            rowMaxHeight = 0;
-        }
-        texture.x = x;
-        texture.y = y;
-        texture.width = Math.ceil(size.width);
-        texture.height = Math.ceil(size.height);
-        if (texture.height > rowMaxHeight)
-        {
-            rowMaxHeight = texture.height;
-        }
-        x += Math.ceil(texture.width) + buffer;
-        if (x > width)
-        {
-            width = x;
-        }
-        if (texture.height + y > height)
-        {
-            height = Math.ceil(texture.height + y);
+            var texture = textures[key];
+            var size = texture.measure(context, texture.param);
+            texture.width = Math.ceil(size.width * multiplier);
+            texture.height = Math.ceil(size.height * multiplier);
+            sorted.push(texture);
         }
     }
 
-    function draw(texture)
+    function sort()
+    {
+        sorted.sort(function(a, b)
+        {
+            if (a.height < b.height)
+            {
+                return -1;
+            }
+            else if (a.height > b.height)
+            {
+                return 1;
+            }
+            else
+            {
+                if (a.width === b.width)
+                {
+                    return 0;
+                }
+                else
+                {
+                    return (a.width < b.width) ? -1 : 1;
+                }
+            }
+        });
+    }
+
+    function place()
+    {
+        function createCanvas(width, height)
+        {
+            canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            context = canvas.getContext('2d');
+            canvases.push(canvas);
+        }
+
+        var x = 0, y = 0, width = 0, height = 0, rowMaxHeight = 0, current = 0;
+        var lastRow = [];
+        for (var i = 0; i < sorted.length; i++)
+        {
+            var texture = sorted[i];
+            if (x + texture.width + buffer > maxWidth)
+            {
+                x = 0;
+                if (y + rowMaxHeight + buffer > maxHeight)
+                {
+                    createCanvas(width, height);
+                    width = height = 0;
+                    current++;
+                    for (var j = 0; j < lastRow.length; j++)
+                    {
+                        lastRow[j].canvas = current;
+                        lastRow[j].y = 0;
+                    }
+                    y = 0;
+                }
+                y += rowMaxHeight + buffer;
+                rowMaxHeight = 0;
+                lastRow = [];
+            }
+            texture.x = x;
+            texture.y = y;
+            texture.canvas = current;
+            lastRow.push(texture);
+            if (texture.height > rowMaxHeight)
+            {
+                rowMaxHeight = texture.height;
+            }
+            x += Math.ceil(texture.width) + buffer;
+            if (x > width)
+            {
+                width = x;
+            }
+            if (texture.height + y > height)
+            {
+                height = Math.ceil(texture.height + y);
+            }
+        }
+        createCanvas(width, height);
+    }
+
+    function draw()
     {
         function r()
         {
             return Math.floor(Math.random() * 255);
         }
 
-        context.save();
-        context.translate(texture.x, texture.y);
-        if (testBoxes)
+        var current, context;
+        for (var key in textures)
         {
-            context.fillStyle = 'rgb(' + r() + ',' + r() + ',' + r() + ')';
-            context.rect(0, 0, texture.width, texture.height);
-            context.fill();
+            var texture = textures[key];
+            if (texture.canvas !== current)
+            {
+                if (typeof current !== 'undefined')
+                {
+                    context.restore();
+                }
+                current = texture.canvas;
+                context = canvases[current].getContext('2d');
+                context.save();
+                context.scale(scale * resolution, scale * resolution);
+            }
+            context.save();
+            context.translate(texture.x, texture.y);
+            if (testBoxes)
+            {
+                context.fillStyle = 'rgb(' + r() + ',' + r() + ',' + r() + ')';
+                context.rect(0, 0, texture.width, texture.height);
+                context.fill();
+            }
+            texture.draw(context, texture.param);
+            context.restore();
         }
-        texture.draw(context, texture.param);
-        context.restore();
     }
 
-    x = y = width = height = rowMaxHeight = 0;
-    for (var key in textures)
+    function createBaseTextures()
     {
-        measure(textures[key]);
+        for (var i = 0; i < baseTextures.length; i++)
+        {
+            baseTextures[i].destroy();
+        }
+        baseTextures = [];
+        for (var i = 0; i < canvases.length; i++)
+        {
+            var base = PIXI.BaseTexture.fromCanvas(canvases[i]);
+            base.resolution = resolution;
+            baseTextures.push(base);
+        }
     }
-    canvas.width = Math.ceil(width * scale * resolution);
-    canvas.height = Math.ceil(height * scale * resolution);
-    if (scale !== 1 || resolution !== 1)
-    {
-        context.save();
-        context.scale(scale * resolution, scale * resolution);
-    }
-    for (var key in textures)
-    {
-        draw(textures[key]);
-    }
-    if (scale !== 1)
-    {
-        context.restore();
-    }
-    texture = PIXI.BaseTexture.fromCanvas(canvas);
-    texture.resolution = resolution;
+
+    canvases = [];
+    var sorted = [];
+    var canvas, context;
+
+    measure();
+    sort();
+    place();
+    draw();
+    createBaseTextures();
+
     for (key in textures)
     {
         var current = textures[key];
         if (!current.texture)
         {
-            current.texture = new PIXI.Texture(texture, new PIXI.Rectangle(current.x * scale * resolution, current.y * scale * resolution, current.width * scale * resolution, current.height * scale * resolution));
+            current.texture = new PIXI.Texture(baseTextures[current.canvas], new PIXI.Rectangle(current.x, current.y, current.width, current.height));
         }
         else
         {
-            current.texture.frame = new PIXI.Rectangle(current.x * scale * resolution, current.y * scale * resolution, current.width * scale * resolution, current.height * scale * resolution);
+            current.texture.texture = baseTextures[current.canvas];
+            current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height);
             current.texture.update();
         }
     }
