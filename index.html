@@ -3,10 +3,10 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/ascetic.min.css">
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script>
 
-    <script src="https://rawgit.com/davidfig/rendersheet/master/rendersheet.js"></script>
+    <!--<script src="https://rawgit.com/davidfig/rendersheet/master/rendersheet.js"></script>-->
 
     <!--for local testing-->
-    <!--<script src="../rendersheet/rendersheet.js"></script>-->
+    <script src="../rendersheet/rendersheet.js"></script>
     <style>
         body {
             margin: 0;
@@ -30,9 +30,12 @@
     <pre><code class="javascript" id="code"></code></pre>
     <script id="sample">
 
+        window.Debug = true;
+        window.debug = console.log;
+
         // set up rendersheet
         var resolution = window.devicePixelRatio;
-        var sheet = new RenderSheet({resolution: resolution});
+        var sheet = new RenderSheet({maxWidth: 2048, resolution: resolution});
 
         // number for triangle
         var n = 0;
