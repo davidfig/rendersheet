@@ -245,7 +245,7 @@ RenderSheet.prototype.render = function()
         var current = textures[key];
         if (!current.texture)
         {
-            current.texture = new PIXI.Texture(baseTextures[current.canvas], new PIXI.Rectangle(current.x, current.y, current.width, current.height));
+            current.texture = new PIXI.Texture(baseTextures[current.canvas], new PIXI.Rectangle(current.x / resolution, current.y / resolution, current.width / resolution, current.height / resolution));
         }
         else
         {
