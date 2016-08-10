@@ -25,8 +25,8 @@ var options;
 
 // Creates a spritesheet texture for pixi.js
 // Options:
-//     maxWidth {number}: 1024 (default)
-//     maxHeight {number}: 1024 (default)
+//     width {number}: 1024 (default)
+//     height {number}: 1024 (default)
 // Usage:
 //     var sheet = new RenderSheet();
 //     sheet.add(name, funct, param)
@@ -37,8 +37,8 @@ var options;
 function RenderSheet(opts)
 {
     options = opts || {};
-    maxWidth = options.maxWidth || maxWidth;
-    maxHeight = options.maxHeight || maxHeight;
+    maxWidth = options.width || maxWidth;
+    maxHeight = options.height || maxHeight;
     resolution = options.resolution || resolution;
 }
 
@@ -129,8 +129,8 @@ RenderSheet.prototype.render = function()
         function createCanvas(width, height)
         {
             canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
+            canvas.width = maxWidth;
+            canvas.height = maxHeight;
             context = canvas.getContext('2d');
             canvases.push(canvas);
         }
@@ -146,7 +146,7 @@ RenderSheet.prototype.render = function()
                 if (y + rowMaxHeight + buffer > maxHeight)
                 {
                     createCanvas(width, height);
-                    width = height = 0;
+                    height = 0;
                     current++;
                     for (var j = 0; j < lastRow.length; j++)
                     {
