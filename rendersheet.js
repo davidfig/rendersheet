@@ -188,6 +188,7 @@ RenderSheet.prototype.render = function()
         }
 
         var current, context;
+        var multiplier = scale * resolution;
         for (var key in textures)
         {
             var texture = textures[key];
@@ -200,19 +201,20 @@ RenderSheet.prototype.render = function()
                 current = texture.canvas;
                 context = canvases[current].getContext('2d');
                 context.save();
-                context.scale(scale * resolution, scale * resolution);
+                context.scale(multiplier, multiplier);
             }
             context.save();
-            context.translate(texture.x, texture.y);
+            context.translate(texture.x / multiplier, texture.y / multiplier);
             if (testBoxes)
             {
                 context.fillStyle = 'rgb(' + r() + ',' + r() + ',' + r() + ')';
-                context.rect(0, 0, texture.width, texture.height);
+                context.rect(0, 0, texture.width * multiplier, texture.height * multiplier);
                 context.fill();
             }
             texture.draw(context, texture.param);
             context.restore();
         }
+        context.restore();
     }
 
     function createBaseTextures()
@@ -245,7 +247,7 @@ RenderSheet.prototype.render = function()
         var current = textures[key];
         if (!current.texture)
         {
-            current.texture = new PIXI.Texture(baseTextures[current.canvas], new PIXI.Rectangle(current.x / resolution, current.y / resolution, current.width / resolution, current.height / resolution));
+            current.texture = new PIXI.Texture(baseTextures[current.canvas], new PIXI.Rectangle(current.x, current.y, current.width, current.height));
         }
         else
         {
