@@ -34,6 +34,9 @@
         var resolution = window.devicePixelRatio;
         var sheet = new RenderSheet({resolution: resolution});
 
+        // number for triangle
+        var n = 0;
+
 console.log('resolution: ' + resolution)
         // draw triangle textures on rendersheet
         var count = 500;
@@ -91,6 +94,9 @@ console.log('renderer style: ' + renderer.view.offsetWidth +','+renderer.view.of
             c.lineTo(size, size);
             c.closePath();
             c.fill();
+            c.fillStyle = 'white';
+            var measure = c.measureText(n);
+            c.fillText(n++, size / 2 - measure.width / 2, size / 2 + 10);
         }
 
         // returns the size of the drawn texture
