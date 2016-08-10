@@ -31,11 +31,10 @@
     <script id="sample">
 
         // set up rendersheet
-        var sheet = new RenderSheet();
-
         var resolution = window.devicePixelRatio;
-        sheet.resolution = resolution;
+        var sheet = new RenderSheet({resolution: resolution});
 
+console.log('resolution: ' + resolution)
         // draw triangle textures on rendersheet
         var count = 500;
         for (var i = 0; i < count; i++)
