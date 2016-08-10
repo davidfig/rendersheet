@@ -27,7 +27,6 @@ var buffer = 5;
 
 var scale = 1;
 
-// TODO: not working yet
 var resolution = 1;
 
 var options;
@@ -74,7 +73,7 @@ RenderSheet.prototype.show = function(styles)
     document.body.appendChild(canvas);
     if (typeof Debug !== 'undefined')
     {
-        debug('rendersheet size: ' + width + ',' + height);
+        debug('rendersheet size: ' + canvas.width + ',' + canvas.height);
     }
     return canvas;
 };
@@ -89,7 +88,7 @@ RenderSheet.prototype.render = function(isDone)
     function measure(texture)
     {
         var size = texture.measure(context, texture.param);
-        if (x + size.width > maxWidth / scale)
+        if (x + size.width + buffer > maxWidth / scale / resolution)
         {
             y += rowMaxHeight;
             x = 0;
