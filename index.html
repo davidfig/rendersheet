@@ -56,6 +56,10 @@ console.log('resolution: ' + resolution)
         stage.addChild(sprite);
         sprite.x = window.innerWidth / 2;
         sprite.y = window.innerHeight / 2;
+console.log('sprite: ' + sprite.x+','+sprite.y)
+console.log('window: ' + window.innerWidth+','+window.innerHeight)
+console.log('renderer: ' + renderer.view.width+','+renderer.view.height)
+console.log('renderer style: ' + renderer.view.offsetWidth +','+renderer.view.offsetHeight)
 
         // change the texture of the sprite to a texture from the rendersheet
         setInterval(function()
@@ -67,9 +71,11 @@ console.log('resolution: ' + resolution)
         // initialize pixi
         function pixi()
         {
-            renderer = new PIXI.WebGLRenderer(1000, 1000, {transparent: true, resolution: resolution});
+            renderer = new PIXI.WebGLRenderer(window.innerWidth, window.innerHeight, {transparent: true, resolution: resolution});
             document.body.appendChild(renderer.view);
             renderer.view.style.pointerEvents = 'none';
+            renderer.view.style.width = window.innerWidth + 'px';
+            renderer.view.style.height = window.innerHeight + 'px';
             stage = new PIXI.Container();
         }
 
