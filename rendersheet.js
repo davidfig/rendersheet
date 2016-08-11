@@ -13,8 +13,8 @@ var textures = {};
 
 var sprite = null;
 
-var maxWidth = 1024;
-var maxHeight = 1024;
+var maxWidth = 2048;
+var maxHeight = 2048;
 
 var buffer = 5;
 
@@ -25,8 +25,8 @@ var options;
 
 // Creates a spritesheet texture for pixi.js
 // Options:
-//     width {number}: 1024 (default)
-//     height {number}: 1024 (default)
+//     width {number}: 2048 (default)
+//     height {number}: 2048 (default)
 // Usage:
 //     var sheet = new RenderSheet();
 //     sheet.add(name, funct, param)
@@ -73,7 +73,7 @@ RenderSheet.prototype.show = function(styles)
         document.body.appendChild(canvas);
         if (typeof Debug !== 'undefined')
         {
-            debug('rendersheet size: ' + canvas.width + ',' + canvas.height);
+            debug('rendersheet size: ' + canvas.width + ',' + canvas.height + ' - resolution: ' + resolution);
         }
     }
 };
