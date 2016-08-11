@@ -59,8 +59,8 @@
         var sprite = new PIXI.Sprite();
         sprite.anchor.set(0.5);
         stage.addChild(sprite);
-        sprite.x = window.innerWidth / 2;
-        sprite.y = window.innerHeight / 2;
+        sprite.x = renderer.view.offsetWidth / 2;
+        sprite.y = renderer.view.offsetHeight / 2;
 
         // change the texture of the sprite to a texture from the rendersheet
         setInterval(function()
