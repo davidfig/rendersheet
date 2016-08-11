@@ -80,8 +80,12 @@
         // initialize pixi
         function pixi()
         {
-            width = document.body.offsetWidth;
-            height = document.body.offsetHeight;
+            var w = window,
+                d = document,
+                e = d.documentElement,
+                g = d.getElementsByTagName('body')[0],
+                width = w.innerWidth || e.clientWidth || g.clientWidth,
+                height = w.innerHeight|| e.clientHeight|| g.clientHeight;
             renderer = new PIXI.WebGLRenderer(width, height, {transparent: true, resolution: resolution});
             document.body.appendChild(renderer.view);
             renderer.view.style.position = 'absolute';
