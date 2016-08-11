@@ -87,11 +87,15 @@ RenderSheet.prototype.render = function()
 {
     function measure()
     {
+        var c = document.createElement('canvas');
+        c.width = maxWidth;
+        c.height = maxHeight;
+        co = c.getContext('2d');
         var multiplier = scale * resolution;
         for (var key in textures)
         {
             var texture = textures[key];
-            var size = texture.measure(context, texture.param);
+            var size = texture.measure(co, texture.param);
             texture.width = Math.ceil(size.width * multiplier);
             texture.height = Math.ceil(size.height * multiplier);
             sorted.push(texture);
