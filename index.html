@@ -90,8 +90,10 @@
         // initialize pixi
         function pixi()
         {
-            renderer = new PIXI.WebGLRenderer(window.innerWidth * resolution, window.innerHeight * resolution, {transparent: true, resolution: resolution});
+            renderer = new PIXI.WebGLRenderer(window.innerWidth, window.innerHeight, {transparent: true, resolution: resolution});
             document.body.appendChild(renderer.view);
+            renderer.view.style.position = 'absolute';
+            renderer.view.style.top = renderer.view.style.left = '0px';
             renderer.view.style.pointerEvents = 'none';
             renderer.view.style.width = window.innerWidth + 'px';
             renderer.view.style.height = window.innerHeight + 'px';
