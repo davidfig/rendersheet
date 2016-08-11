@@ -3,8 +3,9 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/ascetic.min.css">
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script>
 
-    <script src="https://rawgit.com/davidfig/rendersheet/master/rendersheet.js"></script>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
 
+    <script src="https://rawgit.com/davidfig/rendersheet/master/rendersheet.js"></script>
     <!--for local testing-->
     <!--<script src="../rendersheet/rendersheet.js"></script>-->
     <style>
@@ -67,7 +68,6 @@
         var g = new PIXI.Graphics();
         stage.addChild(g);
         g.beginFill(Math.round(Math.random() * 0xffffff), 0.25);
-console.log(width +','+ height +','+ resolution)
         g.drawRect(0, 0, width, height);
         g.endFill();
 
@@ -95,8 +95,6 @@ console.log(width +','+ height +','+ resolution)
             renderer.view.style.width = width + 'px';
             renderer.view.style.height = height + 'px';
             stage = new PIXI.Container();
-            // width *= resolution;
-            // height *= resolution;
         }
 
         // draw a triangle to the render sheet using canvas
