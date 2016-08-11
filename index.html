@@ -54,33 +54,21 @@
         sheet.show({opacity: 0.1, pointerEvents: 'none'});
 
         // set up pixi
-        var renderer, stage;
+        var renderer, stage, width, height;
         pixi();
 
         // add a sprite
         var sprite = new PIXI.Sprite();
         sprite.anchor.set(0.5);
         stage.addChild(sprite);
-        sprite.x = renderer.view.offsetWidth / 2;
-        sprite.y = renderer.view.offsetHeight / 2;
+        sprite.x = window.innerWidth / 2;
+        sprite.y = window.innerHeight / 2;
 
-        function d(x, y)
-        {
-            var radius = renderer.view.offsetWidth * 0.01;
-            var g = new PIXI.Graphics();
-            stage.addChild(g);
-            g.beginFill(Math.round(Math.random() * 0xffffff));
-            g.drawCircle(x, y, radius);
-            g.endFill();
-        }
-
-        for (var y = renderer.view.offsetHeight / 20; y < renderer.view.offsetHeight - renderer.view.offsetHeight / 20; y += renderer.view.offsetHeight / 10)
-        {
-            for (var x = renderer.view.offsetWidth / 20; x < renderer.view.offsetWidth - renderer.view.offsetWidth / 20; x += renderer.view.offsetWidth / 10)
-            {
-                d(x, y)
-            }
-        }
+        var g = new PIXI.Graphics();
+        stage.addChild(g);
+        g.beginFill(Math.round(Math.random() * 0xffffff), 0.25);
+        g.drawRect(0, 0, window.innerWidth, window.innerHeight)
+        g.endFill();
 
         // change the texture of the sprite to a texture from the rendersheet
         setInterval(function()
@@ -92,13 +80,15 @@
         // initialize pixi
         function pixi()
         {
-            renderer = new PIXI.WebGLRenderer(window.innerWidth, window.innerHeight, {transparent: true, resolution: resolution});
+            width = document.body.offsetWidth;
+            height = document.body.offsetHeight;
+            renderer = new PIXI.WebGLRenderer(width, height, {transparent: true, resolution: resolution});
             document.body.appendChild(renderer.view);
             renderer.view.style.position = 'absolute';
             renderer.view.style.top = renderer.view.style.left = '0px';
             renderer.view.style.pointerEvents = 'none';
-            renderer.view.style.width = window.innerWidth + 'px';
-            renderer.view.style.height = window.innerHeight + 'px';
+            renderer.view.style.width = width + 'px';
+            renderer.view.style.height = height + 'px';
             stage = new PIXI.Container();
         }
 
