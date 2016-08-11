@@ -146,14 +146,14 @@ RenderSheet.prototype.render = function()
                 if (y + rowMaxHeight + buffer > maxHeight)
                 {
                     createCanvas(width, height);
-                    height = 0;
+                    height = rowMaxHeight;
                     current++;
+                    y = 0;
                     for (var j = 0; j < lastRow.length; j++)
                     {
                         lastRow[j].canvas = current;
-                        lastRow[j].y = 0;
+                        lastRow[j].y = y;
                     }
-                    y = 0;
                 }
                 y += rowMaxHeight + buffer;
                 rowMaxHeight = 0;
@@ -165,7 +165,7 @@ RenderSheet.prototype.render = function()
             lastRow.push(texture);
             if (texture.height > rowMaxHeight)
             {
-                rowMaxHeight = texture.height;
+                rowMaxHeight = Math.ceil(texture.height);
             }
             x += Math.ceil(texture.width) + buffer;
             if (x > width)
@@ -175,6 +175,18 @@ RenderSheet.prototype.render = function()
             if (texture.height + y > height)
             {
                 height = Math.ceil(texture.height + y);
+            }
+        }
+        if (y + rowMaxHeight + buffer > maxHeight)
+        {
+            createCanvas(width, height);
+            height = rowMaxHeight;
+            current++;
+            y = 0;
+            for (var j = 0; j < lastRow.length; j++)
+            {
+                lastRow[j].canvas = current;
+                lastRow[j].y = y;
             }
         }
         createCanvas(width, height);
