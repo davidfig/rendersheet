@@ -62,6 +62,24 @@
         sprite.x = renderer.view.offsetWidth / 2;
         sprite.y = renderer.view.offsetHeight / 2;
 
+        function d(x, y)
+        {
+            var radius = renderer.view.offsetWidth * 0.01;
+            var g = new PIXI.Graphics();
+            stage.addChild(g);
+            g.beginFill(Math.round(Math.random() * 0xffffff));
+            g.drawCircle(x, y, radius);
+            g.endFill();
+        }
+
+        for (var y = renderer.view.offsetHeight / 20; y < renderer.view.offsetHeight - renderer.view.offsetHeight / 20; y += renderer.view.offsetHeight / 10)
+        {
+            for (var x = renderer.view.offsetWidth / 20; x < renderer.view.offsetWidth - renderer.view.offsetWidth / 20; x += renderer.view.offsetWidth / 10)
+            {
+                d(x, y)
+            }
+        }
+
         // change the texture of the sprite to a texture from the rendersheet
         setInterval(function()
             {
