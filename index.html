@@ -67,7 +67,8 @@
         var g = new PIXI.Graphics();
         stage.addChild(g);
         g.beginFill(Math.round(Math.random() * 0xffffff), 0.25);
-        g.drawRect(0, 0, width, height)
+console.log(width +','+ height +','+ resolution)
+        g.drawRect(0, 0, width, height);
         g.endFill();
 
         // change the texture of the sprite to a texture from the rendersheet
@@ -83,9 +84,9 @@
             var w = window,
                 d = document,
                 e = d.documentElement,
-                g = d.getElementsByTagName('body')[0],
-                width = w.innerWidth || e.clientWidth || g.clientWidth,
-                height = w.innerHeight|| e.clientHeight|| g.clientHeight;
+                g = d.getElementsByTagName('body')[0];
+            width = w.innerWidth || e.clientWidth || g.clientWidth;
+            height = w.innerHeight|| e.clientHeight|| g.clientHeight;
             renderer = new PIXI.WebGLRenderer(width, height, {transparent: true, resolution: resolution});
             document.body.appendChild(renderer.view);
             renderer.view.style.position = 'absolute';
@@ -94,6 +95,8 @@
             renderer.view.style.width = width + 'px';
             renderer.view.style.height = height + 'px';
             stage = new PIXI.Container();
+            // width *= resolution;
+            // height *= resolution;
         }
 
         // draw a triangle to the render sheet using canvas
