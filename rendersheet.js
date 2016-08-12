@@ -52,6 +52,10 @@ RenderSheet.prototype.add = function(name, draw, measure, param)
 // attaches the rendersheet to the DOM for testing purposes
 RenderSheet.prototype.show = function(styles)
 {
+    function r()
+    {
+        return Math.floor(Math.random() * 256);
+    }
     var percent = 1 / this.canvases.length;
     for (var i = 0; i < this.canvases.length; i++)
     {
@@ -63,6 +67,7 @@ RenderSheet.prototype.show = function(styles)
         style.width = 'auto';
         style.height = Math.round(percent * 100) + '%';
         style.zIndex = 1000;
+        style.background = 'rgba(' + r() + ',' + r() + ',' + r() + ', 0.5)';
         for (var key in styles)
         {
             style[key] = styles[key];
@@ -70,7 +75,7 @@ RenderSheet.prototype.show = function(styles)
         document.body.appendChild(canvas);
         if (typeof Debug !== 'undefined')
         {
-            debug('#' + i + ': rendersheet size: ' + canvas.width + ',' + canvas.height + ' - this.resolution: ' + this.resolution);
+            debug('#' + (i + 1) + ': rendersheet size: ' + canvas.width + ',' + canvas.height + ' - this.resolution: ' + this.resolution);
         }
     }
 };
