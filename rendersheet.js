@@ -263,7 +263,7 @@ RenderSheet.prototype.render = function()
         }
         else
         {
-            current.texture.texture = this.baseTextures[current.canvas];
+            current.texture.baseTexture = this.baseTextures[current.canvas];
             current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height);
             current.texture.update();
         }
