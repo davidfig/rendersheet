@@ -52,7 +52,7 @@
         sheet.render();
 
         // show the rendersheet (for debug purposes)
-        sheet.show({opacity: 0.1, pointerEvents: 'none'});
+        sheet.show({opacity: 0.5, pointerEvents: 'none'});
 
         // set up pixi
         var renderer, stage, width, height;
@@ -64,12 +64,6 @@
         stage.addChild(sprite);
         sprite.x = width / 2;
         sprite.y = height / 2;
-
-        var g = new PIXI.Graphics();
-        stage.addChild(g);
-        g.beginFill(Math.round(Math.random() * 0xffffff), 0.25);
-        g.drawRect(0, 0, width, height);
-        g.endFill();
 
         // change the texture of the sprite to a texture from the rendersheet
         setInterval(function()
