@@ -70,7 +70,7 @@ RenderSheet.prototype.show = function(styles)
         document.body.appendChild(canvas);
         if (typeof Debug !== 'undefined')
         {
-            debug('rendersheet size: ' + canvas.width + ',' + canvas.height + ' - this.resolution: ' + this.resolution);
+            debug('#' + i + ': rendersheet size: ' + canvas.width + ',' + canvas.height + ' - this.resolution: ' + this.resolution);
         }
     }
 };
@@ -178,7 +178,7 @@ RenderSheet.prototype.place = function()
     }
     if (y + rowMaxHeight + this.buffer > this.maxHeight)
     {
-        createCanvas(width, height);
+        this.createCanvas(width, height);
         height = rowMaxHeight;
         current++;
         y = 0;
