@@ -8,8 +8,9 @@
     <script src="https://rawgit.com/davidfig/rendersheet/master/rendersheet.js"></script>
     <script src="https://rawgit.com/davidfig/debug/master/debug.js"></script>
     <!--for local testing-->
-    <srript src="../debug/debug.js"></script>
-    <script src="../rendersheet/rendersheet.js"></script>
+
+    <!--<script src="../debug/debug.js"></script>
+    <script src="../rendersheet/rendersheet.js"></script>-->
     <style>
         body {
             margin: 0;
@@ -45,7 +46,7 @@
         var n = 0;
 
         // draw triangle textures on rendersheet
-        var count = 1000;
+        var count = 200;
         for (var i = 0; i < count; i++)
         {
             sheet.add('triangle_' + i, triangleDraw, triangleMeasure, {size: Math.random() * 500, color: Math.round(Math.random() * 0xffffff)});
