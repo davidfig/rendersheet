@@ -22,16 +22,11 @@
 function RenderSheet(options)
 {
     options = options || {};
-
     this.testBoxes = options.testBoxes || false;
-
     this.maxSize = options.maxSize || 2048;
-
     this.buffer = options.buffer || 5;
-
     this.scale = options.scale || 1;
     this.resolution = options.resolution || 1;
-
     this.canvases = [];
     this.baseTextures = [];
     this.textures = {};
@@ -44,7 +39,7 @@ function RenderSheet(options)
 //  params {object} any params to pass the measure and drawing functions
 RenderSheet.prototype.add = function(name, draw, measure, param)
 {
-    this.textures[name] = { draw: draw, measure: measure, param: param };
+    this.textures[name] = { name: name, draw: draw, measure: measure, param: param };
 };
 
 // attaches the rendersheet to the DOM for testing purposes
@@ -135,65 +130,6 @@ RenderSheet.prototype.createCanvas = function(width, height)
     canvas.height = height || this.maxSize;
     context = canvas.getContext('2d');
     this.canvases.push(canvas);
-};
-
-RenderSheet.prototype.place = function()
-{
-    var x = 0, y = 0, width = 0, height = 0, rowMaxHeight = 0, current = 0;
-    var lastRow = [];
-    for (var i = 0; i < this.sorted.length; i++)
-    {
-        var texture = this.sorted[i];
-        if (x + texture.width + this.buffer > this.maxSize)
-        {
-            x = 0;
-            if (y + rowMaxHeight + this.buffer > this.maxSize)
-            {
-                this.createCanvas(width, height);
-                height = rowMaxHeight;
-                current++;
-                y = 0;
-                for (var j = 0; j < lastRow.length; j++)
-                {
-                    lastRow[j].canvas = current;
-                    lastRow[j].y = y;
-                }
-            }
-            y += rowMaxHeight + this.buffer;
-            rowMaxHeight = 0;
-            lastRow = [];
-        }
-        texture.x = x;
-        texture.y = y;
-        texture.canvas = current;
-        lastRow.push(texture);
-        if (texture.height > rowMaxHeight)
-        {
-            rowMaxHeight = Math.ceil(texture.height);
-        }
-        x += Math.ceil(texture.width) + this.buffer;
-        if (x > width)
-        {
-            width = x;
-        }
-        if (texture.height + y > height)
-        {
-            height = Math.ceil(texture.height + y);
-        }
-    }
-    if (y + rowMaxHeight + this.buffer > this.maxHeight)
-    {
-        this.createCanvas(width, height);
-        height = rowMaxHeight;
-        current++;
-        y = 0;
-        for (var j = 0; j < lastRow.length; j++)
-        {
-            lastRow[j].canvas = current;
-            lastRow[j].y = y;
-        }
-    }
-    this.createCanvas(width, height);
 };
 
 RenderSheet.prototype.draw = function()
@@ -292,7 +228,7 @@ RenderSheet.prototype.getIndex = function(find)
 
 RenderSheet.prototype.pack = function()
 {
-    var packers = [new GrowingPacker(this.maxSize, this.sorted[0])];
+    var packers = [new GrowingPacker(this.maxSize, this.sorted[0], this.buffer)];
     for (var i = 0; i < this.sorted.length; i++)
     {
         var block = this.sorted[i];
@@ -307,7 +243,7 @@ RenderSheet.prototype.pack = function()
         }
         if (!packed)
         {
-            packers.push(new GrowingPacker(this.maxSize, block));
+            packers.push(new GrowingPacker(this.maxSize, block, this.buffer));
             if (!packers[j].add(block, j))
             {
                 debug(block.name + ' is too big for the spritesheet.');
@@ -367,10 +303,11 @@ RenderSheet.prototype.entries = function()
 };
 
 // pack subroutines based on https://github.com/jakesgordon/bin-packing/ (MIT)
-var GrowingPacker = function(max, first)
+var GrowingPacker = function(max, first, buffer)
 {
     this.max = max;
-    this.root = { x: 0, y: 0, w: first.width, h: first.height };
+    this.buffer = buffer;
+    this.root = { x: 0, y: 0, w: first.width + buffer, h: first.height + buffer };
 };
 
 GrowingPacker.prototype.finish = function(maxSize)
@@ -398,13 +335,13 @@ GrowingPacker.prototype.finish = function(maxSize)
 GrowingPacker.prototype.add = function(block, canvasNumber)
 {
     var result;
-    if (node = this.findNode(this.root, block.width, block.height))
+    if (node = this.findNode(this.root, block.width + this.buffer, block.height + this.buffer))
     {
-        result = this.splitNode(node, block.width, block.height);
+        result = this.splitNode(node, block.width + this.buffer, block.height + this.buffer);
     }
     else
     {
-        result = this.growNode(block.width, block.height);
+        result = this.growNode(block.width + this.buffer, block.height + this.buffer);
         if (!result)
         {
             return false;
