@@ -2,7 +2,7 @@
   "name": "@yy/rendersheet",
   "version": "1.0.0",
   "description": "renders a canvas spritesheet for use with pixi.js",
-  "main": "renderersheet.js",
+  "main": "rendersheet.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
