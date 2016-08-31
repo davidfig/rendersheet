@@ -1,5 +1,5 @@
 {
-  "name": "@yy/renderersheet",
+  "name": "@yy/rendersheet",
   "version": "1.0.0",
   "description": "renders a canvas spritesheet for use with pixi.js",
   "main": "renderersheet.js",
@@ -8,12 +8,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/davidfig/renderersheet.git"
+    "url": "git+ssh://git@github.com/davidfig/rendersheet.git"
   },
   "author": "david figatner",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/davidfig/renderersheet/issues"
+    "url": "https://github.com/davidfig/rendersheet/issues"
   },
-  "homepage": "https://github.com/davidfig/renderersheet#readme"
+  "homepage": "https://github.com/davidfig/rendersheet#readme"
 }
