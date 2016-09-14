@@ -1,0 +1,30 @@
+{
+  "name": "rendersheetdemo",
+  "version": "1.0.0",
+  "description": "demo for rendersheet",
+  "main": "index.html",
+  "scripts": {
+    "install": "node_modules/.bin/browserify index.js | node_modules/.bin/uglifyjs > index.compiled.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davidfig/rendersheet.git"
+  },
+  "author": "David Figatner",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/davidfig/rendersheet/issues"
+  },
+  "homepage": "https://github.com/davidfig/rendersheet#readme",
+  "devDependencies": {
+    "browserify": "^13.1.0"
+  },
+  "dependencies": {
+    "@yy/debug": "davidfig/debug",
+    "@yy/growingpacker": "davidfig/growingpacker",
+    "@yy/rendersheet": "davidfig/rendersheet",
+    "highlight.js": "^9.6.0",
+    "pixi.js": "^4.0.1",
+    "uglify-js": "^2.7.3"
+  }
+}
