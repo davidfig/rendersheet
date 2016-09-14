@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/davidfig/rendersheet/issues"
   },
-  "homepage": "https://github.com/davidfig/rendersheet#readme"
+  "homepage": "https://github.com/davidfig/rendersheet#readme",
+  "dependencies": {
+    "@yy/growingpacker": "davidfig/growingpacker"
+  }
 }

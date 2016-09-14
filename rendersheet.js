@@ -5,477 +5,374 @@
     Copyright (c) 2016 YOPEY YOPEY LLC
 */
 
-// Creates a spritesheet texture for pixi.js
-// options:
-//     maxSize {number}: 2048 (default)
-//     testBoxes: false (default) - draw colored boxes around the this.textures
-//     buffer {number}: 5 (default) - pixels surrounding each texture
-//     scale {number}: 1 (default) - this.scale renderSheet
-//     resolution {number}: 1 (default) - change this.resolution of renderSheet
-// Usage:
-//     var sheet = new RenderSheet();
-//     sheet.add(name, funct, param)
-//     ...
-//     sheet.render()
-//     sheet.get(name)
-//     sheet.getTexture(name)
-function RenderSheet(options)
-{
-    options = options || {};
-    this.testBoxes = options.testBoxes || false;
-    this.maxSize = options.maxSize || 2048;
-    this.buffer = options.buffer || 5;
-    this.scale = options.scale || 1;
-    this.resolution = options.resolution || 1;
-    this.canvases = [];
-    this.baseTextures = [];
-    this.textures = {};
-}
+/* globals document, PIXI */
 
-// adds a texture to the rendersheeet
-//  name {string}: name of texture (for getting)
-//  funct {function}: drawing function
-//  measure {function}: measure function
-//  params {object} any params to pass the measure and drawing functions
-RenderSheet.prototype.add = function(name, draw, measure, param)
-{
-    this.textures[name] = { name: name, draw: draw, measure: measure, param: param };
-};
+const GrowingPacker = require('@yy/growingpacker');
 
-// attaches the rendersheet to the DOM for testing purposes
-RenderSheet.prototype.show = function(styles)
+/**
+ * Creates a spritesheet texture with canvas renderings for pixi.js
+ * Usage:
+ *
+ * function drawBox(context)
+ * {
+ *      context.fillStyle = 'white';
+ *      context.fillRect(0, 0, 100, 100);
+ * }
+ *
+ * function measureBox()
+ * {
+ *      return {width: 100, height: 100};
+ * }
+ *
+ * const sheet = new RenderSheet();
+ * sheet.add('box', drawBox, measureBox)
+ * ...
+ * sheet.render();
+ *
+ * // returns a PIXI.Sprite
+ * const sprite = sheet.getSprite('box');
+ *
+ * // returns a PIXI.Texture
+ * const texture = sheet.getTexture('box');
+ */
+class RenderSheet
 {
-    function r()
+    /**
+     * @param {object} options
+     * @param {number=2048} maxSize
+     * @param {number=5} buffer around each texture
+     * @param {number=1} scale of texture
+     * @param {number=1} resolution of rendersheet
+     * @param {Function=} debug - function to call with debug information (e.g., console.log)
+     * @param {boolean=} testBoxes - draw a different colored boxes around each rendering
+     */
+    constructor(options)
     {
-        return Math.floor(Math.random() * 256);
+        options = options || {};
+        this.testBoxes = options.testBoxes || false;
+        this.maxSize = options.maxSize || 2048;
+        this.buffer = options.buffer || 5;
+        this.scale = options.scale || 1;
+        this.resolution = options.resolution || 1;
+        this.debug = options.debug;
+        this.canvases = [];
+        this.baseTextures = [];
+        this.textures = {};
     }
-    var percent = 1 / this.canvases.length;
-    for (var i = 0; i < this.canvases.length; i++)
+
+    /**
+     * adds a rendering
+     * @param {string} name of rendering
+     * @param {Function} draw function(context) - use the context to draw within the bounds of the measure function
+     * @param {Function} measure function(context) - needs to return {width: width, height: height} for the rendering
+     * @param {object} params - object to pass the draw() and measure() functions
+     */
+    add(name, draw, measure, param)
     {
-        var canvas = this.canvases[i];
-        var style = canvas.style;
-        style.position = 'fixed';
-        style.left = '0px';
-        style.top = i * Math.round(percent * 100) + '%';
-        style.width = 'auto';
-        style.height = Math.round(percent * 100) + '%';
-        style.zIndex = 1000;
-        style.background = 'rgba(' + r() + ',' + r() + ',' + r() + ', 0.5)';
-        for (var key in styles)
-        {
-            style[key] = styles[key];
-        }
-        document.body.appendChild(canvas);
-        if (typeof Debug !== 'undefined')
-        {
-            debug('#' + (i + 1) + ': rendersheet size: ' + canvas.width + ',' + canvas.height + ' - this.resolution: ' + this.resolution);
-        }
+        this.textures[name] = { name: name, draw: draw, measure: measure, param: param };
     }
-};
 
-RenderSheet.prototype.hasLoaded = function()
-{
-    return texture && texture.hasLoaded;
-};
-
-RenderSheet.prototype.measure = function()
-{
-    var c = document.createElement('canvas');
-    c.width = this.maxSize;
-    c.height = this.maxSize;
-    co = c.getContext('2d');
-    var multiplier = this.scale * this.resolution;
-    for (var key in this.textures)
+    /**
+     * attaches RenderSheet to DOM for testing purposes
+     * @param {object} styles - CSS styles to use for rendersheet
+     */
+    show(styles)
     {
-        var texture = this.textures[key];
-        var size = texture.measure(co, texture.param);
-        texture.width = Math.ceil(size.width * multiplier);
-        texture.height = Math.ceil(size.height * multiplier);
-        this.sorted.push(texture);
-    }
-};
-
-RenderSheet.prototype.sort = function()
-{
-    this.sorted.sort(function(a, b)
-    {
-        var aSize = Math.max(a.height, a.width);
-        var bSize = Math.max(b.height, b.width);
-        if (aSize > bSize)
+        const percent = 1 / this.canvases.length;
+        for (let i = 0; i < this.canvases.length; i++)
         {
-            return -1;
-        }
-        else if (aSize < bSize)
-        {
-            return 1;
-        }
-        else
-        {
-            if (aSize === bSize)
+            const canvas = this.canvases[i];
+            const style = canvas.style;
+            style.position = 'fixed';
+            style.left = '0px';
+            style.top = i * Math.round(percent * 100) + '%';
+            style.width = 'auto';
+            style.height = Math.round(percent * 100) + '%';
+            style.zIndex = 1000;
+            style.background = this.randomColor();
+            for (let key in styles)
             {
-                return 0;
+                style[key] = styles[key];
+            }
+            document.body.appendChild(canvas);
+            if (this.debug)
+            {
+                this.debug('Sheet #' + (i + 1) + '<br>size: ' + canvas.width + 'x' + canvas.height + '<br>resolution: ' + this.resolution);
+            }
+        }
+    }
+
+    /**
+     * create (or refresh) the rendersheet
+     */
+    render()
+    {
+        this.canvases = [];
+        this.sorted = [];
+
+        this.measure();
+        this.sort();
+        this.pack();
+        this.draw();
+        this.createBaseTextures();
+
+        for (let key in this.textures)
+        {
+            const current = this.textures[key];
+            if (!current.texture)
+            {
+                current.texture = new PIXI.Texture(this.baseTextures[current.canvas], new PIXI.Rectangle(current.x, current.y, current.width, current.height));
             }
             else
             {
-                return (aSize > bSize) ? -1 : 1;
+                current.texture.baseTexture = this.baseTextures[current.canvas];
+                current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height);
+                current.texture.update();
             }
         }
-    });
-};
-
-RenderSheet.prototype.createCanvas = function(width, height)
-{
-    canvas = document.createElement('canvas');
-    canvas.width = width || this.maxSize;
-    canvas.height = height || this.maxSize;
-    context = canvas.getContext('2d');
-    this.canvases.push(canvas);
-};
-
-RenderSheet.prototype.draw = function()
-{
-    function r()
-    {
-        return Math.floor(Math.random() * 255);
     }
 
-    var current, context;
-    var multiplier = this.scale * this.resolution;
-    for (var key in this.textures)
+    /**
+     * @param {string} name of texture
+     * @return {PIXI.Texture|null}
+     */
+    getTexture(name)
     {
-        var texture = this.textures[key];
-        if (texture.canvas !== current)
+        const texture = this.textures[name];
+        if (texture)
         {
-            if (typeof current !== 'undefined')
-            {
-                context.restore();
-            }
-            current = texture.canvas;
-            context = this.canvases[current].getContext('2d');
-            context.save();
-            context.scale(multiplier, multiplier);
-        }
-        context.save();
-        context.translate(texture.x / multiplier, texture.y / multiplier);
-        if (this.testBoxes)
-        {
-            context.fillStyle = 'rgb(' + r() + ',' + r() + ',' + r() + ')';
-            context.fillRect(0, 0, texture.width / multiplier, texture.height / multiplier);
-        }
-        texture.draw(context, texture.param);
-        context.restore();
-    }
-    context.restore();
-};
-
-RenderSheet.prototype.createBaseTextures = function()
-{
-    for (var i = 0; i < this.baseTextures.length; i++)
-    {
-        this.baseTextures[i].destroy();
-    }
-    this.baseTextures = [];
-    for (var i = 0; i < this.canvases.length; i++)
-    {
-        var base = PIXI.BaseTexture.fromCanvas(this.canvases[i]);
-        base.resolution = this.resolution;
-        this.baseTextures.push(base);
-    }
-};
-
-RenderSheet.prototype.render = function()
-{
-    this.canvases = [];
-    this.sorted = [];
-    var canvas, context;
-
-    this.measure();
-    this.sort();
-    this.pack();
-    this.draw();
-    this.createBaseTextures();
-
-    for (key in this.textures)
-    {
-        var current = this.textures[key];
-        if (!current.texture)
-        {
-            current.texture = new PIXI.Texture(this.baseTextures[current.canvas], new PIXI.Rectangle(current.x, current.y, current.width, current.height));
+            return this.textures[name].texture;
         }
         else
         {
-            current.texture.baseTexture = this.baseTextures[current.canvas];
-            current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height);
-            current.texture.update();
-        }
-    }
-};
-
-//  find the index of the texture based on the texture object
-RenderSheet.prototype.getIndex = function(find)
-{
-    var i = 0;
-    for (var key in this.textures)
-    {
-        if (i === find)
-        {
-            return this.textures[key].texture;
-        }
-        i++;
-    }
-    return null;
-};
-
-RenderSheet.prototype.pack = function()
-{
-    var packers = [new GrowingPacker(this.maxSize, this.sorted[0], this.buffer)];
-    for (var i = 0; i < this.sorted.length; i++)
-    {
-        var block = this.sorted[i];
-        var packed = false;
-        for (var j = 0; j < packers.length; j++)
-        {
-            if (packers[j].add(block, j))
+            if (this.debug)
             {
-                packed = true;
-                break;
+                this.debug('Texture ' + name + ' not found in spritesheet.', 'error');
+            }
+            return null;
+        }
+    }
+
+    /**
+     * @param {string} name of texture
+     * note: this sets the sprite's anchor to 0.5 (because that's how it should be)
+     * @return {PIXI.Sprite|null}
+     */
+    getSprite(name)
+    {
+        const texture = this.getTexture(name);
+        if (texture)
+        {
+            const sprite = new PIXI.Sprite(texture);
+            sprite.anchor.set(0.5);
+            return sprite;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+
+    /**
+     * @param {string} name of texture
+     * @return {object} texture object
+     */
+    get(name)
+    {
+        return this.textures[name];
+    }
+
+    /**
+     * @return {number} amount of textures in this rendersheet
+     */
+    entries()
+    {
+        let size = 0;
+        for (let key in this.textures)
+        {
+            size++;
+        }
+        return size;
+    }
+
+    /**
+     * find the index of the texture based on the texture object
+     * @param {number} find this indexed texture
+     * @returns {PIXI.Texture}
+     */
+    getIndex(find)
+    {
+        let i = 0;
+        for (let key in this.textures)
+        {
+            if (i === find)
+            {
+                return this.textures[key].texture;
+            }
+            i++;
+        }
+        return null;
+    }
+
+    /**
+     * measures canvas renderings
+     * @private
+     */
+    measure()
+    {
+        const c = document.createElement('canvas');
+        c.width = this.maxSize;
+        c.height = this.maxSize;
+        const context = c.getContext('2d');
+        const multiplier = this.scale * this.resolution;
+        for (let key in this.textures)
+        {
+            const texture = this.textures[key];
+            const size = texture.measure(context, texture.param);
+            texture.width = Math.ceil(size.width * multiplier);
+            texture.height = Math.ceil(size.height * multiplier);
+            this.sorted.push(texture);
+        }
+    }
+
+    /**
+     * sort textures by largest dimension
+     * @private
+     */
+    sort()
+    {
+        this.sorted.sort(
+            function(a, b)
+            {
+                let aSize = Math.max(a.height, a.width);
+                let bSize = Math.max(b.height, b.width);
+                if (aSize === bSize)
+                {
+                    aSize = Math.min(a.height, a.width);
+                    bSize = Math.max(b.height, b.width);
+                }
+                return bSize - aSize;
+            }
+        );
+    }
+
+    /**
+     * create canvas based
+     * @param {number=this.maxSize} width
+     * @param {number=this.maxSize} height
+     * @private
+     */
+    createCanvas(width, height)
+    {
+        const canvas = document.createElement('canvas');
+        canvas.width = width || this.maxSize;
+        canvas.height = height || this.maxSize;
+        this.canvases.push(canvas);
+    }
+
+    /**
+     * returns a random rgb color
+     * @private
+     */
+    randomColor()
+    {
+        const value = Math.floor(Math.random() * 255);
+        return 'rgb(' + this.value + ',' + value + ',' + value + ')';
+    }
+
+    /**
+     * draw renderings to rendertexture
+     * @private
+     */
+    draw()
+    {
+        let current, context;
+        const multiplier = this.scale * this.resolution;
+        for (let key in this.textures)
+        {
+            const texture = this.textures[key];
+            if (texture.canvas !== current)
+            {
+                if (typeof current !== 'undefined')
+                {
+                    context.restore();
+                }
+                current = texture.canvas;
+                context = this.canvases[current].getContext('2d');
+                context.save();
+                context.scale(multiplier, multiplier);
+            }
+            context.save();
+            context.translate(texture.x / multiplier, texture.y / multiplier);
+            if (this.testBoxes)
+            {
+                context.fillStyle = this.randomColor();
+                context.fillRect(0, 0, texture.width / multiplier, texture.height / multiplier);
+            }
+            texture.draw(context, texture.param);
+            context.restore();
+        }
+        context.restore();
+    }
+
+    /**
+     * @private
+     */
+    createBaseTextures()
+    {
+        for (let i = 0; i < this.baseTextures.length; i++)
+        {
+            this.baseTextures[i].destroy();
+        }
+        this.baseTextures = [];
+        for (let i = 0; i < this.canvases.length; i++)
+        {
+            const base = PIXI.BaseTexture.fromCanvas(this.canvases[i]);
+            base.resolution = this.resolution;
+            this.baseTextures.push(base);
+        }
+    }
+
+    /**
+     * pack textures after measurement
+     * @private
+     */
+    pack()
+    {
+        const packers = [new GrowingPacker(this.maxSize, this.sorted[0], this.buffer)];
+        for (var i = 0; i < this.sorted.length; i++)
+        {
+            const block = this.sorted[i];
+            let packed = false;
+            for (var j = 0; j < packers.length; j++)
+            {
+                if (packers[j].add(block, j))
+                {
+                    packed = true;
+                    break;
+                }
+            }
+            if (!packed)
+            {
+                packers.push(new GrowingPacker(this.maxSize, block, this.buffer));
+                if (!packers[j].add(block, j))
+                {
+                    if (this.debug)
+                    {
+                        this.debug(block.name + ' is too big for the spritesheet.');
+                    }
+                    return;
+                }
             }
         }
-        if (!packed)
+
+        for (let i = 0; i < packers.length; i++)
         {
-            packers.push(new GrowingPacker(this.maxSize, block, this.buffer));
-            if (!packers[j].add(block, j))
-            {
-                debug(block.name + ' is too big for the spritesheet.');
-                return;
-            }
+            const size = packers[i].finish(this.maxSize);
+            this.createCanvas(size, size);
         }
     }
-
-    for (var i = 0; i < packers.length; i++)
-    {
-        var size = packers[i].finish(this.maxSize);
-        this.createCanvas(size, size);
-    }
-};
-
-// returns the texture object based on the name
-RenderSheet.prototype.get = function(name)
-{
-    return this.textures[name];
-};
-
-// returns the PIXI.Texture based on the name
-RenderSheet.prototype.getTexture = function(name)
-{
-    var texture = this.textures[name];
-    if (texture)
-    {
-        return this.textures[name].texture;
-    }
-    else
-    {
-        debug('Texture ' + name + ' not found in spritesheet.', 'error');
-        return null;
-    }
-};
-
-// returns a PIXI.Sprite based on the the name
-// also sets sprite anchor to 0.5 (because that's how it should be)
-RenderSheet.prototype.getSprite = function(name)
-{
-    var texture = this.getTexture(name);
-    var sprite = new PIXI.Sprite(texture);
-    sprite.anchor.set(0.5);
-    return sprite;
-};
-
-
-// returns the number of this.textures in the sprite sheet
-RenderSheet.prototype.entries = function()
-{
-    var size = 0;
-    for (var key in this.textures)
-    {
-        size++;
-    }
-    return size;
-};
-
-// pack subroutines based on https://github.com/jakesgordon/bin-packing/ (MIT)
-var GrowingPacker = function(max, first, buffer)
-{
-    this.max = max;
-    this.buffer = buffer;
-    this.root = { x: 0, y: 0, w: first.width + buffer, h: first.height + buffer };
-};
-
-GrowingPacker.prototype.finish = function(maxSize)
-{
-    var n = 1;
-    var squared = [];
-    var count = 0;
-    do
-    {
-        var next = Math.pow(2, n++);
-        squared.push(next);
-    } while (next < maxSize);
-
-    var max = Math.max(this.root.w, this.root.h);
-
-    for (var i = squared.length - 1; i >= 0; i--)
-    {
-        if (squared[i] < max)
-        {
-            return squared[i + 1];
-        }
-    }
-};
-
-GrowingPacker.prototype.add = function(block, canvasNumber)
-{
-    var result;
-    if (node = this.findNode(this.root, block.width + this.buffer, block.height + this.buffer))
-    {
-        result = this.splitNode(node, block.width + this.buffer, block.height + this.buffer);
-    }
-    else
-    {
-        result = this.growNode(block.width + this.buffer, block.height + this.buffer);
-        if (!result)
-        {
-            return false;
-        }
-    }
-    block.x = result.x;
-    block.y = result.y;
-    block.canvas = canvasNumber;
-    return true;
-};
-
-GrowingPacker.prototype.findNode = function(root, w, h)
-{
-    if (root.used)
-    {
-        return this.findNode(root.right, w, h) || this.findNode(root.down, w, h);
-    }
-    else if ((w <= root.w) && (h <= root.h))
-    {
-        return root;
-    }
-    else
-    {
-        return null;
-    }
-};
-
-GrowingPacker.prototype.splitNode = function(node, w, h)
-{
-    node.used = true;
-    node.down  = { x: node.x,     y: node.y + h, w: node.w,     h: node.h - h };
-    node.right = { x: node.x + w, y: node.y,     w: node.w - w, h: h          };
-    return node;
-};
-
-GrowingPacker.prototype.growNode = function(w, h)
-{
-    var canGrowDown  = (w <= this.root.w);
-    var canGrowRight = (h <= this.root.h);
-
-    var shouldGrowRight = canGrowRight && (this.root.h >= (this.root.w + w)); // attempt to keep square-ish by growing right when height is much greater than width
-    var shouldGrowDown  = canGrowDown  && (this.root.w >= (this.root.h + h)); // attempt to keep square-ish by growing down  when width  is much greater than height
-
-    if (shouldGrowRight)
-    {
-        return this.growRight(w, h);
-    }
-    else if (shouldGrowDown)
-    {
-        return this.growDown(w, h);
-    }
-    else if (canGrowRight)
-    {
-        return this.growRight(w, h);
-    }
-    else if (canGrowDown)
-    {
-        return this.growDown(w, h);
-    }
-    else
-    {
-        return null;
-    }
-};
-
-GrowingPacker.prototype.growRight = function(w, h)
-{
-    if (this.root.w + w >= this.max)
-    {
-        return null;
-    }
-    this.root = {
-        used: true,
-        x: 0,
-        y: 0,
-        w: this.root.w + w,
-        h: this.root.h,
-        down: this.root,
-        right: { x: this.root.w, y: 0, w: w, h: this.root.h }
-    };
-    if (node = this.findNode(this.root, w, h))
-    {
-        return this.splitNode(node, w, h);
-    }
-    else
-    {
-        return null;
-    }
-};
-
-GrowingPacker.prototype.growDown = function(w, h)
-{
-    if (this.root.h + h >= this.max)
-    {
-        return null;
-    }
-    this.root = {
-        used: true,
-        x: 0,
-        y: 0,
-        w: this.root.w,
-        h: this.root.h + h,
-        down:  { x: 0, y: this.root.h, w: this.root.w, h: h },
-        right: this.root
-    };
-    if (node = this.findNode(this.root, w, h))
-    {
-        return this.splitNode(node, w, h);
-    }
-    else
-    {
-        return null;
-    }
-};
-
-// add support for AMD (Asynchronous Module Definition) libraries such as require.js.
-if (typeof define === 'function' && define.amd)
-{
-    define(function()
-    {
-        return {
-            RenderSheet: RenderSheet
-        };
-    });
 }
 
-// add support for CommonJS libraries such as browserify.
-if (typeof exports !== 'undefined')
-{
-    module.exports = RenderSheet;
-}
-
-// define globally in case AMD is not available or available but not used
-if (typeof window !== 'undefined')
-{
-    window.RenderSheet = RenderSheet;
-}
+module.exports = RenderSheet;
