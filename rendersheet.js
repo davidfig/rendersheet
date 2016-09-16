@@ -204,9 +204,14 @@ class RenderSheet
             const current = this.textures[key];
             if (current.texture)
             {
-                current.texture.destroy();
+                current.texture = new PIXI.Texture(this.baseTextures[current.canvas], new PIXI.Rectangle(current.x, current.y, current.width, current.height));
             }
-            current.texture = new PIXI.Texture(this.baseTextures[current.canvas], new PIXI.Rectangle(current.x, current.y, current.width, current.height));
+            else
+            {
+                current.texture.baseTexture = this.baseTextures[current.canvas];
+                current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height);
+                current.texture.update();
+            }
         }
     }
 
@@ -342,6 +347,7 @@ class RenderSheet
             {
                 if (packers[j].add(block, j))
                 {
+                    block.texture = j;
                     packed = true;
                     break;
                 }
@@ -356,6 +362,10 @@ class RenderSheet
                         this.debug(block.name + ' is too big for the spritesheet.');
                     }
                     return;
+                }
+                else
+                {
+                    block.texture = j;
                 }
             }
         }
