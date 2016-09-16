@@ -347,7 +347,7 @@ class RenderSheet
             {
                 if (packers[j].add(block, j))
                 {
-                    block.texture = j;
+                    block.canvas = j;
                     packed = true;
                     break;
                 }
@@ -365,7 +365,7 @@ class RenderSheet
                 }
                 else
                 {
-                    block.texture = j;
+                    block.canvas = j;
                 }
             }
         }
