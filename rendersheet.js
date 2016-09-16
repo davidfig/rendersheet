@@ -202,7 +202,7 @@ class RenderSheet
         for (let key in this.textures)
         {
             const current = this.textures[key];
-            if (current.texture)
+            if (!current.texture)
             {
                 current.texture = new PIXI.Texture(this.baseTextures[current.canvas], new PIXI.Rectangle(current.x, current.y, current.width, current.height));
             }
