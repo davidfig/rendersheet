@@ -5,7 +5,7 @@
   "main": "index.html",
   "scripts": {
     "install": "node_modules/.bin/browserify index.js | node_modules/.bin/uglifyjs -mc > index.compiled.js",
-    "local": "node_modules/.bin/browserify index.js | node_modules/.bin/uglifyjs -mc > index.compiled.js && ../refresh.sh"
+    "local": "node_modules/.bin/browserify index.js > index.compiled.js && ../refresh.sh"
   },
   "repository": {
     "type": "git",

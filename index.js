@@ -1,6 +1,10 @@
 const PIXI = require('pixi.js');
 
 const RenderSheet = require('@yy/rendersheet');
+
+// for local testing
+// const RenderSheet = require('../rendersheet/rendersheet.js');
+
 const Debug = require('@yy/debug');
 
 Debug.init();
@@ -18,6 +22,16 @@ for (var i = 0; i < count; i++)
 {
     sheet.add('triangle_' + i, triangleDraw, triangleMeasure, {size: Math.random() * 500, color: Math.round(Math.random() * 0xffffff)});
 }
+sheet.render();
+
+// test changing the rendersheet after rendering
+
+for (var i = count; i < count + 10; i++)
+{
+    sheet.add('triangle_' + i, triangleDraw, triangleMeasure, {size: Math.random() * 500, color: Math.round(Math.random() * 0xffffff)});
+}
+count += 10;
+
 sheet.render();
 
 // show the rendersheet (for debug purposes)
