@@ -319,15 +319,17 @@ class RenderSheet
      */
     createBaseTextures()
     {
-        for (let i = 0; i < this.baseTextures.length; i++)
+        while (this.baseTextures.length)
         {
-            this.baseTextures[i].destroy();
+            this.baseTextures.pop().destroy();
         }
-        this.baseTextures = [];
         for (let i = 0; i < this.canvases.length; i++)
         {
             const base = PIXI.BaseTexture.fromCanvas(this.canvases[i]);
-            base.resolution = this.resolution;
+
+            // My best guess is that since I manually scale everything based on resolution, this is not needed
+            // base.resolution = this.resolution;
+
             this.baseTextures.push(base);
         }
     }
