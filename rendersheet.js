@@ -7,7 +7,7 @@
 
 /* globals document, PIXI */
 
-const GrowingPacker = require('@yy/growingpacker');
+const GrowingPacker = require('./growingpacker.js');
 
 /**
  * Creates a spritesheet texture with canvas renderings for pixi.js
@@ -73,7 +73,7 @@ class RenderSheet
     }
 
     /**
-     * attaches RenderSheet to DOM for testing purposes
+     * attaches RenderSheet to DOM for testing
      * @param {object} styles - CSS styles to use for rendersheet
      */
     show(styles)
@@ -98,36 +98,6 @@ class RenderSheet
             if (this.debug)
             {
                 this.debug('Sheet #' + (i + 1) + '<br>size: ' + canvas.width + 'x' + canvas.height + '<br>resolution: ' + this.resolution);
-            }
-        }
-    }
-
-    /**
-     * create (or refresh) the rendersheet
-     */
-    render()
-    {
-        this.canvases = [];
-        this.sorted = [];
-
-        this.measure();
-        this.sort();
-        this.pack();
-        this.draw();
-        this.createBaseTextures();
-
-        for (let key in this.textures)
-        {
-            const current = this.textures[key];
-            if (!current.texture)
-            {
-                current.texture = new PIXI.Texture(this.baseTextures[current.canvas], new PIXI.Rectangle(current.x, current.y, current.width, current.height));
-            }
-            else
-            {
-                current.texture.baseTexture = this.baseTextures[current.canvas];
-                current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height);
-                current.texture.update();
             }
         }
     }
@@ -216,6 +186,31 @@ class RenderSheet
     }
 
     /**
+     * create (or refresh) the rendersheet
+     */
+    render()
+    {
+        this.canvases = [];
+        this.sorted = [];
+
+        this.measure();
+        this.sort();
+        this.pack();
+        this.draw();
+        this.createBaseTextures();
+
+        for (let key in this.textures)
+        {
+            const current = this.textures[key];
+            if (current.texture)
+            {
+                current.texture.destroy();
+            }
+            current.texture = new PIXI.Texture(this.baseTextures[current.canvas], new PIXI.Rectangle(current.x, current.y, current.width, current.height));
+        }
+    }
+
+    /**
      * measures canvas renderings
      * @private
      */
@@ -258,16 +253,14 @@ class RenderSheet
     }
 
     /**
-     * create canvas based
-     * @param {number=this.maxSize} width
-     * @param {number=this.maxSize} height
+     * create square canvas
+     * @param {number=this.maxSize} size
      * @private
      */
-    createCanvas(width, height)
+    createCanvas(size)
     {
         const canvas = document.createElement('canvas');
-        canvas.width = width || this.maxSize;
-        canvas.height = height || this.maxSize;
+        canvas.width = canvas.height = size || this.maxSize;
         this.canvases.push(canvas);
     }
 
@@ -370,7 +363,7 @@ class RenderSheet
         for (let i = 0; i < packers.length; i++)
         {
             const size = packers[i].finish(this.maxSize);
-            this.createCanvas(size, size);
+            this.createCanvas(size);
         }
     }
 }
