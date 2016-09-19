@@ -6,7 +6,6 @@
  * {@link https://github.com/davidfig/rendersheet}
  */
 
-const PIXI = require('pixi.js');
 const GrowingPacker = require('./growingpacker.js');
 
 /**
@@ -43,8 +42,8 @@ class RenderSheet
      * @param {number} [options.buffer=5] around each texture
      * @param {number} [options.scale=1] of texture
      * @param {number} [options.resolution=1] of rendersheet
-     * @param {Function} [options.debug] - function to call with debug information (e.g., console.log)
-     * @param {boolean} [options.testBoxes] - draw a different colored boxes around each rendering
+     * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
+     * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
      */
     constructor(options)
     {
@@ -97,7 +96,7 @@ class RenderSheet
             document.body.appendChild(canvas);
             if (this.debug)
             {
-                this.debug('Sheet #' + (i + 1) + '<br>size: ' + canvas.width + 'x' + canvas.height + '<br>resolution: ' + this.resolution);
+                this.debug.log('Sheet #' + (i + 1) + '<br>size: ' + canvas.width + 'x' + canvas.height + '<br>resolution: ' + this.resolution);
             }
         }
     }
@@ -274,8 +273,11 @@ class RenderSheet
      */
     randomColor()
     {
-        const value = Math.floor(Math.random() * 255);
-        return 'rgb(' + this.value + ',' + value + ',' + value + ')';
+        function r()
+        {
+            return Math.floor(Math.random() * 255);
+        }
+        return 'rgba(' + r() + ',' + r() + ',' + r() + ', 0.2)';
     }
 
     /**
