@@ -1,5 +1,5 @@
 {
-  "name": "@yy/rendersheet",
+  "name": "yy-rendersheet",
   "version": "1.0.0",
   "description": "renders a canvas spritesheet for use with pixi.js",
   "main": "rendersheet.js",
