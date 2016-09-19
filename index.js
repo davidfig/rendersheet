@@ -1,11 +1,6 @@
 const PIXI = require('pixi.js');
-
-const RenderSheet = require('@yy/rendersheet');
-
-// for local testing
-// const RenderSheet = require('../rendersheet/rendersheet.js');
-
-const Debug = require('@yy/debug');
+const Debug = require('yy-debug');
+const RenderSheet = require('yy-rendersheet');
 
 Debug.init();
 
@@ -97,16 +92,5 @@ function triangleMeasure(c, params)
     return {width: params.size, height: params.size};
 }
 
-// shows the code in the demo
-window.onload = function()
-{
-    var client = new XMLHttpRequest();
-    client.open('GET', 'index.js');
-    client.onreadystatechange = function()
-    {
-        var code = document.getElementById('code');
-        code.innerHTML = client.responseText;
-        require('highlight.js').highlightBlock(code);
-    }
-    client.send();
-};
+// for eslint
+/* global window */
