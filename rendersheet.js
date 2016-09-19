@@ -8,6 +8,9 @@
 
 const GrowingPacker = require('./growingpacker.js');
 
+// debug to console.log or yy-debug (if available)
+let Debug = console;
+
 /**
  * Creates a spritesheet texture with canvas renderings for pixi.js
  * Usage:
@@ -53,7 +56,10 @@ class RenderSheet
         this.buffer = options.buffer || 5;
         this.scale = options.scale || 1;
         this.resolution = options.resolution || 1;
-        this.debug = options.debug;
+        if (options.debug)
+        {
+            Debug = options.debug;
+        }
         this.canvases = [];
         this.baseTextures = [];
         this.textures = {};
@@ -94,9 +100,9 @@ class RenderSheet
                 style[key] = styles[key];
             }
             document.body.appendChild(canvas);
-            if (this.debug)
+            if (Debug)
             {
-                this.debug.log('Sheet #' + (i + 1) + '<br>size: ' + canvas.width + 'x' + canvas.height + '<br>resolution: ' + this.resolution);
+                Debug.log('Sheet #' + (i + 1) + '<br>size: ' + canvas.width + 'x' + canvas.height + '<br>resolution: ' + this.resolution);
             }
         }
     }
@@ -114,9 +120,9 @@ class RenderSheet
         }
         else
         {
-            if (this.debug)
+            if (Debug)
             {
-                this.debug('Texture ' + name + ' not found in spritesheet.', 'error');
+                Debug.log('Texture ' + name + ' not found in spritesheet.', 'error');
             }
             return null;
         }
@@ -360,9 +366,9 @@ class RenderSheet
                 packers.push(new GrowingPacker(this.maxSize, block, this.buffer));
                 if (!packers[j].add(block, j))
                 {
-                    if (this.debug)
+                    if (Debug)
                     {
-                        this.debug(block.name + ' is too big for the spritesheet.');
+                        Debug.log(block.name + ' is too big for the spritesheet.');
                     }
                     return;
                 }
@@ -384,4 +390,4 @@ class RenderSheet
 module.exports = RenderSheet;
 
 // for eslint
-/* globals document */
+/* globals document, console */
