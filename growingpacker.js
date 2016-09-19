@@ -1,16 +1,16 @@
-/*
-    growingpacker.js <https://github.com/davidfig/rendersheet>
-    Copyrigh (c) 2011-2016 Jake Gordon and Contributors
-    license: MIT license <https://github.com/davidfig/rendersheet/blob/master/LICENSE>
-    Author: David Figatner
-    Copyright (c) 2016 YOPEY YOPEY LLC
-
-    based on
-    packer.growing.js <https://github.com/jakesgordon/bin-packing/>
-    licenses: MIT license <https://github.com/jakesgordon/bin-packing/blob/master/LICENSE>
-    Author: Jake Gordon
-    Copyright (c) 2011-2016 Jake Gordon and contributors
-*/
+/**
+ * @file growingpacker.js
+ * @author David Figatner
+ * @license MIT
+ * @copyright YOPEY YOPEY LLC 2016
+ * {@link https://github.com/davidfig/rendersheet}
+ *
+ * based on
+ * packer.growing.js {@link https://github.com/jakesgordon/bin-packing/}
+ * by Jake Gordon
+ * MIT license
+ * Copyright (c) 2011-2016 Jake Gordon and contributors
+ */
 
 class GrowingPacker
 {

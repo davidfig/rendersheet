@@ -1,12 +1,12 @@
-/*
-    rendersheet.js <https://github.com/davidfig/rendersheet>
-    License: MIT license <https://github.com/davidfig/rendersheet/license>
-    Author: David Figatner
-    Copyright (c) 2016 YOPEY YOPEY LLC
-*/
+/**
+ * @file rendersheet.js
+ * @author David Figatner
+ * @license MIT
+ * @copyright YOPEY YOPEY LLC 2016
+ * {@link https://github.com/davidfig/rendersheet}
+ */
 
-/* globals document, PIXI */
-
+const PIXI = require('pixi.js');
 const GrowingPacker = require('./growingpacker.js');
 
 /**
@@ -39,12 +39,12 @@ class RenderSheet
 {
     /**
      * @param {object} options
-     * @param {number=2048} maxSize
-     * @param {number=5} buffer around each texture
-     * @param {number=1} scale of texture
-     * @param {number=1} resolution of rendersheet
-     * @param {Function=} debug - function to call with debug information (e.g., console.log)
-     * @param {boolean=} testBoxes - draw a different colored boxes around each rendering
+     * @param {number} [options.maxSize=2048]
+     * @param {number} [options.buffer=5] around each texture
+     * @param {number} [options.scale=1] of texture
+     * @param {number} [options.resolution=1] of rendersheet
+     * @param {Function} [options.debug] - function to call with debug information (e.g., console.log)
+     * @param {boolean} [options.testBoxes] - draw a different colored boxes around each rendering
      */
     constructor(options)
     {
@@ -104,7 +104,7 @@ class RenderSheet
 
     /**
      * @param {string} name of texture
-     * @return {PIXI.Texture|null}
+     * @return {(PIXI.Texture|null)}
      */
     getTexture(name)
     {
@@ -124,9 +124,9 @@ class RenderSheet
     }
 
     /**
+     * returns a PIXI.Sprite (with anchor set to 0.5, because that's where it should be)
      * @param {string} name of texture
-     * note: this sets the sprite's anchor to 0.5 (because that's how it should be)
-     * @return {PIXI.Sprite|null}
+     * @return {(PIXI.Sprite|null)}
      */
     getSprite(name)
     {
@@ -142,7 +142,6 @@ class RenderSheet
             return null;
         }
     }
-
 
     /**
      * @param {string} name of texture
@@ -259,7 +258,7 @@ class RenderSheet
 
     /**
      * create square canvas
-     * @param {number=this.maxSize} size
+     * @param {number} [size=this.maxSize]
      * @private
      */
     createCanvas(size)
@@ -381,3 +380,6 @@ class RenderSheet
 }
 
 module.exports = RenderSheet;
+
+// for eslint
+/* globals document */
