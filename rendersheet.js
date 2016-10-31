@@ -348,7 +348,7 @@ class RenderSheet
     pack()
     {
         const packers = [new GrowingPacker(this.maxSize, this.sorted[0], this.buffer)];
-        for (var i = 0; i < this.sorted.length; i++)
+        for (let i = 0; i < this.sorted.length; i++)
         {
             const block = this.sorted[i];
             let packed = false;
@@ -390,4 +390,4 @@ class RenderSheet
 module.exports = RenderSheet;
 
 // for eslint
-/* globals document, console */
+/* globals document, console, PIXI */
