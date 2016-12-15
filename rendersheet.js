@@ -8,6 +8,9 @@
 
 const GrowingPacker = require('./growingpacker.js');
 
+const NORMAL = 0;
+const FILE = 1;
+
 // debug to console.log or yy-debug (if available)
 let Debug = console;
 
@@ -74,7 +77,14 @@ class RenderSheet
      */
     add(name, draw, measure, param)
     {
-        this.textures[name] = { name: name, draw: draw, measure: measure, param: param };
+        this.textures[name] = { name: name, draw: draw, measure: measure, param: param, type: NORMAL };
+    }
+
+    addImage(name, file)
+    {
+        const image = new Image();
+        image.src = file;
+        this.textures[name] = { name: name, file: file, type: FILE, image: image };
     }
 
     /**
@@ -390,4 +400,4 @@ class RenderSheet
 module.exports = RenderSheet;
 
 // for eslint
-/* globals document, console, PIXI */
+/* globals document, console, PIXI, Image */
