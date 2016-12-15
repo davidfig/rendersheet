@@ -1,12 +1,12 @@
 const PIXI = require('pixi.js');
 const Debug = require('yy-debug');
-const RenderSheet = require('yy-rendersheet');
+const RenderSheet = require('../rendersheet/rendersheet.js');
 
 Debug.init();
 
 // set up rendersheet
 var resolution = window.devicePixelRatio;
-var sheet = new RenderSheet({width: 2048, height: 2048, resolution: resolution});
+var sheet = new RenderSheet({width: 2048, height: 2048, resolution: resolution, debug: Debug});
 
 // number for triangle
 var n = 0;
