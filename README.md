@@ -90,13 +90,14 @@ const texture = sheet.getTexture('box');
 * [RenderSheet](#RenderSheet)
     * [new RenderSheet(options)](#new_RenderSheet_new)
     * [.add(name, draw, measure, params)](#RenderSheet+add)
+    * [.addImage(name, draw, measure, params)](#RenderSheet+addImage)
     * [.show(styles)](#RenderSheet+show)
     * [.getTexture(name)](#RenderSheet+getTexture) ⇒ <code>PIXI.Texture</code> &#124; <code>null</code>
     * [.getSprite(name)](#RenderSheet+getSprite) ⇒ <code>PIXI.Sprite</code> &#124; <code>null</code>
     * [.get(name)](#RenderSheet+get) ⇒ <code>object</code>
     * [.entries()](#RenderSheet+entries) ⇒ <code>number</code>
     * [.getIndex(find)](#RenderSheet+getIndex) ⇒ <code>PIXI.Texture</code>
-    * [.render()](#RenderSheet+render)
+    * [.render([callback])](#RenderSheet+render)
 
 <a name="new_RenderSheet_new"></a>
 
@@ -109,13 +110,28 @@ const texture = sheet.getTexture('box');
 | [options.buffer] | <code>number</code> | <code>5</code> | around each texture |
 | [options.scale] | <code>number</code> | <code>1</code> | of texture |
 | [options.resolution] | <code>number</code> | <code>1</code> | of rendersheet |
-| [options.debug] | <code>function</code> |  | function to call with debug information (e.g., console.log) |
+| [options.wait] | <code>number</code> | <code>250</code> | number of milliseconds to wait between checks for onload of addImage images before rendering |
+| [options.debug] | <code>function</code> |  | the Debug module from yy-debug (@see [github.com/davidfig/debug](github.com/davidfig/debug)) |
 | [options.testBoxes] | <code>boolean</code> |  | draw a different colored boxes around each rendering |
 
 <a name="RenderSheet+add"></a>
 
 ### renderSheet.add(name, draw, measure, params)
-adds a rendering
+adds a canvas rendering
+
+**Kind**: instance method of <code>[RenderSheet](#RenderSheet)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| name | <code>string</code> | of rendering |
+| draw | <code>function</code> | function(context) - use the context to draw within the bounds of the measure function |
+| measure | <code>function</code> | function(context) - needs to return {width: width, height: height} for the rendering |
+| params | <code>object</code> | object to pass the draw() and measure() functions |
+
+<a name="RenderSheet+addImage"></a>
+
+### renderSheet.addImage(name, draw, measure, params)
+adds an image rendering
 
 **Kind**: instance method of <code>[RenderSheet](#RenderSheet)</code>  
 
@@ -185,10 +201,15 @@ find the index of the texture based on the texture object
 
 <a name="RenderSheet+render"></a>
 
-### renderSheet.render()
+### renderSheet.render([callback])
 create (or refresh) the rendersheet
 
 **Kind**: instance method of <code>[RenderSheet](#RenderSheet)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [callback] | <code>function</code> | function - useful for addImage to ensure image is loaded before rendering starts |
+
 
 * * *
 

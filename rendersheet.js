@@ -8,8 +8,12 @@
 
 const GrowingPacker = require('./growingpacker.js');
 
-const NORMAL = 0;
-const FILE = 1;
+// types
+const CANVAS = 0; // default
+const IMAGE = 1;
+
+// default ms to wait to reload an image to load
+const WAIT = 250;
 
 // debug to console.log or yy-debug (if available)
 let Debug = console;
@@ -48,12 +52,14 @@ class RenderSheet
      * @param {number} [options.buffer=5] around each texture
      * @param {number} [options.scale=1] of texture
      * @param {number} [options.resolution=1] of rendersheet
+     * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
      * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
      * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
      */
     constructor(options)
     {
         options = options || {};
+        this.wait = options.wait || WAIT;
         this.testBoxes = options.testBoxes || false;
         this.maxSize = options.maxSize || 2048;
         this.buffer = options.buffer || 5;
@@ -69,7 +75,7 @@ class RenderSheet
     }
 
     /**
-     * adds a rendering
+     * adds a canvas rendering
      * @param {string} name of rendering
      * @param {Function} draw function(context) - use the context to draw within the bounds of the measure function
      * @param {Function} measure function(context) - needs to return {width: width, height: height} for the rendering
@@ -77,14 +83,28 @@ class RenderSheet
      */
     add(name, draw, measure, param)
     {
-        this.textures[name] = { name: name, draw: draw, measure: measure, param: param, type: NORMAL };
+        const object = this.textures[name] = { name: name, draw: draw, measure: measure, param: param, type: CANVAS };
+        return object;
     }
 
+    /**
+     * adds an image rendering
+     * @param {string} name of rendering
+     * @param {Function} draw function(context) - use the context to draw within the bounds of the measure function
+     * @param {Function} measure function(context) - needs to return {width: width, height: height} for the rendering
+     * @param {object} params - object to pass the draw() and measure() functions
+     */
     addImage(name, file)
     {
-        const image = new Image();
-        image.src = file;
-        this.textures[name] = { name: name, file: file, type: FILE, image: image };
+        const object = this.textures[name] = { name: name, file: file, type: IMAGE };
+        object.image = new Image();
+        object.image.onload =
+            function()
+            {
+                object.loaded = true;
+            };
+        object.image.src = file;
+        return object;
     }
 
     /**
@@ -199,11 +219,31 @@ class RenderSheet
         return null;
     }
 
+    checkLoaded()
+    {
+        for (let key in this.textures)
+        {
+            const current = this.textures[key];
+            if (current.type === IMAGE && !current.loaded)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * create (or refresh) the rendersheet
+     * @param {function} [callback] function - useful for addImage to ensure image is loaded before rendering starts
      */
-    render()
+    render(callback)
     {
+        if (!this.checkLoaded())
+        {
+            this.callback = callback;
+            window.setTimeout(this.render.bind(this), WAIT);
+            return;
+        }
         this.canvases = [];
         this.sorted = [];
 
@@ -227,6 +267,11 @@ class RenderSheet
                 current.texture.update();
             }
         }
+        callback = callback || this.callback;
+        if (callback)
+        {
+            callback();
+        }
     }
 
     /**
@@ -243,9 +288,19 @@ class RenderSheet
         for (let key in this.textures)
         {
             const texture = this.textures[key];
-            const size = texture.measure(context, texture.param);
-            texture.width = Math.ceil(size.width * multiplier);
-            texture.height = Math.ceil(size.height * multiplier);
+            switch (texture.type)
+            {
+            case CANVAS:
+                const size = texture.measure(context, texture.param);
+                texture.width = Math.ceil(size.width * multiplier);
+                texture.height = Math.ceil(size.height * multiplier);
+                break;
+
+            case IMAGE:
+                texture.width = texture.image.width * multiplier;
+                texture.height = texture.image.height * multiplier;
+                break;
+            }
             this.sorted.push(texture);
         }
     }
@@ -325,7 +380,16 @@ class RenderSheet
                 context.fillStyle = this.randomColor();
                 context.fillRect(0, 0, texture.width / multiplier, texture.height / multiplier);
             }
-            texture.draw(context, texture.param);
+            switch (texture.type)
+            {
+            case CANVAS:
+                texture.draw(context, texture.param);
+                break;
+
+            case IMAGE:
+                context.drawImage(texture.image, 0, 0);
+                break;
+            }
             context.restore();
         }
         context.restore();
@@ -343,10 +407,6 @@ class RenderSheet
         for (let i = 0; i < this.canvases.length; i++)
         {
             const base = PIXI.BaseTexture.fromCanvas(this.canvases[i]);
-
-            // My best guess is that since I manually scale everything based on resolution, this is not needed
-            // base.resolution = this.resolution;
-
             this.baseTextures.push(base);
         }
     }
