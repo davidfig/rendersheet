@@ -37458,7 +37458,7 @@ const GrowingPacker = require('./growingpacker.js');
 const CANVAS = 0; // default
 const IMAGE = 1;
 
-// ms to wait to reload an image to load
+// default ms to wait to reload an image to load
 const WAIT = 250;
 
 // debug to console.log or yy-debug (if available)
@@ -37498,12 +37498,14 @@ class RenderSheet
      * @param {number} [options.buffer=5] around each texture
      * @param {number} [options.scale=1] of texture
      * @param {number} [options.resolution=1] of rendersheet
+     * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
      * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
      * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
      */
     constructor(options)
     {
         options = options || {};
+        this.wait = options.wait || WAIT;
         this.testBoxes = options.testBoxes || false;
         this.maxSize = options.maxSize || 2048;
         this.buffer = options.buffer || 5;
@@ -37519,7 +37521,7 @@ class RenderSheet
     }
 
     /**
-     * adds a rendering
+     * adds a canvas rendering
      * @param {string} name of rendering
      * @param {Function} draw function(context) - use the context to draw within the bounds of the measure function
      * @param {Function} measure function(context) - needs to return {width: width, height: height} for the rendering
@@ -37531,6 +37533,13 @@ class RenderSheet
         return object;
     }
 
+    /**
+     * adds an image rendering
+     * @param {string} name of rendering
+     * @param {Function} draw function(context) - use the context to draw within the bounds of the measure function
+     * @param {Function} measure function(context) - needs to return {width: width, height: height} for the rendering
+     * @param {object} params - object to pass the draw() and measure() functions
+     */
     addImage(name, file)
     {
         const object = this.textures[name] = { name: name, file: file, type: IMAGE };
@@ -37671,6 +37680,7 @@ class RenderSheet
 
     /**
      * create (or refresh) the rendersheet
+     * @param {function} [callback] function - useful for addImage to ensure image is loaded before rendering starts
      */
     render(callback)
     {
