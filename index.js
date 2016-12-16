@@ -8,47 +8,64 @@ Debug.init();
 var resolution = window.devicePixelRatio;
 var sheet = new RenderSheet({width: 2048, height: 2048, resolution: resolution, debug: Debug});
 
-// number for triangle
+// surround textures with boxes (for debug purposes)
+// sheet.testBoxes = true;
+
+// count for triangles
 var n = 0;
 
+// maximum size of triangles
+var size = 500;
+
 // draw triangle textures on rendersheet
-var count = 200;
+var count = 50;
 for (var i = 0; i < count; i++)
 {
-    sheet.add('triangle_' + i, triangleDraw, triangleMeasure, {size: Math.random() * 500, color: Math.round(Math.random() * 0xffffff)});
+    sheet.add('texture_' + i, triangleDraw, triangleMeasure, {size: Math.random() * size, color: Math.round(Math.random() * 0xffffff)});
 }
+
 sheet.render();
 
 // test changing the rendersheet after rendering
-
 for (var i = count; i < count + 10; i++)
 {
-    sheet.add('triangle_' + i, triangleDraw, triangleMeasure, {size: Math.random() * 500, color: Math.round(Math.random() * 0xffffff)});
+    sheet.add('texture_' + i, triangleDraw, triangleMeasure, {size: Math.random() * size, color: Math.round(Math.random() * 0xffffff)});
 }
-count += 10;
 
-sheet.render();
-
-// show the rendersheet (for debug purposes)
-sheet.show({opacity: 0.5, pointerEvents: 'none'});
+// test addImage instead of canvas drawing
+for (var i = count + 10; i < count + 17; i++)
+{
+    sheet.addImage('texture_' + i, 'faces/happy-' + (i - count - 9) + '.png');
+}
+var total = count + 16;
 
 // set up pixi
 var renderer, stage, width, height;
 pixi();
 
-// add a sprite
-var sprite = new PIXI.Sprite();
-sprite.anchor.set(0.5);
-stage.addChild(sprite);
-sprite.x = width / 2;
-sprite.y = height / 2;
+sheet.render(go);
 
-// change the texture of the sprite to a texture from the rendersheet
-setInterval(function()
-    {
-        sprite.texture = sheet.getTexture('triangle_' + Math.floor(Math.random() * count));
-        renderer.render(stage);
-    }, 200);
+// called after images are loaded and render is successful
+function go()
+{
+    // show the rendersheet (for debug purposes)
+    sheet.show({opacity: 0.5, pointerEvents: 'none'});
+
+    // add a sprite
+    var sprite = new PIXI.Sprite();
+    sprite.anchor.set(0.5);
+    stage.addChild(sprite);
+    sprite.x = width / 2;
+    sprite.y = height / 2;
+
+    // change the texture of the sprite to a texture from the rendersheet
+    window.setInterval(
+        function()
+        {
+            sprite.texture = sheet.getTexture('texture_' + Math.floor(Math.random() * total));
+            renderer.render(stage);
+        }, 200);
+}
 
 // initialize pixi
 function pixi()
@@ -91,6 +108,3 @@ function triangleMeasure(c, params)
 {
     return {width: params.size, height: params.size};
 }
-
-// for eslint
-/* global window */

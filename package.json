@@ -4,9 +4,9 @@
   "description": "demo for rendersheet",
   "main": "index.html",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "install": "node_modules/.bin/browserify *.js -u index.compiled.js > index.compiled.js",
-    "watch": "node_modules/.bin/watchify *.js -u index.compiled.js -vo index.compiled.js"
+    "test": "live-server",
+    "run": "browserify index.js > index.compiled.js",
+    "watch": "watchify index.js -vo index.compiled.js"
   },
   "repository": {
     "type": "git",
@@ -25,6 +25,7 @@
     "highlight.js": "^9.6.0",
     "pixi.js": "^4.0.1",
     "uglify-js": "^2.7.3",
+    "yy-debug": "^1.0.9",
     "yy-rendersheet": "^1.0.2"
   }
 }
