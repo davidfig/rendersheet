@@ -11,6 +11,10 @@ var sheet = new RenderSheet({width: 2048, height: 2048, resolution: resolution, 
 // surround textures with boxes (for debug purposes)
 // sheet.testBoxes = true;
 
+// show the rendersheet (for debug purposes)
+sheet.show = {opacity: 0.5, pointerEvents: 'none'};
+
+
 // count for triangles
 var n = 0;
 
@@ -48,9 +52,6 @@ sheet.render(go);
 // called after images are loaded and render is successful
 function go()
 {
-    // show the rendersheet (for debug purposes)
-    sheet.show({opacity: 0.5, pointerEvents: 'none'});
-
     // add a sprite
     var sprite = new PIXI.Sprite();
     sprite.anchor.set(0.5);

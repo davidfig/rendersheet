@@ -1890,6 +1890,10 @@ var sheet = new RenderSheet({width: 2048, height: 2048, resolution: resolution, 
 // surround textures with boxes (for debug purposes)
 // sheet.testBoxes = true;
 
+// show the rendersheet (for debug purposes)
+sheet.show = {opacity: 0.5, pointerEvents: 'none'};
+
+
 // count for triangles
 var n = 0;
 
@@ -1927,9 +1931,6 @@ sheet.render(go);
 // called after images are loaded and render is successful
 function go()
 {
-    // show the rendersheet (for debug purposes)
-    sheet.show({opacity: 0.5, pointerEvents: 'none'});
-
     // add a sprite
     var sprite = new PIXI.Sprite();
     sprite.anchor.set(0.5);
@@ -37482,6 +37483,10 @@ let Debug = console;
  * const sheet = new RenderSheet();
  * sheet.add('box', drawBox, measureBox)
  * ...
+ *
+ * // set this to true or a CSS style object to attach the canvases--useful for debugging
+ * sheet.show = true
+
  * sheet.render();
  *
  * // returns a PIXI.Sprite
@@ -37501,6 +37506,7 @@ class RenderSheet
      * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
      * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
      * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
+     * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
      */
     constructor(options)
     {
@@ -37515,6 +37521,7 @@ class RenderSheet
         {
             Debug = options.debug;
         }
+        this.show = options.show;
         this.canvases = [];
         this.baseTextures = [];
         this.textures = {};
@@ -37556,9 +37563,22 @@ class RenderSheet
     /**
      * attaches RenderSheet to DOM for testing
      * @param {object} styles - CSS styles to use for rendersheet
+     * @private
      */
-    show(styles)
+    showCanvases()
     {
+        if (!this.divCanvases)
+        {
+            this.divCanvases = document.createElement('div');
+            document.body.appendChild(this.divCanvases);
+        }
+        else
+        {
+            while (this.divCanvases.hasChildNodes())
+            {
+                this.divCanvases.removeChild(this.divCanvases.lastChild);
+            }
+        }
         const percent = 1 / this.canvases.length;
         for (let i = 0; i < this.canvases.length; i++)
         {
@@ -37571,11 +37591,14 @@ class RenderSheet
             style.height = Math.round(percent * 100) + '%';
             style.zIndex = 1000;
             style.background = this.randomColor();
-            for (let key in styles)
+            if (typeof this.show === 'object')
             {
-                style[key] = styles[key];
+                for (let key in this.show)
+                {
+                    style[key] = this.show[key];
+                }
             }
-            document.body.appendChild(canvas);
+            this.divCanvases.appendChild(canvas);
             if (Debug)
             {
                 Debug.log('Sheet #' + (i + 1) + '<br>size: ' + canvas.width + 'x' + canvas.height + '<br>resolution: ' + this.resolution);
@@ -37717,6 +37740,10 @@ class RenderSheet
         if (callback)
         {
             callback();
+        }
+        if (this.show)
+        {
+            this.showCanvases();
         }
     }
 
