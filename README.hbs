@@ -2,12 +2,15 @@
 renders a canvas spritesheet for use with pixi.js
 
 ## Rationale
-I needed a way to generate spritesheets on the fly based on canvas drawings. This allows me to resize the drawings based on different resolutions. It works by passing the rendersheet two functions: a drawing function and a measure function. It currently uses a rudimentary packing algorithm.
+I needed a way to generate spritesheets on the fly based on canvas drawings and/or images. This allows me to resize the drawings based on different resolutions. It works by passing the rendersheet two functions: a drawing function and a measure function. It currently uses a rudimentary packing algorithm.
 
 ## Code Example
 
     // set up rendersheet
     var sheet = new RenderSheet();
+
+    // show the rendersheet (used for debugging)
+    sheet.show = true;
 
     // draw triangle textures on rendersheet
     sheet.add('triangle', triangleDraw, triangleMeasure, {size: 50, 'red'});
@@ -15,8 +18,6 @@ I needed a way to generate spritesheets on the fly based on canvas drawings. Thi
     // render the sheet
     sheet.render();
 
-    // show the rendersheet (used for debug purposes)
-    var canvas = sheet.show();
 
     // create a sprite using the rendersheet
     var sprite = new PIXI.Sprite(sheet.getTexture(triangle));

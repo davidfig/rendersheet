@@ -2,12 +2,15 @@
 renders a canvas spritesheet for use with pixi.js
 
 ## Rationale
-I needed a way to generate spritesheets on the fly based on canvas drawings. This allows me to resize the drawings based on different resolutions. It works by passing the rendersheet two functions: a drawing function and a measure function. It currently uses a rudimentary packing algorithm.
+I needed a way to generate spritesheets on the fly based on canvas drawings and/or images. This allows me to resize the drawings based on different resolutions. It works by passing the rendersheet two functions: a drawing function and a measure function. It currently uses a rudimentary packing algorithm.
 
 ## Code Example
 
     // set up rendersheet
     var sheet = new RenderSheet();
+
+    // show the rendersheet (used for debugging)
+    sheet.show = true;
 
     // draw triangle textures on rendersheet
     sheet.add('triangle', triangleDraw, triangleMeasure, {size: 50, 'red'});
@@ -15,8 +18,6 @@ I needed a way to generate spritesheets on the fly based on canvas drawings. Thi
     // render the sheet
     sheet.render();
 
-    // show the rendersheet (used for debug purposes)
-    var canvas = sheet.show();
 
     // create a sprite using the rendersheet
     var sprite = new PIXI.Sprite(sheet.getTexture(triangle));
@@ -77,6 +78,9 @@ function measureBox()
 const sheet = new RenderSheet();
 sheet.add('box', drawBox, measureBox)
 ...
+
+// set this to true or a CSS style object to attach the canvases--useful for debugging
+sheet.show = true
 sheet.render();
 
 // returns a PIXI.Sprite
@@ -91,7 +95,6 @@ const texture = sheet.getTexture('box');
     * [new RenderSheet(options)](#new_RenderSheet_new)
     * [.add(name, draw, measure, params)](#RenderSheet+add)
     * [.addImage(name, draw, measure, params)](#RenderSheet+addImage)
-    * [.show(styles)](#RenderSheet+show)
     * [.getTexture(name)](#RenderSheet+getTexture) ⇒ <code>PIXI.Texture</code> &#124; <code>null</code>
     * [.getSprite(name)](#RenderSheet+getSprite) ⇒ <code>PIXI.Sprite</code> &#124; <code>null</code>
     * [.get(name)](#RenderSheet+get) ⇒ <code>object</code>
@@ -113,6 +116,7 @@ const texture = sheet.getTexture('box');
 | [options.wait] | <code>number</code> | <code>250</code> | number of milliseconds to wait between checks for onload of addImage images before rendering |
 | [options.debug] | <code>function</code> |  | the Debug module from yy-debug (@see [github.com/davidfig/debug](github.com/davidfig/debug)) |
 | [options.testBoxes] | <code>boolean</code> |  | draw a different colored boxes around each rendering |
+| [options.show] | <code>boolean</code> &#124; <code>object</code> |  | set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging |
 
 <a name="RenderSheet+add"></a>
 
@@ -141,17 +145,6 @@ adds an image rendering
 | draw | <code>function</code> | function(context) - use the context to draw within the bounds of the measure function |
 | measure | <code>function</code> | function(context) - needs to return {width: width, height: height} for the rendering |
 | params | <code>object</code> | object to pass the draw() and measure() functions |
-
-<a name="RenderSheet+show"></a>
-
-### renderSheet.show(styles)
-attaches RenderSheet to DOM for testing
-
-**Kind**: instance method of <code>[RenderSheet](#RenderSheet)</code>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| styles | <code>object</code> | CSS styles to use for rendersheet |
 
 <a name="RenderSheet+getTexture"></a>
 
