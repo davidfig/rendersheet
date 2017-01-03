@@ -260,9 +260,12 @@ class RenderSheet
      */
     render(callback)
     {
-        if (!this.checkLoaded())
+        if (callback)
         {
             this.callback = callback;
+        }
+        if (!this.checkLoaded())
+        {
             window.setTimeout(this.render.bind(this), WAIT);
             return;
         }
