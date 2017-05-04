@@ -321,16 +321,16 @@ class RenderSheet
             const texture = this.textures[key];
             switch (texture.type)
             {
-            case CANVAS:
-                const size = texture.measure(context, texture.param);
-                texture.width = Math.ceil(size.width * multiplier);
-                texture.height = Math.ceil(size.height * multiplier);
-                break;
+                case CANVAS:
+                    const size = texture.measure(context, texture.param);
+                    texture.width = Math.ceil(size.width * multiplier);
+                    texture.height = Math.ceil(size.height * multiplier);
+                    break;
 
-            case IMAGE:
-                texture.width = texture.image.width * multiplier;
-                texture.height = texture.image.height * multiplier;
-                break;
+                case IMAGE:
+                    texture.width = texture.image.width * multiplier;
+                    texture.height = texture.image.height * multiplier;
+                    break;
             }
             this.sorted.push(texture);
         }
