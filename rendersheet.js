@@ -59,6 +59,7 @@ class RenderSheet
      * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
      * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
      * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
+     * @param {number} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet
      * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
      */
     constructor(options)
@@ -69,6 +70,7 @@ class RenderSheet
         this.maxSize = options.maxSize || 2048;
         this.buffer = options.buffer || 5;
         this.scale = options.scale || 1;
+        this.scaleMode = options.scaleMode;
         this.resolution = options.resolution || 1;
         if (options.debug)
         {
@@ -411,13 +413,13 @@ class RenderSheet
             }
             switch (texture.type)
             {
-            case CANVAS:
-                texture.draw(context, texture.param);
-                break;
+                case CANVAS:
+                    texture.draw(context, texture.param);
+                    break;
 
-            case IMAGE:
-                context.drawImage(texture.image, 0, 0);
-                break;
+                case IMAGE:
+                    context.drawImage(texture.image, 0, 0);
+                    break;
             }
             context.restore();
         }
@@ -436,6 +438,10 @@ class RenderSheet
         for (let i = 0; i < this.canvases.length; i++)
         {
             const base = PIXI.BaseTexture.fromCanvas(this.canvases[i]);
+            if (this.scaleMode)
+            {
+                base.scaleMode = this.scaleMode;
+            }
             this.baseTextures.push(base);
         }
     }
