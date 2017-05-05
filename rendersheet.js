@@ -145,6 +145,10 @@ class RenderSheet
             style.width = 'auto';
             style.height = Math.round(percent * 100) + '%';
             style.zIndex = 1000;
+            if (this.scaleMode === PIXI.SCALE_MODE.NEAREST)
+            {
+                style.imageRendering = 'pixelated';
+            }
             style.background = this.randomColor();
             if (typeof this.show === 'object')
             {
