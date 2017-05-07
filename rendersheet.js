@@ -91,7 +91,7 @@ class RenderSheet
      */
     add(name, draw, measure, param)
     {
-        const object = this.textures[name] = { name: name, draw: draw, measure: measure, param: param, type: CANVAS };
+        const object = this.textures[name] = { name: name, draw: draw, measure: measure, param: param, type: CANVAS, texture: new PIXI.Texture(PIXI.Texture.EMPTY) };
         return object;
     }
 
@@ -104,7 +104,7 @@ class RenderSheet
      */
     addImage(name, file)
     {
-        const object = this.textures[name] = { name: name, file: file, type: IMAGE };
+        const object = this.textures[name] = { name: name, file: file, type: IMAGE, texture: new PIXI.Texture(PIXI.Texture.EMPTY)  };
         object.image = new Image();
         object.image.onload =
             function()
@@ -287,16 +287,9 @@ class RenderSheet
         for (let key in this.textures)
         {
             const current = this.textures[key];
-            if (!current.texture)
-            {
-                current.texture = new PIXI.Texture(this.baseTextures[current.canvas], new PIXI.Rectangle(current.x, current.y, current.width, current.height));
-            }
-            else
-            {
-                current.texture.baseTexture = this.baseTextures[current.canvas];
-                current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height);
-                current.texture.update();
-            }
+            current.texture.baseTexture = this.baseTextures[current.canvas];
+            current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height);
+            current.texture.update();
         }
         callback = callback || this.callback;
         if (callback)
