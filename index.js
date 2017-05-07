@@ -14,7 +14,6 @@ var sheet = new RenderSheet({width: 2048, height: 2048, resolution: resolution, 
 // show the rendersheet (for debug purposes)
 sheet.show = {opacity: 0.5, pointerEvents: 'none'};
 
-
 // count for triangles
 var n = 0;
 
@@ -27,8 +26,6 @@ for (var i = 0; i < count; i++)
 {
     sheet.add('texture_' + i, triangleDraw, triangleMeasure, {size: Math.random() * size, color: Math.round(Math.random() * 0xffffff)});
 }
-
-sheet.render();
 
 // test changing the rendersheet after rendering
 for (var i = count; i < count + 10; i++)
@@ -47,7 +44,9 @@ var total = count + 16;
 var renderer, stage, width, height;
 pixi();
 
-sheet.render(go);
+sheet.render();
+
+go();
 
 // called after images are loaded and render is successful
 function go()

@@ -1893,7 +1893,6 @@ var sheet = new RenderSheet({width: 2048, height: 2048, resolution: resolution, 
 // show the rendersheet (for debug purposes)
 sheet.show = {opacity: 0.5, pointerEvents: 'none'};
 
-
 // count for triangles
 var n = 0;
 
@@ -1906,8 +1905,6 @@ for (var i = 0; i < count; i++)
 {
     sheet.add('texture_' + i, triangleDraw, triangleMeasure, {size: Math.random() * size, color: Math.round(Math.random() * 0xffffff)});
 }
-
-sheet.render();
 
 // test changing the rendersheet after rendering
 for (var i = count; i < count + 10; i++)
@@ -1926,7 +1923,9 @@ var total = count + 16;
 var renderer, stage, width, height;
 pixi();
 
-sheet.render(go);
+sheet.render();
+
+go();
 
 // called after images are loaded and render is successful
 function go()
@@ -37506,6 +37505,7 @@ class RenderSheet
      * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
      * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
      * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
+     * @param {number} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet
      * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
      */
     constructor(options)
@@ -37516,6 +37516,7 @@ class RenderSheet
         this.maxSize = options.maxSize || 2048;
         this.buffer = options.buffer || 5;
         this.scale = options.scale || 1;
+        this.scaleMode = options.scaleMode;
         this.resolution = options.resolution || 1;
         if (options.debug)
         {
@@ -37536,7 +37537,7 @@ class RenderSheet
      */
     add(name, draw, measure, param)
     {
-        const object = this.textures[name] = { name: name, draw: draw, measure: measure, param: param, type: CANVAS };
+        const object = this.textures[name] = { name: name, draw: draw, measure: measure, param: param, type: CANVAS, texture: new PIXI.Texture(PIXI.Texture.EMPTY) };
         return object;
     }
 
@@ -37549,7 +37550,7 @@ class RenderSheet
      */
     addImage(name, file)
     {
-        const object = this.textures[name] = { name: name, file: file, type: IMAGE };
+        const object = this.textures[name] = { name: name, file: file, type: IMAGE, texture: new PIXI.Texture(PIXI.Texture.EMPTY)  };
         object.image = new Image();
         object.image.onload =
             function()
@@ -37590,6 +37591,10 @@ class RenderSheet
             style.width = 'auto';
             style.height = Math.round(percent * 100) + '%';
             style.zIndex = 1000;
+            if (this.scaleMode === PIXI.SCALE_MODES.NEAREST)
+            {
+                style.imageRendering = 'pixelated';
+            }
             style.background = this.randomColor();
             if (typeof this.show === 'object')
             {
@@ -37707,9 +37712,12 @@ class RenderSheet
      */
     render(callback)
     {
-        if (!this.checkLoaded())
+        if (callback)
         {
             this.callback = callback;
+        }
+        if (!this.checkLoaded())
+        {
             window.setTimeout(this.render.bind(this), WAIT);
             return;
         }
@@ -37725,16 +37733,9 @@ class RenderSheet
         for (let key in this.textures)
         {
             const current = this.textures[key];
-            if (!current.texture)
-            {
-                current.texture = new PIXI.Texture(this.baseTextures[current.canvas], new PIXI.Rectangle(current.x, current.y, current.width, current.height));
-            }
-            else
-            {
-                current.texture.baseTexture = this.baseTextures[current.canvas];
-                current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height);
-                current.texture.update();
-            }
+            current.texture.baseTexture = this.baseTextures[current.canvas];
+            current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height);
+            current.texture.update();
         }
         callback = callback || this.callback;
         if (callback)
@@ -37763,16 +37764,16 @@ class RenderSheet
             const texture = this.textures[key];
             switch (texture.type)
             {
-            case CANVAS:
-                const size = texture.measure(context, texture.param);
-                texture.width = Math.ceil(size.width * multiplier);
-                texture.height = Math.ceil(size.height * multiplier);
-                break;
+                case CANVAS:
+                    const size = texture.measure(context, texture.param);
+                    texture.width = Math.ceil(size.width * multiplier);
+                    texture.height = Math.ceil(size.height * multiplier);
+                    break;
 
-            case IMAGE:
-                texture.width = texture.image.width * multiplier;
-                texture.height = texture.image.height * multiplier;
-                break;
+                case IMAGE:
+                    texture.width = texture.image.width * multiplier;
+                    texture.height = texture.image.height * multiplier;
+                    break;
             }
             this.sorted.push(texture);
         }
@@ -37855,13 +37856,13 @@ class RenderSheet
             }
             switch (texture.type)
             {
-            case CANVAS:
-                texture.draw(context, texture.param);
-                break;
+                case CANVAS:
+                    texture.draw(context, texture.param);
+                    break;
 
-            case IMAGE:
-                context.drawImage(texture.image, 0, 0);
-                break;
+                case IMAGE:
+                    context.drawImage(texture.image, 0, 0);
+                    break;
             }
             context.restore();
         }
@@ -37880,6 +37881,10 @@ class RenderSheet
         for (let i = 0; i < this.canvases.length; i++)
         {
             const base = PIXI.BaseTexture.fromCanvas(this.canvases[i]);
+            if (this.scaleMode)
+            {
+                base.scaleMode = this.scaleMode;
+            }
             this.baseTextures.push(base);
         }
     }
