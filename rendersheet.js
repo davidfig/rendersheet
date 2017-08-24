@@ -266,6 +266,11 @@ class RenderSheet
      */
     render(callback)
     {
+        if (!this.textures.length)
+        {
+            callback()
+            return
+        }
         if (callback)
         {
             this.callback = callback;
