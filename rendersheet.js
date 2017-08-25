@@ -266,7 +266,7 @@ class RenderSheet
      */
     render(callback)
     {
-        if (!this.textures.length)
+        if (!Object.keys(this.textures).length)
         {
             callback()
             return
