@@ -55,7 +55,7 @@ https://davidfig.github.io/rendersheet/
      * @param {number} [options.maxSize=2048]
      * @param {number} [options.buffer=5] around each texture
      * @param {number} [options.scale=1] of texture
-     * @param {number} [options.resolution=1] of rendersheet
+     * @param {number} [options.resolution=window.devicePixelRatio] of rendersheet
      * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
      * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
      * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
@@ -91,13 +91,14 @@ https://davidfig.github.io/rendersheet/
     /**
      * returns a PIXI.Sprite (with anchor set to 0.5, because that's where it should be)
      * @param {string} name of texture
-     * @return {(PIXI.Sprite|null)}
+     * @return {PIXI.Sprite}
      */
     getSprite(name)
 
     /**
+     * alias for getSprite()
      * @param {string} name of texture
-     * @return {object} texture object
+     * @return {PIXI.Sprite)}
      */
     get(name)
 
@@ -107,11 +108,22 @@ https://davidfig.github.io/rendersheet/
     entries()
 
     /**
+     * prints statistics of canvases to console.log
+     */
+    debug()
+
+    /**
      * find the index of the texture based on the texture object
      * @param {number} find this indexed texture
      * @returns {PIXI.Texture}
      */
     getIndex(find)
+
+    /**
+     * checks if all textures are loaded
+     * @return {boolean}
+     */
+    checkLoaded()
 
     /**
      * create (or refresh) the rendersheet

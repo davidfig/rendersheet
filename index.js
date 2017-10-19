@@ -4,6 +4,7 @@
 // MIT License
 // https://github.com/davidfig/rendersheet
 
+const PIXI = require('pixi.js')
 const GrowingPacker = require('./growingpacker.js')
 
 // types
@@ -20,7 +21,7 @@ class RenderSheet
      * @param {number} [options.maxSize=2048]
      * @param {number} [options.buffer=5] around each texture
      * @param {number} [options.scale=1] of texture
-     * @param {number} [options.resolution=1] of rendersheet
+     * @param {number} [options.resolution=window.devicePixelRatio] of rendersheet
      * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
      * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
      * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
@@ -36,7 +37,7 @@ class RenderSheet
         this.buffer = options.buffer || 5
         this.scale = options.scale || 1
         this.scaleMode = options.scaleMode
-        this.resolution = options.resolution || 1
+        this.resolution = options.resolution || window.devicePixelRatio
         this.show = options.show
         this.canvases = []
         this.baseTextures = []
@@ -135,7 +136,7 @@ class RenderSheet
         }
         else
         {
-            console.warn('YY-RenderSheet: Texture ' + name + ' not found in spritesheet.')
+            console.warn('yy-rendersheet: texture ' + name + ' not found in spritesheet.')
             return null
         }
     }
@@ -143,7 +144,7 @@ class RenderSheet
     /**
      * returns a PIXI.Sprite (with anchor set to 0.5, because that's where it should be)
      * @param {string} name of texture
-     * @return {(PIXI.Sprite|null)}
+     * @return {PIXI.Sprite}
      */
     getSprite(name)
     {
@@ -161,12 +162,13 @@ class RenderSheet
     }
 
     /**
+     * alias for getSprite()
      * @param {string} name of texture
-     * @return {object} texture object
+     * @return {PIXI.Sprite)}
      */
     get(name)
     {
-        return this.textures[name]
+        return this.getSprite(name)
     }
 
     /**
@@ -174,12 +176,7 @@ class RenderSheet
      */
     entries()
     {
-        let size = 0
-        for (let key in this.textures)
-        {
-            size++
-        }
-        return size
+        return Object.keys(this.textures).length
     }
 
     /**
@@ -190,7 +187,7 @@ class RenderSheet
         for (let i = 0; i < this.canvases.length; i++)
         {
             const canvas = this.canvases[i]
-            console.log('Sheet #' + (i + 1) + '<br>size: ' + canvas.width + 'x' + canvas.height + '<br>resolution: ' + this.resolution)
+            console.log('yy-rendersheet: Sheet #' + (i + 1) + ' | size: ' + canvas.width + 'x' + canvas.height + ' | resolution: ' + this.resolution)
         }
     }
 
@@ -213,6 +210,10 @@ class RenderSheet
         return null
     }
 
+    /**
+     * checks if all textures are loaded
+     * @return {boolean}
+     */
     checkLoaded()
     {
         for (let key in this.textures)
@@ -439,10 +440,7 @@ class RenderSheet
                 packers.push(new GrowingPacker(this.maxSize, block, this.buffer))
                 if (!packers[j].add(block, j))
                 {
-                    if (Debug)
-                    {
-                        Debug.log(block.name + ' is too big for the spritesheet.')
-                    }
+                    console.warn('yy-rendersheet: ' + block.name + ' is too big for the spritesheet.')
                     return
                 }
                 else
@@ -461,6 +459,3 @@ class RenderSheet
 }
 
 module.exports = RenderSheet
-
-// for eslint
-/* globals document, console, PIXI, Image */

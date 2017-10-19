@@ -10,9 +10,13 @@ earcut@^2.0.7:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/earcut/-/earcut-2.1.1.tgz#157634e5f3ebb42224e475016e86a5b6ce556b45"
 
-eventemitter3@^2.0.0:
+eventemitter3@^2.0.0, eventemitter3@^2.0.3:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-2.0.3.tgz#b5e1079b59fb5e1ba2771c0a993be060a58c99ba"
+
+fork-me-github@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/fork-me-github/-/fork-me-github-1.0.3.tgz#cf2da58566815a7203233f82a999c079e0bfd739"
 
 highlight.js@^9.12.0:
   version "9.12.0"
@@ -61,6 +65,22 @@ resource-loader@^2.0.9:
   dependencies:
     mini-signals "^1.1.1"
     parse-uri "^1.0.0"
+
+tinycolor2@^1.4.1:
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/tinycolor2/-/tinycolor2-1.4.1.tgz#f4fad333447bc0b07d4dc8e9209d8f39a8ac77e8"
+
+yy-fps@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/yy-fps/-/yy-fps-0.3.2.tgz#e18b2a74149416bd0732836273d11a192fe0318d"
+  dependencies:
+    tinycolor2 "^1.4.1"
+
+yy-loop@^0.3.4:
+  version "0.3.4"
+  resolved "https://registry.yarnpkg.com/yy-loop/-/yy-loop-0.3.4.tgz#3ddaecd31a8731115c9783a78eee9dd5d8ceac14"
+  dependencies:
+    eventemitter3 "^2.0.3"
 
 yy-renderer@^1.3.3:
   version "1.3.3"
