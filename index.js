@@ -21,7 +21,7 @@ class RenderSheet
      * @param {number} [options.maxSize=2048]
      * @param {number} [options.buffer=5] around each texture
      * @param {number} [options.scale=1] of texture
-     * @param {number} [options.resolution=window.devicePixelRatio] of rendersheet
+     * @param {number} [options.resolution=1] of rendersheet
      * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
      * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
      * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
@@ -37,7 +37,7 @@ class RenderSheet
         this.buffer = options.buffer || 5
         this.scale = options.scale || 1
         this.scaleMode = options.scaleMode
-        this.resolution = options.resolution || window.devicePixelRatio
+        this.resolution = options.resolution || 1
         this.show = options.show
         this.canvases = []
         this.baseTextures = []
