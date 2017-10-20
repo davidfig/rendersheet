@@ -1,11 +1,11 @@
 const PIXI = require('pixi.js')
 const Renderer = require('yy-renderer')
-const Loop = require('yy-loop')
-const FPS = require('yy-fps')
+const Counter = require('yy-counter')
+const Random = require('yy-random')
 
 const RenderSheet = require('..')
 
-let renderer, n = 0, size = 500, loop, fps
+let renderer, counter, n = 0, size = 500
 
 // set up rendersheet
 const sheet = new RenderSheet({width: 2048, height: 2048})
@@ -16,8 +16,10 @@ const sheet = new RenderSheet({width: 2048, height: 2048})
 // show the rendersheet (for debug purposes)
 sheet.show = {opacity: 0.6, pointerEvents: 'none'}
 
+counter = new Counter({side: 'bottom-left'})
+
 // draw triangle textures on rendersheet
-const count = 50
+const count = 100
 for (let i = 0; i < count; i++)
 {
     sheet.add('texture_' + i, triangleDraw, triangleMeasure, {size: Math.random() * size, color: Math.round(Math.random() * 0xffffff)})
@@ -51,16 +53,15 @@ function go()
     sprite.y = window.innerHeight / 2
 
     // cycle the texture of the sprite from all textures in the rendersheet
-    fps = new FPS()
-    loop = new Loop()
-    loop.interval(() => fps.frame())
-    loop.interval(
+    renderer.interval(
         function()
         {
-            sprite.texture = sheet.getTexture('texture_' + Math.floor(Math.random() * total))
-            renderer.render()
+            const n = Random.get(total)
+            sprite.texture = sheet.getTexture('texture_' + n)
+            renderer.dirty = true
+            counter.log('texture #' + n)
         }, 200)
-    loop.start()
+    renderer.start()
 }
 
 // draw a triangle to the render sheet using canvas
@@ -76,6 +77,7 @@ function triangleDraw(c, params)
     c.closePath()
     c.fill()
     c.fillStyle = 'white'
+    c.font = '40px Arial'
     const measure = c.measureText(n)
     c.fillText(n++, size / 2 - measure.width / 2, size / 2 + 10)
 }
@@ -88,8 +90,7 @@ function triangleMeasure(c, params)
 
 window.onload = function ()
 {
-    renderer = new Renderer()
+    renderer = new Renderer({ debug: true })
     sheet.render(go)
-
     require('./highlight')('https://github.com/davidfig/rendersheet')
 }
