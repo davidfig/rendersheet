@@ -416,6 +416,16 @@ class RenderSheet
     }
 
     /**
+     * tests whether a texture exists
+     * @param {string} name of texture
+     * @return {boolean}
+     */
+    exists(name)
+    {
+        return this.textures[name] ? true : false
+    }
+
+    /**
      * @param {string} name of texture
      * @return {(PIXI.Texture|null)}
      */
@@ -424,7 +434,7 @@ class RenderSheet
         const texture = this.textures[name]
         if (texture)
         {
-            return this.textures[name].texture
+            return texture.texture
         }
         else
         {
@@ -961,6 +971,7 @@ exports.nextCombination = function(v) {
 'use strict';
 
 module.exports = earcut;
+module.exports.default = earcut;
 
 function earcut(data, holeIndices, dim) {
 
@@ -973,7 +984,7 @@ function earcut(data, holeIndices, dim) {
 
     if (!outerNode) return triangles;
 
-    var minX, minY, maxX, maxY, x, y, size;
+    var minX, minY, maxX, maxY, x, y, invSize;
 
     if (hasHoles) outerNode = eliminateHoles(data, holeIndices, outerNode, dim);
 
@@ -991,11 +1002,12 @@ function earcut(data, holeIndices, dim) {
             if (y > maxY) maxY = y;
         }
 
-        // minX, minY and size are later used to transform coords into integers for z-order calculation
-        size = Math.max(maxX - minX, maxY - minY);
+        // minX, minY and invSize are later used to transform coords into integers for z-order calculation
+        invSize = Math.max(maxX - minX, maxY - minY);
+        invSize = invSize !== 0 ? 1 / invSize : 0;
     }
 
-    earcutLinked(outerNode, triangles, dim, minX, minY, size);
+    earcutLinked(outerNode, triangles, dim, minX, minY, invSize);
 
     return triangles;
 }
@@ -1031,7 +1043,7 @@ function filterPoints(start, end) {
         if (!p.steiner && (equals(p, p.next) || area(p.prev, p, p.next) === 0)) {
             removeNode(p);
             p = end = p.prev;
-            if (p === p.next) return null;
+            if (p === p.next) break;
             again = true;
 
         } else {
@@ -1043,11 +1055,11 @@ function filterPoints(start, end) {
 }
 
 // main ear slicing loop which triangulates a polygon (given as a linked list)
-function earcutLinked(ear, triangles, dim, minX, minY, size, pass) {
+function earcutLinked(ear, triangles, dim, minX, minY, invSize, pass) {
     if (!ear) return;
 
     // interlink polygon nodes in z-order
-    if (!pass && size) indexCurve(ear, minX, minY, size);
+    if (!pass && invSize) indexCurve(ear, minX, minY, invSize);
 
     var stop = ear,
         prev, next;
@@ -1057,7 +1069,7 @@ function earcutLinked(ear, triangles, dim, minX, minY, size, pass) {
         prev = ear.prev;
         next = ear.next;
 
-        if (size ? isEarHashed(ear, minX, minY, size) : isEar(ear)) {
+        if (invSize ? isEarHashed(ear, minX, minY, invSize) : isEar(ear)) {
             // cut off the triangle
             triangles.push(prev.i / dim);
             triangles.push(ear.i / dim);
@@ -1078,16 +1090,16 @@ function earcutLinked(ear, triangles, dim, minX, minY, size, pass) {
         if (ear === stop) {
             // try filtering points and slicing again
             if (!pass) {
-                earcutLinked(filterPoints(ear), triangles, dim, minX, minY, size, 1);
+                earcutLinked(filterPoints(ear), triangles, dim, minX, minY, invSize, 1);
 
             // if this didn't work, try curing all small self-intersections locally
             } else if (pass === 1) {
                 ear = cureLocalIntersections(ear, triangles, dim);
-                earcutLinked(ear, triangles, dim, minX, minY, size, 2);
+                earcutLinked(ear, triangles, dim, minX, minY, invSize, 2);
 
             // as a last resort, try splitting the remaining polygon into two
             } else if (pass === 2) {
-                splitEarcut(ear, triangles, dim, minX, minY, size);
+                splitEarcut(ear, triangles, dim, minX, minY, invSize);
             }
 
             break;
@@ -1115,7 +1127,7 @@ function isEar(ear) {
     return true;
 }
 
-function isEarHashed(ear, minX, minY, size) {
+function isEarHashed(ear, minX, minY, invSize) {
     var a = ear.prev,
         b = ear,
         c = ear.next;
@@ -1129,8 +1141,8 @@ function isEarHashed(ear, minX, minY, size) {
         maxTY = a.y > b.y ? (a.y > c.y ? a.y : c.y) : (b.y > c.y ? b.y : c.y);
 
     // z-order range for the current triangle bbox;
-    var minZ = zOrder(minTX, minTY, minX, minY, size),
-        maxZ = zOrder(maxTX, maxTY, minX, minY, size);
+    var minZ = zOrder(minTX, minTY, minX, minY, invSize),
+        maxZ = zOrder(maxTX, maxTY, minX, minY, invSize);
 
     // first look for points inside the triangle in increasing z-order
     var p = ear.nextZ;
@@ -1181,7 +1193,7 @@ function cureLocalIntersections(start, triangles, dim) {
 }
 
 // try splitting polygon into two and triangulate them independently
-function splitEarcut(start, triangles, dim, minX, minY, size) {
+function splitEarcut(start, triangles, dim, minX, minY, invSize) {
     // look for a valid diagonal that divides the polygon into two
     var a = start;
     do {
@@ -1196,8 +1208,8 @@ function splitEarcut(start, triangles, dim, minX, minY, size) {
                 c = filterPoints(c, c.next);
 
                 // run earcut on each half
-                earcutLinked(a, triangles, dim, minX, minY, size);
-                earcutLinked(c, triangles, dim, minX, minY, size);
+                earcutLinked(a, triangles, dim, minX, minY, invSize);
+                earcutLinked(c, triangles, dim, minX, minY, invSize);
                 return;
             }
             b = b.next;
@@ -1254,7 +1266,7 @@ function findHoleBridge(hole, outerNode) {
     // find a segment intersected by a ray from the hole's leftmost point to the left;
     // segment's endpoint with lesser x will be potential connection point
     do {
-        if (hy <= p.y && hy >= p.next.y) {
+        if (hy <= p.y && hy >= p.next.y && p.next.y !== p.y) {
             var x = p.x + (hy - p.y) * (p.next.x - p.x) / (p.next.y - p.y);
             if (x <= hx && x > qx) {
                 qx = x;
@@ -1285,7 +1297,7 @@ function findHoleBridge(hole, outerNode) {
     p = m.next;
 
     while (p !== stop) {
-        if (hx >= p.x && p.x >= mx &&
+        if (hx >= p.x && p.x >= mx && hx !== p.x &&
                 pointInTriangle(hy < my ? hx : qx, hy, mx, my, hy < my ? qx : hx, hy, p.x, p.y)) {
 
             tan = Math.abs(hy - p.y) / (hx - p.x); // tangential
@@ -1303,10 +1315,10 @@ function findHoleBridge(hole, outerNode) {
 }
 
 // interlink polygon nodes in z-order
-function indexCurve(start, minX, minY, size) {
+function indexCurve(start, minX, minY, invSize) {
     var p = start;
     do {
-        if (p.z === null) p.z = zOrder(p.x, p.y, minX, minY, size);
+        if (p.z === null) p.z = zOrder(p.x, p.y, minX, minY, invSize);
         p.prevZ = p.prev;
         p.nextZ = p.next;
         p = p.next;
@@ -1339,20 +1351,11 @@ function sortLinked(list) {
                 q = q.nextZ;
                 if (!q) break;
             }
-
             qSize = inSize;
 
             while (pSize > 0 || (qSize > 0 && q)) {
 
-                if (pSize === 0) {
-                    e = q;
-                    q = q.nextZ;
-                    qSize--;
-                } else if (qSize === 0 || !q) {
-                    e = p;
-                    p = p.nextZ;
-                    pSize--;
-                } else if (p.z <= q.z) {
+                if (pSize !== 0 && (qSize === 0 || !q || p.z <= q.z)) {
                     e = p;
                     p = p.nextZ;
                     pSize--;
@@ -1380,11 +1383,11 @@ function sortLinked(list) {
     return list;
 }
 
-// z-order of a point given coords and size of the data bounding box
-function zOrder(x, y, minX, minY, size) {
+// z-order of a point given coords and inverse of the longer side of data bbox
+function zOrder(x, y, minX, minY, invSize) {
     // coords are transformed into non-negative 15-bit integer range
-    x = 32767 * (x - minX) / size;
-    y = 32767 * (y - minY) / size;
+    x = 32767 * (x - minX) * invSize;
+    y = 32767 * (y - minY) * invSize;
 
     x = (x | (x << 8)) & 0x00FF00FF;
     x = (x | (x << 4)) & 0x0F0F0F0F;
@@ -1468,7 +1471,8 @@ function middleInside(a, b) {
         px = (a.x + b.x) / 2,
         py = (a.y + b.y) / 2;
     do {
-        if (((p.y > py) !== (p.next.y > py)) && (px < (p.next.x - p.x) * (py - p.y) / (p.next.y - p.y) + p.x))
+        if (((p.y > py) !== (p.next.y > py)) && p.next.y !== p.y &&
+                (px < (p.next.x - p.x) * (py - p.y) / (p.next.y - p.y) + p.x))
             inside = !inside;
         p = p.next;
     } while (p !== a);
@@ -58413,11 +58417,11 @@ module.exports = class Counter
 {
     /**
      * @param {object} [options]
-     * @param {side} [options.side=rightbottom] side to place the panel (combination of right/left and bottom/top)
+     * @param {string} [options.side=rightbottom] side to place the panel (combination of right/left and bottom/top)
      * @param {number} [options.padding=7px]
      * @param {string} [options.color=white]
-     * @param {string} [options.background=rgba(150,150,150,0.5)]
-     * @param {*} {options.xxx} where xxx is a CSS style for the div (in javascript format, i.e., 'backgroundColor' instead of 'background-color')
+     * @param {string} [options.background=rgba(0,0,0,0.5)]
+     * @param {*} {options.xxx} where xxx is a CSS style for the div
      */
     constructor(options)
     {
@@ -58426,9 +58430,9 @@ module.exports = class Counter
         options.side.toLowerCase()
         options.padding = options.padding || '7px'
         options.color = options.color || 'white'
-        options.background = options.background || 'rgba(150,150,150,0.5)'
+        options.background = options.background || 'rgba(0,0,0,0.5)'
         this.div = document.createElement('div')
-        this.findParent(options).appendChild(this.div)
+        Counter.findParent(options.side).appendChild(this.div)
         for (let style in options)
         {
             if (style !== 'parent' && style !== 'side')
@@ -58439,15 +58443,15 @@ module.exports = class Counter
     }
 
     /**
-     * find parent div
-     * @private
+     * find the parent div for one of the corners
+     * @param {string} [options.side] side to place the panel (combination of right/left and bottom/top)
      * @return {HTMLElement}
      */
-    findParent(options)
+    static findParent(side)
     {
         const styles = []
         let name = 'yy-counter-'
-        if (options.side.indexOf('left') !== -1)
+        if (side.indexOf('left') !== -1)
         {
             name += 'left-'
             styles['left'] = 0
@@ -58457,7 +58461,7 @@ module.exports = class Counter
             name += 'right-'
             styles['right'] = 0
         }
-        if (options.side.indexOf('top') !== -1)
+        if (side.indexOf('top') !== -1)
         {
             name += 'top'
             styles['top'] = 0
@@ -58474,7 +58478,6 @@ module.exports = class Counter
         }
         const container = document.createElement('div')
         container.id = name
-        container.style.position = options.position
         container.style.overflow = 'hidden'
         container.style.position = 'fixed'
         container.style.zIndex = 10000
@@ -58520,12 +58523,11 @@ module.exports = class Counter
 }
 },{}],375:[function(require,module,exports){
 const Color = require('tinycolor2')
+const Counter = require('yy-counter')
 
 const STYLES = {
-    'position': 'fixed',
     'background': 'rgba(0, 0, 0, 0.5)',
     'color': 'white',
-    'zIndex': 1001
 }
 
 const STYLES_FPS = {
@@ -58546,7 +58548,6 @@ module.exports = class FPS
      * @param {number} [options.meterWidth=100] width of meter div
      * @param {number} [options.meterHeight=25] height of meter div
      * @param {number} [options.meterLineHeight=4] height of meter line
-     * @param {HTMLElement} [options.parent=document.body]
      * @param {styles[]} [options.styles] CSS styles to apply to the div (in javascript format)
      * @param {styles[]} [options.stylesFPS] CSS styles to apply to the FPS text (in javascript format)
      * @param {styles[]} [options.stylesMeter] CSS styles to apply to the FPS meter (in javascript format)
@@ -58561,9 +58562,7 @@ module.exports = class FPS
         this.meterHeight = this.options.meterHeight || 25
         this.meterLineHeight = this.options.meterLineHeight || 4
         this.div = document.createElement('div')
-        this.parent = this.options.parent || document.body
-        this.parent.appendChild(this.div)
-        this.side(this.options)
+        Counter.findParent(this.options.side || 'bottom-right').appendChild(this.div)
         this.style(this.div, STYLES, this.options.styles)
         this.divFPS()
         this.meter = typeof this.options.meter === 'undefined' || this.options.meter
@@ -58571,6 +58570,19 @@ module.exports = class FPS
         this.frameNumber = 0
         this.lastUpdate = 0
         this.lastFPS = '--'
+    }
+
+    /**
+     * change desired FPS
+     * @type {number}
+     */
+    get fps()
+    {
+        return this.FPS
+    }
+    set fps(value)
+    {
+        this.FPS = value
     }
 
     /**
@@ -58627,8 +58639,8 @@ module.exports = class FPS
         const options = this.options
         const divFPS = document.createElement('div')
         div.appendChild(divFPS)
-        this.fps = document.createElement('span')
-        divFPS.appendChild(this.fps)
+        this.fpsSpan = document.createElement('span')
+        divFPS.appendChild(this.fpsSpan)
         const span = document.createElement('span')
         divFPS.appendChild(span)
         span.innerText = typeof options.text !== 'undefined' ? options.text : ' FPS'
@@ -58683,7 +58695,7 @@ module.exports = class FPS
             this.lastTime = performance.now()
             this.frameNumber = 0
         }
-        this.fps.innerText = this.lastFPS
+        this.fpsSpan.innerText = this.lastFPS
         if (this.meterCanvas && this.lastFPS !== '--')
         {
             this.meterUpdate(this.lastFPS / this.FPS)
@@ -58741,7 +58753,7 @@ module.exports = class FPS
         }
     }
 }
-},{"tinycolor2":373}],376:[function(require,module,exports){
+},{"tinycolor2":373,"yy-counter":374}],376:[function(require,module,exports){
 module.exports = require('./src/loop')
 },{"./src/loop":378}],377:[function(require,module,exports){
 const Events = require('eventemitter3')
@@ -59534,7 +59546,7 @@ class Renderer extends Loop
         this.stage = new PIXI.Container()
         this.dirty = this.alwaysRender = options.alwaysRender || false
         this.resize(true)
-        this.interval(this.updateRenderer.bind(this), this.FPS)
+        this.updateRendererID = this.interval(this.updateRenderer.bind(this), this.FPS)
     }
 
     /**
@@ -59573,11 +59585,11 @@ class Renderer extends Loop
         this.debug = options.debug
         const fpsOptions = options.fpsOptions || {}
         fpsOptions.FPS = options.FPS
-        this.fps = new FPS(fpsOptions)
+        this.fpsMeter = new FPS(fpsOptions)
         const indicator = document.createElement('div')
         indicator.style.display = 'flex'
         indicator.style.justifyContent = 'space-between'
-        this.fps.div.prepend(indicator)
+        this.fpsMeter.div.prepend(indicator)
         if (options.debug === true || options.debug === 1 || options.debug.toLowerCase().indexOf('dirty') !== -1)
         {
             this.dirtyIndicator = document.createElement('div')
@@ -59611,9 +59623,9 @@ class Renderer extends Loop
      */
     updateRenderer()
     {
-        if (this.fps)
+        if (this.fpsMeter)
         {
-            this.fps.frame()
+            this.fpsMeter.frame()
             if (this.dirtyIndicator && this.lastDirty !== this.dirty)
             {
                 this.dirtyIndicator.style.color = this.dirty ? 'white' : 'black'
@@ -59767,6 +59779,25 @@ class Renderer extends Loop
     {
         return (this.landscape ? this.width : this.height)
     }
+
+    /**
+     * getter/setter to change desired FPS of renderer
+     */
+    get fps()
+    {
+        return this.FPS
+    }
+    set fps(value)
+    {
+        this.FPS = 1000 / value
+        this.removeInterval(this.updateRendererID)
+        this.updateRendererID = this.interval(this.updateRenderer.bind(this), this.FPS)
+        if (this.fpsMeter)
+        {
+            this.fpsMeter.fps = value
+        }
+    }
+
 
     /**
      * start the internal loop

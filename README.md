@@ -83,6 +83,13 @@ https://davidfig.github.io/rendersheet/
     addImage(name, file)
 
     /**
+     * tests whether a texture exists
+     * @param {string} name of texture
+     * @return {boolean}
+     */
+    exists(name)
+
+    /**
      * @param {string} name of texture
      * @return {(PIXI.Texture|null)}
      */

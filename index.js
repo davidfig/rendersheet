@@ -124,6 +124,16 @@ class RenderSheet
     }
 
     /**
+     * tests whether a texture exists
+     * @param {string} name of texture
+     * @return {boolean}
+     */
+    exists(name)
+    {
+        return this.textures[name] ? true : false
+    }
+
+    /**
      * @param {string} name of texture
      * @return {(PIXI.Texture|null)}
      */
@@ -132,7 +142,7 @@ class RenderSheet
         const texture = this.textures[name]
         if (texture)
         {
-            return this.textures[name].texture
+            return texture.texture
         }
         else
         {
