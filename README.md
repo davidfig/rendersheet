@@ -137,6 +137,14 @@ https://davidfig.github.io/rendersheet/
      * @param {function} [callback] function - useful for addImage to ensure image is loaded before rendering starts
      */
     render(callback)
+
+    /**
+     * Changes the drawing function of a texture
+     * NOTE: this only works if the texture remains the same size; use Sheet.render() to resize the texture
+     * @param {string} name
+     * @param {function} draw
+     */
+    changeDraw(name, draw)
 ```
 ## license  
 MIT License  

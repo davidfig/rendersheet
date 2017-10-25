@@ -16,8 +16,6 @@ const sheet = new RenderSheet({width: 2048, height: 2048})
 // show the rendersheet (for debug purposes)
 sheet.show = {opacity: 0.6, pointerEvents: 'none'}
 
-counter = new Counter({side: 'bottom-left'})
-
 // draw triangle textures on rendersheet
 const count = 100
 for (let i = 0; i < count; i++)
@@ -39,7 +37,7 @@ for (let i = count + 10; i < count + 17; i++)
 const total = count + 16
 
 // called after images are loaded and render is successful
-function go()
+function testTextures()
 {
     // print statistics abouts textures to console.log
     sheet.debug()
@@ -50,7 +48,7 @@ function go()
     sprite.alpha = 0.25
     renderer.stage.addChild(sprite)
     sprite.x = window.innerWidth / 2
-    sprite.y = window.innerHeight / 2
+    sprite.y = window.innerHeight / 4
 
     // cycle the texture of the sprite from all textures in the rendersheet
     renderer.interval(
@@ -58,10 +56,9 @@ function go()
         {
             const n = Random.get(total)
             sprite.texture = sheet.getTexture('texture_' + n)
-            renderer.dirty = true
             counter.log('texture #' + n)
+            renderer.dirty = true
         }, 200)
-    renderer.start()
 }
 
 // draw a triangle to the render sheet using canvas
@@ -88,9 +85,44 @@ function triangleMeasure(c, params)
     return {width: params.size, height: params.size}
 }
 
+function draw(c, params)
+{
+    const size = params.size
+    c.beginPath()
+    c.rect(0, 0, size, size)
+    c.fillStyle = '#' + Random.color().toString(16)
+    c.fill()
+}
+
+function testChangingTextures()
+{
+    const sprite = renderer.add(sheet.get('texture_0'))
+    sprite.anchor.set(0.5)
+    sprite.alpha = 0.25
+    renderer.stage.addChild(sprite)
+    sprite.x = window.innerWidth / 2
+    sprite.y = 3 * window.innerHeight / 4
+
+    renderer.interval(
+        function ()
+        {
+            sheet.changeDraw('texture_0', draw)
+            renderer.dirty = true
+        }, 1000
+    )
+}
+
+function tests()
+{
+    testTextures()
+    testChangingTextures()
+    renderer.start()
+}
+
 window.onload = function ()
 {
     renderer = new Renderer({ debug: true })
-    sheet.render(go)
+    counter = new Counter({ side: 'bottom-left' })
+    sheet.render(tests)
     require('./highlight')('https://github.com/davidfig/rendersheet')
 }

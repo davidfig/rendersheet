@@ -466,6 +466,31 @@ class RenderSheet
             this.createCanvas(size)
         }
     }
+
+    /**
+     * Changes the drawing function of a texture
+     * NOTE: this only works if the texture remains the same size; use Sheet.render() to resize the texture
+     * @param {string} name
+     * @param {function} draw
+     */
+    changeDraw(name, draw)
+    {
+        const texture = this.textures[name]
+        if (texture.type !== CANVAS)
+        {
+            console.warn('yy-sheet.changeTextureDraw only works with type: CANVAS.')
+            return
+        }
+        texture.draw = draw
+        const context = this.canvases[texture.canvas].getContext('2d')
+        const multiplier = this.scale * this.resolution
+        context.save()
+        context.scale(multiplier, multiplier)
+        context.translate(texture.x / multiplier, texture.y / multiplier)
+        texture.draw(context, texture.param)
+        context.restore()
+        texture.texture.update()
+    }
 }
 
 module.exports = RenderSheet

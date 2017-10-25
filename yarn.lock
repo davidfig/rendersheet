@@ -30,6 +30,10 @@ ismobilejs@^0.4.0:
   version "0.4.1"
   resolved "https://registry.yarnpkg.com/ismobilejs/-/ismobilejs-0.4.1.tgz#1a5f126c70fed39c93da380fa62cbae5723e7dc2"
 
+lodash@^4.17.4:
+  version "4.17.4"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
+
 mini-signals@^1.1.1:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/mini-signals/-/mini-signals-1.2.0.tgz#45b08013c5fae51a24aa1a935cd317c9ed721d74"
@@ -78,16 +82,16 @@ tinycolor2@^1.4.1:
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/tinycolor2/-/tinycolor2-1.4.1.tgz#f4fad333447bc0b07d4dc8e9209d8f39a8ac77e8"
 
-yy-counter@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/yy-counter/-/yy-counter-2.0.1.tgz#35385c5e65b35abb0f99e797b616299a395a8800"
+yy-counter@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/yy-counter/-/yy-counter-2.1.0.tgz#6c023c5a5f48a962cf34f234cbb26f64d8bd2c2e"
 
-yy-fps@^0.5.0:
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/yy-fps/-/yy-fps-0.5.0.tgz#15f05eaf452da32e08cca8e593bd6f59b00a60e6"
+yy-fps@^0.5.2:
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/yy-fps/-/yy-fps-0.5.2.tgz#e0614c7850b10e5a90b3bbe4f597e96f8cdd44f3"
   dependencies:
     tinycolor2 "^1.4.1"
-    yy-counter "^2.0.1"
+    yy-counter "^2.1.0"
 
 yy-loop@^0.3.5:
   version "0.3.5"
@@ -101,11 +105,11 @@ yy-random@^1.6.0:
   dependencies:
     seedrandom "^2.4.3"
 
-yy-renderer@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/yy-renderer/-/yy-renderer-2.3.0.tgz#85f2d2528c3242d79733167186d5b3a2badf8fd8"
+yy-renderer@^2.4.0:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/yy-renderer/-/yy-renderer-2.4.0.tgz#c907542d577f797f08ffe0bd84fb5b32c6657cfc"
   dependencies:
     exists "^1.0.1"
     pixi.js "^4.5.6"
-    yy-fps "^0.5.0"
+    yy-fps "^0.5.2"
     yy-loop "^0.3.5"

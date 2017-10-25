@@ -17,8 +17,6 @@ const sheet = new RenderSheet({width: 2048, height: 2048})
 // show the rendersheet (for debug purposes)
 sheet.show = {opacity: 0.6, pointerEvents: 'none'}
 
-counter = new Counter({side: 'bottom-left'})
-
 // draw triangle textures on rendersheet
 const count = 100
 for (let i = 0; i < count; i++)
@@ -40,7 +38,7 @@ for (let i = count + 10; i < count + 17; i++)
 const total = count + 16
 
 // called after images are loaded and render is successful
-function go()
+function testTextures()
 {
     // print statistics abouts textures to console.log
     sheet.debug()
@@ -51,7 +49,7 @@ function go()
     sprite.alpha = 0.25
     renderer.stage.addChild(sprite)
     sprite.x = window.innerWidth / 2
-    sprite.y = window.innerHeight / 2
+    sprite.y = window.innerHeight / 4
 
     // cycle the texture of the sprite from all textures in the rendersheet
     renderer.interval(
@@ -59,10 +57,9 @@ function go()
         {
             const n = Random.get(total)
             sprite.texture = sheet.getTexture('texture_' + n)
-            renderer.dirty = true
             counter.log('texture #' + n)
+            renderer.dirty = true
         }, 200)
-    renderer.start()
 }
 
 // draw a triangle to the render sheet using canvas
@@ -89,10 +86,45 @@ function triangleMeasure(c, params)
     return {width: params.size, height: params.size}
 }
 
+function draw(c, params)
+{
+    const size = params.size
+    c.beginPath()
+    c.rect(0, 0, size, size)
+    c.fillStyle = '#' + Random.color().toString(16)
+    c.fill()
+}
+
+function testChangingTextures()
+{
+    const sprite = renderer.add(sheet.get('texture_0'))
+    sprite.anchor.set(0.5)
+    sprite.alpha = 0.25
+    renderer.stage.addChild(sprite)
+    sprite.x = window.innerWidth / 2
+    sprite.y = 3 * window.innerHeight / 4
+
+    renderer.interval(
+        function ()
+        {
+            sheet.changeDraw('texture_0', draw)
+            renderer.dirty = true
+        }, 1000
+    )
+}
+
+function tests()
+{
+    testTextures()
+    testChangingTextures()
+    renderer.start()
+}
+
 window.onload = function ()
 {
     renderer = new Renderer({ debug: true })
-    sheet.render(go)
+    counter = new Counter({ side: 'bottom-left' })
+    sheet.render(tests)
     require('./highlight')('https://github.com/davidfig/rendersheet')
 }
 },{"..":4,"./highlight":2,"pixi.js":324,"yy-counter":374,"yy-random":379,"yy-renderer":380}],2:[function(require,module,exports){
@@ -757,6 +789,31 @@ class RenderSheet
             const size = packers[i].finish(this.maxSize)
             this.createCanvas(size)
         }
+    }
+
+    /**
+     * Changes the drawing function of a texture
+     * NOTE: this only works if the texture remains the same size; use Sheet.render() to resize the texture
+     * @param {string} name
+     * @param {function} draw
+     */
+    changeDraw(name, draw)
+    {
+        const texture = this.textures[name]
+        if (texture.type !== CANVAS)
+        {
+            console.warn('yy-sheet.changeTextureDraw only works with type: CANVAS.')
+            return
+        }
+        texture.draw = draw
+        const context = this.canvases[texture.canvas].getContext('2d')
+        const multiplier = this.scale * this.resolution
+        context.save()
+        context.scale(multiplier, multiplier)
+        context.translate(texture.x / multiplier, texture.y / multiplier)
+        texture.draw(context, texture.param)
+        context.restore()
+        texture.texture.update()
     }
 }
 
@@ -58481,6 +58538,8 @@ module.exports = class Counter
         container.style.overflow = 'hidden'
         container.style.position = 'fixed'
         container.style.zIndex = 10000
+        container.style.pointerEvents = 'none'
+        container.style.userSelect = 'none'
         for (let style in styles)
         {
             container.style[style] = styles[style]
@@ -59718,7 +59777,7 @@ class Renderer extends Loop
      * remove child from stage
      * @param {PIXI.DisplayObject} object
      */
-    remove(object)
+    removeChild(object)
     {
         this.stage.removeChild(object)
     }
@@ -59843,10 +59902,7 @@ class Renderer extends Loop
      * @inherited from yy-loop
      * @param {object} entry - returned by add()
      */
-    removeInterval()
-    {
-        super.remove(...arguments)
-    }
+    // remove(entry)
 
     /**
      * @inherited from yy-loop
