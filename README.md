@@ -49,7 +49,7 @@ I needed a way to generate spritesheets on the fly based on canvas drawings and/
 https://davidfig.github.io/rendersheet/
 
 ## API Reference
-```
+```js
     /**
      * @param {object} options
      * @param {number} [options.maxSize=2048]
