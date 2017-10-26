@@ -1,6 +1,6 @@
 {
   "name": "yy-rendersheet",
-  "version": "3.2.2",
+  "version": "3.2.3",
   "description": "renders a canvas spritesheet for use with pixi.js",
   "main": "index.js",
   "scripts": {
@@ -27,7 +27,6 @@
     "yy-renderer": "^2.4.0"
   },
   "dependencies": {
-    "lodash": "^4.17.4",
     "pixi.js": "^4.5.6"
   }
 }
