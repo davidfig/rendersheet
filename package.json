@@ -1,6 +1,6 @@
 {
   "name": "yy-rendersheet",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "renders a canvas spritesheet for use with pixi.js",
   "main": "index.js",
   "scripts": {
