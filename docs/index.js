@@ -9,7 +9,7 @@ const RenderSheet = require('..')
 let renderer, counter, n = 0, size = 500
 
 // set up rendersheet
-const sheet = new RenderSheet({width: 2048, height: 2048})
+const sheet = new RenderSheet({width: 2048, height: 2048, useSimplePacker: true})
 
 // surround textures with boxes (for debug purposes)
 // sheet.testBoxes = true;
@@ -329,7 +329,9 @@ module.exports = GrowingPacker
 // https://github.com/davidfig/rendersheet
 
 const PIXI = require('pixi.js')
-const GrowingPacker = require('./growingpacker.js')
+
+const GrowingPacker = require('./growingpacker')
+const SimplePacker = require('./simplepacker')
 
 // types
 const CANVAS = 0 // default
@@ -350,6 +352,7 @@ class RenderSheet
      * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
      * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
      * @param {number} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet
+     * @param {boolean} [options.useSimplePacker] use a stupidly simple (but fast) packer instead of growing packer algorithm
      * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
      */
     constructor(options)
@@ -363,6 +366,7 @@ class RenderSheet
         this.scaleMode = options.scaleMode
         this.resolution = options.resolution || 1
         this.show = options.show
+        this.packer = options.useSimplePacker ? SimplePacker : GrowingPacker
         this.canvases = []
         this.baseTextures = []
         this.textures = {}
@@ -755,7 +759,7 @@ class RenderSheet
      */
     pack()
     {
-        const packers = [new GrowingPacker(this.maxSize, this.sorted[0], this.buffer)]
+        const packers = [new this.packer(this.maxSize, this.sorted[0], this.buffer)]
         for (let i = 0; i < this.sorted.length; i++)
         {
             const block = this.sorted[i]
@@ -771,7 +775,7 @@ class RenderSheet
             }
             if (!packed)
             {
-                packers.push(new GrowingPacker(this.maxSize, block, this.buffer))
+                packers.push(new this.packer(this.maxSize, block, this.buffer))
                 if (!packers[j].add(block, j))
                 {
                     console.warn('yy-rendersheet: ' + block.name + ' is too big for the spritesheet.')
@@ -818,7 +822,7 @@ class RenderSheet
 }
 
 module.exports = RenderSheet
-},{"./growingpacker.js":3,"pixi.js":324}],5:[function(require,module,exports){
+},{"./growingpacker":3,"./simplepacker":381,"pixi.js":324}],5:[function(require,module,exports){
 /**
  * Bit twiddling hacks for JavaScript.
  *
@@ -32381,7 +32385,7 @@ var SpriteMaskFilter = function (_Filter) {
 
 exports.default = SpriteMaskFilter;
 
-},{"../../../../math":239,"../Filter":255,"path":382}],259:[function(require,module,exports){
+},{"../../../../math":239,"../Filter":255,"path":383}],259:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -36071,7 +36075,7 @@ function generateSampleSrc(maxTextures) {
     return src;
 }
 
-},{"../../Shader":213,"path":382}],277:[function(require,module,exports){
+},{"../../Shader":213,"path":383}],277:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -41179,7 +41183,7 @@ function determineCrossOrigin(url) {
     return '';
 }
 
-},{"url":388}],293:[function(require,module,exports){
+},{"url":389}],293:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -45746,7 +45750,7 @@ exports.default = TilingSpriteRenderer;
 
 core.WebGLRenderer.registerPlugin('tilingSprite', TilingSpriteRenderer);
 
-},{"../../core":234,"../../core/const":215,"path":382}],312:[function(require,module,exports){
+},{"../../core":234,"../../core/const":215,"path":383}],312:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -46909,7 +46913,7 @@ var ColorMatrixFilter = function (_core$Filter) {
 exports.default = ColorMatrixFilter;
 ColorMatrixFilter.prototype.grayscale = ColorMatrixFilter.prototype.greyscale;
 
-},{"../../core":234,"path":382}],319:[function(require,module,exports){
+},{"../../core":234,"path":383}],319:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47019,7 +47023,7 @@ var DisplacementFilter = function (_core$Filter) {
 
 exports.default = DisplacementFilter;
 
-},{"../../core":234,"path":382}],320:[function(require,module,exports){
+},{"../../core":234,"path":383}],320:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47073,7 +47077,7 @@ var FXAAFilter = function (_core$Filter) {
 
 exports.default = FXAAFilter;
 
-},{"../../core":234,"path":382}],321:[function(require,module,exports){
+},{"../../core":234,"path":383}],321:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47249,7 +47253,7 @@ var NoiseFilter = function (_core$Filter) {
 
 exports.default = NoiseFilter;
 
-},{"../../core":234,"path":382}],323:[function(require,module,exports){
+},{"../../core":234,"path":383}],323:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47299,7 +47303,7 @@ var VoidFilter = function (_core$Filter) {
 
 exports.default = VoidFilter;
 
-},{"../../core":234,"path":382}],324:[function(require,module,exports){
+},{"../../core":234,"path":383}],324:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -49919,7 +49923,7 @@ function parse(resource, texture) {
     resource.bitmapFont = _extras.BitmapText.registerFont(resource.data, texture);
 }
 
-},{"../core":234,"../extras":310,"path":382,"resource-loader":363}],332:[function(require,module,exports){
+},{"../core":234,"../extras":310,"path":383,"resource-loader":363}],332:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -50277,7 +50281,7 @@ function getResourcePath(resource, baseUrl) {
     return _url2.default.resolve(resource.url.replace(baseUrl, ''), resource.data.meta.image);
 }
 
-},{"../core":234,"resource-loader":363,"url":388}],335:[function(require,module,exports){
+},{"../core":234,"resource-loader":363,"url":389}],335:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -51924,7 +51928,7 @@ exports.default = MeshRenderer;
 
 core.WebGLRenderer.registerPlugin('mesh', MeshRenderer);
 
-},{"../../core":234,"../Mesh":336,"path":382,"pixi-gl-core":198}],343:[function(require,module,exports){
+},{"../../core":234,"../Mesh":336,"path":383,"pixi-gl-core":198}],343:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -57265,7 +57269,7 @@ if ((typeof module) == 'object' && module.exports) {
   Math    // math: package containing random, pow, and seedrandom
 );
 
-},{"crypto":381}],373:[function(require,module,exports){
+},{"crypto":382}],373:[function(require,module,exports){
 // TinyColor v1.4.1
 // https://github.com/bgrins/TinyColor
 // Brian Grinstead, MIT License
@@ -59925,8 +59929,87 @@ class Renderer extends Loop
 
 module.exports = Renderer
 },{"exists":8,"pixi.js":324,"yy-fps":375,"yy-loop":376}],381:[function(require,module,exports){
+/**
+ * @file simple-packer.js
+ * @author David Figatner
+ * @license MIT
+ * @copyright YOPEY YOPEY LLC 2016
+ * {@link https://github.com/davidfig/rendersheet}
+ */
 
+module.exports = class SimplePacker
+{
+    /**
+     * ridiculously simple packer, optimized (if you can call it that) only for speed
+     * @param {number} max size
+     * @param {boolean} first block
+     * @param {number} buffer between each block
+     */
+    constructor(max, first, buffer)
+    {
+        this.max = max
+        this.buffer = buffer
+        this.list = []
+        this.x = 0
+        this.y = 0
+        this.largest = 0
+    }
+
+    finish(maxSize)
+    {
+        let n = 1, next
+        const squared = []
+        do
+        {
+            next = Math.pow(2, n++)
+            squared.push(next)
+        } while (next <= maxSize)
+
+        const max = Math.max(this.x - this.buffer, this.y - this.buffer)
+
+        for (let i = squared.length - 1; i >= 0; i--)
+        {
+            if (squared[i] < max)
+            {
+                return squared[i + 1]
+            }
+        }
+    }
+
+    add(block, canvasNumber)
+    {
+        if (this.x + block.width < this.max)
+        {
+            if (this.y + block.height < this.max)
+            {
+                block.x = this.x
+                block.y = this.y
+                block.canvas = canvasNumber
+                this.largest = block.height > this.largest ? block.height : this.largest
+                this.x += block.width + this.buffer
+                return true
+            }
+            else
+            {
+                return false
+            }
+        }
+        else
+        {
+            this.y += this.largest + this.buffer
+            if (this.y > this.max)
+            {
+                return false
+            }
+            this.x = 0
+            this.largest = 0
+            return this.add(block, canvasNumber)
+        }
+    }
+}
 },{}],382:[function(require,module,exports){
+
+},{}],383:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -60154,7 +60237,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
-},{"_process":383}],383:[function(require,module,exports){
+},{"_process":384}],384:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -60340,7 +60423,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],384:[function(require,module,exports){
+},{}],385:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/punycode v1.4.1 by @mathias */
 ;(function(root) {
@@ -60877,7 +60960,7 @@ process.umask = function() { return 0; };
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],385:[function(require,module,exports){
+},{}],386:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -60963,7 +61046,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],386:[function(require,module,exports){
+},{}],387:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -61050,13 +61133,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],387:[function(require,module,exports){
+},{}],388:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":385,"./encode":386}],388:[function(require,module,exports){
+},{"./decode":386,"./encode":387}],389:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -61790,7 +61873,7 @@ Url.prototype.parseHost = function() {
   if (host) this.hostname = host;
 };
 
-},{"./util":389,"punycode":384,"querystring":387}],389:[function(require,module,exports){
+},{"./util":390,"punycode":385,"querystring":388}],390:[function(require,module,exports){
 'use strict';
 
 module.exports = {

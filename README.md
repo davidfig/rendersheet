@@ -60,6 +60,7 @@ https://davidfig.github.io/rendersheet/
      * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
      * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
      * @param {number} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet
+     * @param {boolean} [options.useSimplePacker] use a stupidly simple (but fast) packer instead of growing packer algorithm
      * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
      */
     constructor(options)

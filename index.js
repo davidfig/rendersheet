@@ -5,7 +5,9 @@
 // https://github.com/davidfig/rendersheet
 
 const PIXI = require('pixi.js')
-const GrowingPacker = require('./growingpacker.js')
+
+const GrowingPacker = require('./growingpacker')
+const SimplePacker = require('./simplepacker')
 
 // types
 const CANVAS = 0 // default
@@ -26,6 +28,7 @@ class RenderSheet
      * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
      * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
      * @param {number} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet
+     * @param {boolean} [options.useSimplePacker] use a stupidly simple (but fast) packer instead of growing packer algorithm
      * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
      */
     constructor(options)
@@ -39,6 +42,7 @@ class RenderSheet
         this.scaleMode = options.scaleMode
         this.resolution = options.resolution || 1
         this.show = options.show
+        this.packer = options.useSimplePacker ? SimplePacker : GrowingPacker
         this.canvases = []
         this.baseTextures = []
         this.textures = {}
@@ -431,7 +435,7 @@ class RenderSheet
      */
     pack()
     {
-        const packers = [new GrowingPacker(this.maxSize, this.sorted[0], this.buffer)]
+        const packers = [new this.packer(this.maxSize, this.sorted[0], this.buffer)]
         for (let i = 0; i < this.sorted.length; i++)
         {
             const block = this.sorted[i]
@@ -447,7 +451,7 @@ class RenderSheet
             }
             if (!packed)
             {
-                packers.push(new GrowingPacker(this.maxSize, block, this.buffer))
+                packers.push(new this.packer(this.maxSize, block, this.buffer))
                 if (!packers[j].add(block, j))
                 {
                     console.warn('yy-rendersheet: ' + block.name + ' is too big for the spritesheet.')
