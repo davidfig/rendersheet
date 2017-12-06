@@ -5,7 +5,7 @@ const Random = require('yy-random')
 
 const RenderSheet = require('..')
 
-let renderer, counter, n = 0, size = 500
+let renderer, counter, n = 0, size = 500, total
 
 // set up rendersheet
 const sheet = new RenderSheet({ width: 2048, height: 2048 })
@@ -16,25 +16,38 @@ const sheet = new RenderSheet({ width: 2048, height: 2048 })
 // show the rendersheet (for debug purposes)
 sheet.show = {opacity: 0.6, pointerEvents: 'none'}
 
-// draw triangle textures on rendersheet
-const count = 100
-for (let i = 0; i < count; i++)
+function setupSheet()
 {
-    sheet.add('texture_' + i, triangleDraw, triangleMeasure, {size: Math.random() * size, color: Math.round(Math.random() * 0xffffff)})
-}
+    // draw triangle textures on rendersheet
+    const count = 100
+    for (let i = 0; i < count; i++)
+    {
+        sheet.add('texture_' + i, triangleDraw, triangleMeasure, { size: Math.random() * size, color: Math.round(Math.random() * 0xffffff) })
+    }
 
-// test changing the rendersheet after rendering
-for (let i = count; i < count + 10; i++)
-{
-    sheet.add('texture_' + i, triangleDraw, triangleMeasure, {size: Math.random() * size, color: Math.round(Math.random() * 0xffffff)})
-}
+    // test changing the rendersheet after rendering
+    for (let i = count; i < count + 10; i++)
+    {
+        sheet.add('texture_' + i, triangleDraw, triangleMeasure, { size: Math.random() * size, color: Math.round(Math.random() * 0xffffff) })
+    }
 
-// test addImage instead of canvas drawing
-for (let i = count + 10; i < count + 17; i++)
-{
-    sheet.addImage('texture_' + i, 'faces/happy-' + (i - count - 9) + '.png')
+    // test addImage instead of canvas drawing
+    for (let i = count + 10; i < count + 17; i++)
+    {
+        sheet.addImage('texture_' + i, 'faces/happy-' + (i - count - 9) + '.png')
+    }
+
+    total = count + 16
+
+    const image = document.getElementById('PNG')
+    const canvas = document.createElement('canvas')
+    canvas.width = image.width
+    canvas.height = image.height
+    const c = canvas.getContext('2d')
+    c.drawImage(image, 0, 0)
+    const data = canvas.toDataURL('image/png')//.replace(/^data:image\/(png|jpg);base64,/, '')
+    sheet.addData('data-test', data)
 }
-const total = count + 16
 
 // called after images are loaded and render is successful
 function testTextures()
@@ -59,6 +72,9 @@ function testTextures()
             counter.log('texture #' + n)
             renderer.dirty = true
         }, 200)
+
+    const data = renderer.stage.addChild(sheet.get('data-test'))
+    data.position.set(window.innerWidth - data.width, window.innerHeight - data.height)
 }
 
 // draw a triangle to the render sheet using canvas
@@ -123,6 +139,7 @@ window.onload = function ()
 {
     renderer = new Renderer({ debug: true })
     counter = new Counter({ side: 'bottom-left' })
+    setupSheet()
     sheet.render(tests)
     require('./highlight')('https://github.com/davidfig/rendersheet')
 }

@@ -57,10 +57,9 @@ https://davidfig.github.io/rendersheet/
      * @param {number} [options.scale=1] of texture
      * @param {number} [options.resolution=1] of rendersheet
      * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
-     * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
-     * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
+     * @param {boolean} [options.testBoxes] draw a different colored boxes behind each rendering (useful for debugging)
      * @param {number} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet
-     * @param {boolean} [options.useSimplePacker] use a stupidly simple (but fast) packer instead of growing packer algorithm
+     * @param {boolean} [options.useSimplePacker] use a stupidly simple packer instead of growing packer algorithm
      * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
      */
     constructor(options)
@@ -71,17 +70,24 @@ https://davidfig.github.io/rendersheet/
      * @param {Function} draw function(context) - use the context to draw within the bounds of the measure function
      * @param {Function} measure function(context) - needs to return {width: width, height: height} for the rendering
      * @param {object} params - object to pass the draw() and measure() functions
+     * @return {object} rendersheet object for texture
      */
     add(name, draw, measure, param)
 
     /**
      * adds an image rendering
      * @param {string} name of rendering
-     * @param {Function} draw function(context) - use the context to draw within the bounds of the measure function
-     * @param {Function} measure function(context) - needs to return {width: width, height: height} for the rendering
-     * @param {object} params - object to pass the draw() and measure() functions
+     * @param {string} src for image
+     * @return {object} rendersheet object for texture
      */
-    addImage(name, file)
+    addImage(name, src)
+
+    /**
+     * adds a data source (e.g., a PNG file in data format)
+     * @param {object} data of rendering (not filename)
+     * @return {object} rendersheet object for texture
+     */
+    addData(name, data)
 
     /**
      * tests whether a texture exists
@@ -146,6 +152,7 @@ https://davidfig.github.io/rendersheet/
      * @param {function} draw
      */
     changeDraw(name, draw)
+
 ```
 ## license  
 MIT License  

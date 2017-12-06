@@ -11,7 +11,8 @@ const SimplePacker = require('./simplepacker')
 
 // types
 const CANVAS = 0 // default
-const IMAGE = 1
+const IMAGE = 1 // image url
+const DATA = 2 // data src (e.g., result of .toDataURL())
 
 // default ms to wait to reload an image to load
 const WAIT = 250
@@ -25,10 +26,9 @@ class RenderSheet
      * @param {number} [options.scale=1] of texture
      * @param {number} [options.resolution=1] of rendersheet
      * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
-     * @param {Function} [options.debug] the Debug module from yy-debug (@see {@link github.com/davidfig/debug})
-     * @param {boolean} [options.testBoxes] draw a different colored boxes around each rendering
+     * @param {boolean} [options.testBoxes] draw a different colored boxes behind each rendering (useful for debugging)
      * @param {number} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet
-     * @param {boolean} [options.useSimplePacker] use a stupidly simple (but fast) packer instead of growing packer algorithm
+     * @param {boolean} [options.useSimplePacker] use a stupidly simple packer instead of growing packer algorithm
      * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
      */
     constructor(options)
@@ -54,6 +54,7 @@ class RenderSheet
      * @param {Function} draw function(context) - use the context to draw within the bounds of the measure function
      * @param {Function} measure function(context) - needs to return {width: width, height: height} for the rendering
      * @param {object} params - object to pass the draw() and measure() functions
+     * @return {object} rendersheet object for texture
      */
     add(name, draw, measure, param)
     {
@@ -64,20 +65,28 @@ class RenderSheet
     /**
      * adds an image rendering
      * @param {string} name of rendering
-     * @param {Function} draw function(context) - use the context to draw within the bounds of the measure function
-     * @param {Function} measure function(context) - needs to return {width: width, height: height} for the rendering
-     * @param {object} params - object to pass the draw() and measure() functions
+     * @param {string} src for image
+     * @return {object} rendersheet object for texture
      */
-    addImage(name, file)
+    addImage(name, src)
     {
-        const object = this.textures[name] = { name: name, file: file, type: IMAGE, texture: new PIXI.Texture(PIXI.Texture.EMPTY)  }
+        const object = this.textures[name] = { name, file: src, type: IMAGE, texture: new PIXI.Texture(PIXI.Texture.EMPTY)  }
         object.image = new Image()
-        object.image.onload =
-            function()
-            {
-                object.loaded = true
-            }
-        object.image.src = file
+        object.image.onload = () => object.loaded = true
+        object.image.src = src
+        return object
+    }
+
+    /**
+     * adds a data source (e.g., a PNG file in data format)
+     * @param {object} data of rendering (not filename)
+     * @return {object} rendersheet object for texture
+     */
+    addData(name, data)
+    {
+        const object = this.textures[name] = { name, type: DATA, texture: new PIXI.Texture(PIXI.Texture.EMPTY) }
+        object.image = new Image()
+        object.image.setAttribute('src', data)
         return object
     }
 
@@ -310,7 +319,7 @@ class RenderSheet
                     texture.height = Math.ceil(size.height * multiplier)
                     break
 
-                case IMAGE:
+                case IMAGE: case DATA:
                     texture.width = texture.image.width * multiplier
                     texture.height = texture.image.height * multiplier
                     break
@@ -400,7 +409,7 @@ class RenderSheet
                     texture.draw(context, texture.param)
                     break
 
-                case IMAGE:
+                case IMAGE: case DATA:
                     context.drawImage(texture.image, 0, 0)
                     break
             }
