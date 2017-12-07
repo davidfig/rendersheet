@@ -61,6 +61,7 @@ https://davidfig.github.io/rendersheet/
      * @param {number|boolean} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet (use =true for PIXI.SCALE_MODES.NEAREST for pixel art)
      * @param {boolean} [options.useSimplePacker] use a stupidly simple packer instead of growing packer algorithm
      * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
+     * @event render - emitted when RenderSheet.render completes
      */
     constructor(options)
 
@@ -142,9 +143,8 @@ https://davidfig.github.io/rendersheet/
 
     /**
      * create (or refresh) the rendersheet
-     * @param {function} [callback] function - useful for addImage to ensure image is loaded before rendering starts
      */
-    render(callback)
+    render()
 
     /**
      * Changes the drawing function of a texture

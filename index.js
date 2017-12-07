@@ -5,6 +5,7 @@
 // https://github.com/davidfig/rendersheet
 
 const PIXI = require('pixi.js')
+const Events = require('eventemitter3')
 
 const GrowingPacker = require('./growingpacker')
 const SimplePacker = require('./simplepacker')
@@ -17,7 +18,7 @@ const DATA = 2 // data src (e.g., result of .toDataURL())
 // default ms to wait to reload an image to load
 const WAIT = 250
 
-class RenderSheet
+class RenderSheet extends Events
 {
     /**
      * @param {object} options
@@ -30,9 +31,11 @@ class RenderSheet
      * @param {number|boolean} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet (use =true for PIXI.SCALE_MODES.NEAREST for pixel art)
      * @param {boolean} [options.useSimplePacker] use a stupidly simple packer instead of growing packer algorithm
      * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
+     * @event render - emitted when RenderSheet.render completes
      */
     constructor(options)
     {
+        super()
         options = options || {}
         this.wait = options.wait || WAIT
         this.testBoxes = options.testBoxes || false
@@ -255,18 +258,13 @@ class RenderSheet
 
     /**
      * create (or refresh) the rendersheet
-     * @param {function} [callback] function - useful for addImage to ensure image is loaded before rendering starts
      */
-    render(callback)
+    render()
     {
         if (!Object.keys(this.textures).length)
         {
-            if (callback) callback()
+            this.emit('render', this)
             return
-        }
-        if (callback)
-        {
-            this.callback = callback
         }
         if (!this.checkLoaded())
         {
@@ -289,15 +287,11 @@ class RenderSheet
             current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height)
             current.texture.update()
         }
-        callback = callback || this.callback
-        if (callback)
-        {
-            callback()
-        }
         if (this.show)
         {
             this.showCanvases()
         }
+        this.emit('render', this)
     }
 
     /**

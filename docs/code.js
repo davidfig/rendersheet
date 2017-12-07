@@ -45,7 +45,7 @@ function setupSheet()
     canvas.height = image.height
     const c = canvas.getContext('2d')
     c.drawImage(image, 0, 0)
-    const data = canvas.toDataURL('image/png')//.replace(/^data:image\/(png|jpg);base64,/, '')
+    const data = canvas.toDataURL().replace(/^data:image\/(png|jpg);base64,/, '')
     sheet.addData('data-test', data)
 }
 
@@ -140,6 +140,7 @@ window.onload = function ()
     renderer = new Renderer({ debug: true })
     counter = new Counter({ side: 'bottom-left' })
     setupSheet()
-    sheet.render(tests)
+    sheet.once('render', tests)
+    sheet.render()
     require('./highlight')('https://github.com/davidfig/rendersheet')
 }
