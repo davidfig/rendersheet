@@ -27,7 +27,7 @@ class RenderSheet
      * @param {number} [options.resolution=1] of rendersheet
      * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
      * @param {boolean} [options.testBoxes] draw a different colored boxes behind each rendering (useful for debugging)
-     * @param {number} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet
+     * @param {number|boolean} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet (use =true for PIXI.SCALE_MODES.NEAREST for pixel art)
      * @param {boolean} [options.useSimplePacker] use a stupidly simple packer instead of growing packer algorithm
      * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
      */
@@ -39,7 +39,7 @@ class RenderSheet
         this.maxSize = options.maxSize || 2048
         this.buffer = options.buffer || 5
         this.scale = options.scale || 1
-        this.scaleMode = options.scaleMode
+        this.scaleMode = options.scaleMode === true ? PIXI.SCALE_MODES.NEAREST : options.scaleMode
         this.resolution = options.resolution || 1
         this.show = options.show
         this.packer = options.useSimplePacker ? SimplePacker : GrowingPacker
@@ -80,13 +80,16 @@ class RenderSheet
     /**
      * adds a data source (e.g., a PNG file in data format)
      * @param {object} data of rendering (not filename)
+     * @param {string="data:image/png;base64,"} [header] for data
      * @return {object} rendersheet object for texture
      */
-    addData(name, data)
+    addData(name, data, header)
     {
+        header = typeof header !== 'undefined' ? header : 'data:image/png;base64,'
         const object = this.textures[name] = { name, type: DATA, texture: new PIXI.Texture(PIXI.Texture.EMPTY) }
         object.image = new Image()
-        object.image.setAttribute('src', data)
+        object.image.src = header + data
+        object.image.onload = () => object.loaded = true
         return object
     }
 
@@ -242,7 +245,7 @@ class RenderSheet
         for (let key in this.textures)
         {
             const current = this.textures[key]
-            if (current.type === IMAGE && !current.loaded)
+            if ((current.type === IMAGE || current.type === DATA) && !current.loaded)
             {
                 return false
             }
