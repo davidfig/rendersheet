@@ -143,8 +143,9 @@ https://davidfig.github.io/rendersheet/
 
     /**
      * create (or refresh) the rendersheet
+     * @param {function} callback - convenience function that calls Rendersheet.once('render', callback)
      */
-    render()
+    render(callback)
 
     /**
      * Changes the drawing function of a texture

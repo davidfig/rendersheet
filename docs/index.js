@@ -600,12 +600,17 @@ class RenderSheet extends Events
 
     /**
      * create (or refresh) the rendersheet
+     * @param {function} callback - convenience function that calls Rendersheet.once('render', callback)
      */
-    render()
+    render(callback)
     {
+        if (callback)
+        {
+            this.once('render', callback)
+        }
         if (!Object.keys(this.textures).length)
         {
-            this.emit('render', this)
+            this.emit('render')
             return
         }
         if (!this.checkLoaded())
@@ -633,7 +638,7 @@ class RenderSheet extends Events
         {
             this.showCanvases()
         }
-        this.emit('render', this)
+        this.emit('render')
     }
 
     /**
