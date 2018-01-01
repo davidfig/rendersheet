@@ -145,7 +145,7 @@ window.onload = function ()
     sheet.render()
     require('./highlight')('https://github.com/davidfig/rendersheet')
 }
-},{"..":4,"./highlight":2,"pixi.js":324,"yy-counter":375,"yy-random":381,"yy-renderer":382}],2:[function(require,module,exports){
+},{"..":4,"./highlight":2,"pixi.js":324,"yy-counter":375,"yy-random":380,"yy-renderer":381}],2:[function(require,module,exports){
 const forkMe = require('fork-me-github')
 
 module.exports = function highlight(url)
@@ -615,7 +615,7 @@ class RenderSheet extends Events
         }
         if (!this.checkLoaded())
         {
-            window.setTimeout(this.render.bind(this), WAIT)
+            window.setTimeout(() => this.render(), WAIT)
             return
         }
         this.canvases = []
@@ -851,7 +851,7 @@ class RenderSheet extends Events
 }
 
 module.exports = RenderSheet
-},{"./growingpacker":3,"./simplepacker":383,"eventemitter3":7,"pixi.js":324}],5:[function(require,module,exports){
+},{"./growingpacker":3,"./simplepacker":382,"eventemitter3":7,"pixi.js":324}],5:[function(require,module,exports){
 /**
  * Bit twiddling hacks for JavaScript.
  *
@@ -32463,7 +32463,7 @@ var SpriteMaskFilter = function (_Filter) {
 
 exports.default = SpriteMaskFilter;
 
-},{"../../../../math":239,"../../../../textures/TextureMatrix":285,"../Filter":255,"path":385}],259:[function(require,module,exports){
+},{"../../../../math":239,"../../../../textures/TextureMatrix":285,"../Filter":255,"path":384}],259:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -36162,7 +36162,7 @@ function generateSampleSrc(maxTextures) {
     return src;
 }
 
-},{"../../Shader":213,"path":385}],277:[function(require,module,exports){
+},{"../../Shader":213,"path":384}],277:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -41480,7 +41480,7 @@ function determineCrossOrigin(url) {
     return '';
 }
 
-},{"url":391}],294:[function(require,module,exports){
+},{"url":390}],294:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -45926,7 +45926,7 @@ exports.default = TilingSpriteRenderer;
 
 core.WebGLRenderer.registerPlugin('tilingSprite', TilingSpriteRenderer);
 
-},{"../../core":234,"../../core/const":215,"path":385}],312:[function(require,module,exports){
+},{"../../core":234,"../../core/const":215,"path":384}],312:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -46010,7 +46010,7 @@ var AlphaFilter = function (_core$Filter) {
 
 exports.default = AlphaFilter;
 
-},{"../../core":234,"path":385}],313:[function(require,module,exports){
+},{"../../core":234,"path":384}],313:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47173,7 +47173,7 @@ var ColorMatrixFilter = function (_core$Filter) {
 exports.default = ColorMatrixFilter;
 ColorMatrixFilter.prototype.grayscale = ColorMatrixFilter.prototype.greyscale;
 
-},{"../../core":234,"path":385}],320:[function(require,module,exports){
+},{"../../core":234,"path":384}],320:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47283,7 +47283,7 @@ var DisplacementFilter = function (_core$Filter) {
 
 exports.default = DisplacementFilter;
 
-},{"../../core":234,"path":385}],321:[function(require,module,exports){
+},{"../../core":234,"path":384}],321:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47337,7 +47337,7 @@ var FXAAFilter = function (_core$Filter) {
 
 exports.default = FXAAFilter;
 
-},{"../../core":234,"path":385}],322:[function(require,module,exports){
+},{"../../core":234,"path":384}],322:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47513,7 +47513,7 @@ var NoiseFilter = function (_core$Filter) {
 
 exports.default = NoiseFilter;
 
-},{"../../core":234,"path":385}],324:[function(require,module,exports){
+},{"../../core":234,"path":384}],324:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -50132,7 +50132,7 @@ function parse(resource, texture) {
     resource.bitmapFont = _extras.BitmapText.registerFont(resource.data, texture);
 }
 
-},{"../core":234,"../extras":310,"path":385,"resource-loader":364}],332:[function(require,module,exports){
+},{"../core":234,"../extras":310,"path":384,"resource-loader":364}],332:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -50490,7 +50490,7 @@ function getResourcePath(resource, baseUrl) {
     return _url2.default.resolve(resource.url.replace(baseUrl, ''), resource.data.meta.image);
 }
 
-},{"../core":234,"resource-loader":364,"url":391}],335:[function(require,module,exports){
+},{"../core":234,"resource-loader":364,"url":390}],335:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -52140,7 +52140,7 @@ exports.default = MeshRenderer;
 
 core.WebGLRenderer.registerPlugin('mesh', MeshRenderer);
 
-},{"../../core":234,"../Mesh":336,"path":385,"pixi-gl-core":198}],343:[function(require,module,exports){
+},{"../../core":234,"../Mesh":336,"path":384,"pixi-gl-core":198}],343:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -57799,7 +57799,7 @@ if ((typeof module) == 'object' && module.exports) {
   Math    // math: package containing random, pow, and seedrandom
 );
 
-},{"crypto":384}],374:[function(require,module,exports){
+},{"crypto":383}],374:[function(require,module,exports){
 // TinyColor v1.4.1
 // https://github.com/bgrins/TinyColor
 // Brian Grinstead, MIT License
@@ -59347,10 +59347,11 @@ module.exports = class FPS
     }
 }
 },{"tinycolor2":374,"yy-counter":375}],377:[function(require,module,exports){
-module.exports = require('./src/loop')
-},{"./src/loop":380}],378:[function(require,module,exports){
-arguments[4][358][0].apply(exports,arguments)
-},{"dup":358}],379:[function(require,module,exports){
+const Loop = require('./src/loop')
+Loop.entry = require('./src/entry')
+
+module.exports = Loop
+},{"./src/entry":378,"./src/loop":379}],378:[function(require,module,exports){
 const Events = require('eventemitter3')
 
 /** Entry class for Loop */
@@ -59431,7 +59432,7 @@ class Entry extends Events
 }
 
 module.exports = Entry
-},{"eventemitter3":378}],380:[function(require,module,exports){
+},{"eventemitter3":7}],379:[function(require,module,exports){
 /* Copyright (c) 2017 YOPEY YOPEY LLC */
 
 const Events = require('eventemitter3')
@@ -59444,7 +59445,7 @@ class Loop extends Events
      * @param {number} [options.maxFrameTime=1000/60] maximum time in milliseconds for a frame
      * @param {object} [options.pauseOnBlur] pause loop when app loses focus, start it when app regains focus
      *
-     * @event each(elapsed, Loop, elapsedInLoop)
+     * @event each(elapsed, Loop)
      * @event start(Loop)
      * @event stop(Loop)
      */
@@ -59455,8 +59456,8 @@ class Loop extends Events
         this.maxFrameTime = options.maxFrameTime || 1000 / 60
         if (options.pauseOnBlur)
         {
-            window.addEventListener('blur', this.stopBlur.bind(this))
-            window.addEventListener('focus', this.startBlur.bind(this))
+            window.addEventListener('blur', () => this.stopBlur())
+            window.addEventListener('focus', () => this.startBlur())
         }
         this.list = []
     }
@@ -59470,10 +59471,7 @@ class Loop extends Events
         if (!this.running)
         {
             this.running = true
-            if (!this.waiting)
-            {
-                this.loop()
-            }
+            this.loop(0)
             this.emit('start', this)
         }
         return this
@@ -59511,6 +59509,11 @@ class Loop extends Events
      */
     stop()
     {
+        if (this.handle)
+        {
+            window.cancelAnimationFrame(this.handle)
+            this.handle = null
+        }
         this.running = false
         this.blurred = false
         this.emit('stop', this)
@@ -59519,40 +59522,49 @@ class Loop extends Events
 
     /**
      * loop through updates; can be called manually each frame, or called automatically as part of start()
+     * @param {number} elapsed time since last call (will be clamped to this.maxFrameTime)
      */
-    update()
+    update(elapsed)
     {
-        const now = performance.now()
-        let elapsed = now - this.last ? this.last : 0
-        elapsed = elapsed > this.maxFrameTime ? this.maxFrameTime : elapsed
-        for (let entry of this.list)
+        const maxFrameTime = this.maxFrameTime
+        elapsed = elapsed > maxFrameTime ? maxFrameTime : elapsed
+        for (let i = 0, _i = this.list.length; i < _i; i++)
         {
-            if (entry.update(elapsed))
+            if (this.list[i].update(elapsed))
             {
-                this.remove(entry)
+                this.list.splice(i, 1)
+                i--
+                _i--
             }
         }
-        this.emit('each', elapsed, this, now - performance.now())
-        this.last = now
+        this.emit('each', elapsed, this)
     }
 
     /**
      * internal loop through animations
      * @private
      */
-    loop()
+    loop(elapsed)
     {
         if (this.running)
         {
-            this.waiting = false
-            this.update()
-            requestAnimationFrame(this.loop.bind(this))
-            this.waiting = true
+            this.update(elapsed)
+            this.handle = requestAnimationFrame((elapsed) => this.loop(elapsed))
         }
-        else
-        {
-            this.waiting = false
-        }
+    }
+
+    /**
+     * adds a callback to the loop
+     * @deprecated use add() instead
+     * @param {function} callback
+     * @param {number} [time=0] in milliseconds to call this update (0=every frame)
+     * @param {number} [count=0] number of times to run this update (0=infinite)
+     * @return {object} entry - used to remove or change the parameters of the update
+     */
+    interval(callback, time, count)
+    {
+        console.warn('yy-loop: interval() deprecated. Use add() instead.')
+        this.add(callback, time, count)
     }
 
     /**
@@ -59562,7 +59574,7 @@ class Loop extends Events
      * @param {number} [count=0] number of times to run this update (0=infinite)
      * @return {object} entry - used to remove or change the parameters of the update
      */
-    interval(callback, time, count)
+    add(callback, time, count)
     {
         const entry = new Entry(callback, time, count)
         this.list.push(entry)
@@ -59577,7 +59589,7 @@ class Loop extends Events
      */
     timeout(callback, time)
     {
-        return this.interval(callback, time, 1)
+        return this.add(callback, time, 1)
     }
 
     /**
@@ -59630,7 +59642,7 @@ const Entry = require('./entry')
 
 Loop.entry = Entry
 module.exports = Loop
-},{"./entry":379,"eventemitter3":378}],381:[function(require,module,exports){
+},{"./entry":378,"eventemitter3":7}],380:[function(require,module,exports){
 // yy-random
 // by David Figatner
 // MIT license
@@ -60056,7 +60068,7 @@ class Random
 }
 
 module.exports = new Random()
-},{"seedrandom":366}],382:[function(require,module,exports){
+},{"seedrandom":366}],381:[function(require,module,exports){
 // yy-renderer
 // by David Figatner
 // (c) YOPEY YOPEY LLC 2017
@@ -60068,7 +60080,7 @@ const FPS = require('yy-fps')
 const Loop = require('yy-loop')
 const exists = require('exists')
 
-class Renderer extends Loop
+class Renderer
 {
     /**
      * Wrapper for a pixi.js Renderer
@@ -60084,6 +60096,9 @@ class Renderer extends Loop
      * @param {boolean} [options.autoresize=false] automatically calls resize during resize events
      * @param {number} [options.color=0xffffff] background color in hex
      *
+     * @param {boolean} [options.turnOffTicker] turn off PIXI.shared.ticker
+     * @param {boolean} [options.turnOffInteraction] turn off PIXI.Interaction manager (saves cycles)
+     *
      * @param {boolean} [options.noWebGL=false] use the PIXI.CanvasRenderer instead of PIXI.WebGLRenderer
      * @param {boolean} [options.antialias=true] turn on antialias if native antialias is not used, uses FXAA
      * @param {boolean} [options.forceFXAA=false] forces FXAA antialiasing to be used over native. FXAA is faster, but may not always look as great
@@ -60095,7 +60110,6 @@ class Renderer extends Loop
      * @param {boolean|string} [options.debug] false, true, or some combination of 'fps', 'dirty', and 'count' (e.g., 'count-dirty' or 'dirty')
      * @param {object} [options.fpsOptions] options from yy-fps (https://github.com/davidfig/fps)
      *
-     ** from yy-loop:
      * @param {number} [options.maxFrameTime=1000/60] maximum time in milliseconds for a frame
      * @param {object} [options.pauseOnBlur] pause loop when app loses focus, start it when app regains focus
      *
@@ -60106,7 +60120,8 @@ class Renderer extends Loop
     constructor(options)
     {
         options = options || {}
-        super({ pauseOnBlur: options.pauseOnBlur, maxFrameTime: options.maxFrameTime })
+        this.options = options
+        this.loop = new Loop({ pauseOnBlur: options.pauseOnBlur, maxFrameTime: options.maxFrameTime })
         this.canvas = options.canvas
         this.autoResize = options.autoresize
         this.aspectRatio = options.aspectRatio
@@ -60117,12 +60132,23 @@ class Renderer extends Loop
         if (!this.canvas) this.createCanvas(options)
         options.view = this.canvas
 
+        if (options.turnoffTicker)
+        {
+            const ticker = PIXI.ticker.shared
+            ticker.autoStart = false
+            ticker.stop()
+        }
+
         const noWebGL = options.noWebGL || false
         options.noWebGL = null
         options.autoresize = null
         const Renderer = noWebGL ? PIXI.CanvasRenderer : PIXI.WebGLRenderer
 
         this.renderer = new Renderer(options)
+        if (options.turnOffInteraction)
+        {
+            this.renderer.plugins.interaction.destroy()
+        }
         if (options.color)
         {
             this.canvas.style.backgroundColor = options.color
@@ -60136,12 +60162,11 @@ class Renderer extends Loop
         }
 
         if (options.debug) this.createDebug(options)
-        if (this.autoResize) window.addEventListener('resize', this.resize.bind(this))
+        if (this.autoResize) window.addEventListener('resize', () => this.resize())
         this.time = 0
         this.stage = new PIXI.Container()
         this.dirty = this.alwaysRender = options.alwaysRender || false
         this.resize(true)
-        this.updateRendererID = this.interval(this.updateRenderer.bind(this), this.FPS)
     }
 
     /**
@@ -60213,10 +60238,9 @@ class Renderer extends Loop
     }
 
     /**
-     * render the scene
      * @private
      */
-    updateRenderer()
+    update()
     {
         if (this.fpsMeter)
         {
@@ -60255,7 +60279,7 @@ class Renderer extends Loop
                 return
             }
             total++
-            for (var i = 0; i < object.children.length; i++)
+            for (let i = 0, _i = object.children.length; i < _i; i++)
             {
                 count(object.children[i])
             }
@@ -60385,82 +60409,66 @@ class Renderer extends Loop
     set fps(value)
     {
         this.FPS = 1000 / value
-        this.removeInterval(this.updateRendererID)
-        this.updateRendererID = this.interval(this.updateRenderer.bind(this), this.FPS)
+        if (this.loop)
+        {
+            this.loop.remove(this.loopSave)
+            this.loopSave = this.loop.add(() => this.update(), this.FPS)
+        }
         if (this.fpsMeter)
         {
             this.fpsMeter.fps = value
         }
     }
 
+    /**
+     * Add a listener for a given event to yy-loop
+     * @param {(String|Symbol)} event The event name.
+     * @param {Function} fn The listener function.
+     * @param {*} [context=this] The context to invoke the listener with.
+     * @returns {EventEmitter} `this`.
+     */
+    on()
+    {
+        this.loop.on(...arguments)
+    }
+
+    /**
+     * Add a one-time listener for a given event to yy-loop
+     * @param {(String|Symbol)} event The event name.
+     * @param {Function} fn The listener function.
+     * @param {*} [context=this] The context to invoke the listener with.
+     * @returns {EventEmitter} `this`.
+     * @public
+     */
+    once()
+    {
+        this.loop.once(...arguments)
+    }
 
     /**
      * start the internal loop
-     * @inherited from yy-loop
      * @returns {Renderer} this
      */
-    // start()
+    start()
+    {
+        this.loopSave = this.loop.add(() => this.update(), this.FPS)
+        this.loop.start()
+        return this
+    }
 
     /**
      * stop the internal loop
      * @inherited from yy-loop
      * @returns {Renderer} this
      */
-    // stop()
-
-    /**
-     * loop through updates; can be called manually each frame, or called automatically as part of start()
-     * @inherited from yy-loop
-     */
-    // update()
-
-    /**
-     * adds a callback to the loop
-     * @inherited from yy-loop
-     * @param {function} callback
-     * @param {number} [time=0] in milliseconds to call this update (0=every frame)
-     * @param {number} [count=0] number of times to run this update (0=infinite)
-     * @return {object} entry - used to remove or change the parameters of the update
-     */
-    // interval(callback, time, count)
-
-    /**
-     * adds a one-time callback to the loop
-     * @inherited from yy-loop
-     * @param {function} callback
-     * @param {number} time in milliseconds to call this update
-     * @return {object} entry - used to remove or change the parameters of the update
-     */
-    // timeout(callback, time)
-
-    /**
-     * remove a callback from the loop
-     * @inherited from yy-loop
-     * @param {object} entry - returned by add()
-     */
-    // remove(entry)
-
-    /**
-     * @inherited from yy-loop
-     * removes all callbacks from the loop
-     */
-    // removeAll()
-
-    /**
-     * @inherited from yy-loop
-     * @type {number} count of all animations
-     */
-    // get count()
-
-    /**
-     * @inherited from yy-loop
-     * @type {number} count of running animations
-     */
-    // get countRunning()
+    stop()
+    {
+        this.loop.stop()
+    }
 }
 
 module.exports = Renderer
-},{"exists":8,"pixi.js":324,"yy-fps":376,"yy-loop":377}],383:[function(require,module,exports){
+},{"exists":8,"pixi.js":324,"yy-fps":376,"yy-loop":377}],382:[function(require,module,exports){
 /**
  * @file simple-packer.js
  * @author David Figatner
@@ -60539,9 +60547,9 @@ module.exports = class SimplePacker
         }
     }
 }
-},{}],384:[function(require,module,exports){
+},{}],383:[function(require,module,exports){
 
-},{}],385:[function(require,module,exports){
+},{}],384:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -60769,7 +60777,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
-},{"_process":386}],386:[function(require,module,exports){
+},{"_process":385}],385:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -60955,7 +60963,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],387:[function(require,module,exports){
+},{}],386:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/punycode v1.4.1 by @mathias */
 ;(function(root) {
@@ -61492,7 +61500,7 @@ process.umask = function() { return 0; };
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],388:[function(require,module,exports){
+},{}],387:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -61578,7 +61586,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],389:[function(require,module,exports){
+},{}],388:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -61665,13 +61673,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],390:[function(require,module,exports){
+},{}],389:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":388,"./encode":389}],391:[function(require,module,exports){
+},{"./decode":387,"./encode":388}],390:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -62405,7 +62413,7 @@ Url.prototype.parseHost = function() {
   if (host) this.hostname = host;
 };
 
-},{"./util":392,"punycode":387,"querystring":390}],392:[function(require,module,exports){
+},{"./util":391,"punycode":386,"querystring":389}],391:[function(require,module,exports){
 'use strict';
 
 module.exports = {

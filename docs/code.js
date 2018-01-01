@@ -1,5 +1,4 @@
 const PIXI = require('pixi.js')
-const Renderer = require('yy-renderer')
 const Counter = require('yy-counter')
 const Random = require('yy-random')
 
@@ -14,7 +13,7 @@ const sheet = new RenderSheet({ width: 2048, height: 2048 })
 // sheet.testBoxes = true;
 
 // show the rendersheet (for debug purposes)
-sheet.show = {opacity: 0.6, pointerEvents: 'none'}
+sheet.show = { opacity: 0.6, pointerEvents: 'none' }
 
 function setupSheet()
 {
@@ -64,14 +63,18 @@ function testTextures()
     sprite.y = window.innerHeight / 4
 
     // cycle the texture of the sprite from all textures in the rendersheet
-    renderer.interval(
-        function()
+    let time = 0
+    PIXI.ticker.shared.add((t) =>
+    {
+        time += t
+        if (time > 5)
         {
+            time = 0
             const n = Random.get(total)
             sprite.texture = sheet.getTexture('texture_' + n)
             counter.log('texture #' + n)
-            renderer.dirty = true
-        }, 200)
+        }
+    })
 
     const data = renderer.stage.addChild(sheet.get('data-test'))
     data.position.set(window.innerWidth - data.width, window.innerHeight - data.height)
@@ -98,7 +101,7 @@ function triangleDraw(c, params)
 // returns the size of the drawn texture
 function triangleMeasure(c, params)
 {
-    return {width: params.size, height: params.size}
+    return { width: params.size, height: params.size }
 }
 
 function draw(c, params)
@@ -112,20 +115,24 @@ function draw(c, params)
 
 function testChangingTextures()
 {
-    const sprite = renderer.add(sheet.get('texture_0'))
+    const sprite = renderer.stage.addChild(sheet.get('texture_0'))
     sprite.anchor.set(0.5)
     sprite.alpha = 0.25
     renderer.stage.addChild(sprite)
     sprite.x = window.innerWidth / 2
     sprite.y = 3 * window.innerHeight / 4
 
-    renderer.interval(
-        function ()
+    let time = 0
+
+    PIXI.ticker.shared.add((t) =>
+    {
+        time += t
+        if (time > 10)
         {
+            time = 0
             sheet.changeDraw('texture_0', draw)
-            renderer.dirty = true
-        }, 1000
-    )
+        }
+    })
 }
 
 function tests()
@@ -137,7 +144,9 @@ function tests()
 
 window.onload = function ()
 {
-    renderer = new Renderer({ debug: true })
+    renderer = new PIXI.Application({ transparent: true, width: window.innerWidth, height: window.innerHeight, autoResize: true })
+    document.body.appendChild(renderer.view)
+
     counter = new Counter({ side: 'bottom-left' })
     setupSheet()
     sheet.once('render', tests)

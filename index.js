@@ -273,7 +273,7 @@ class RenderSheet extends Events
         }
         if (!this.checkLoaded())
         {
-            window.setTimeout(this.render.bind(this), WAIT)
+            window.setTimeout(() => this.render(), WAIT)
             return
         }
         this.canvases = []
