@@ -15,7 +15,7 @@ const CANVAS = 0 // default
 const IMAGE = 1 // image url
 const DATA = 2 // data src (e.g., result of .toDataURL())
 
-// default ms to wait to reload an image to load
+// default ms to wait to check if an image has finished loading
 const WAIT = 250
 
 class RenderSheet extends Events
@@ -258,7 +258,7 @@ class RenderSheet extends Events
 
     /**
      * create (or refresh) the rendersheet
-     * @param {function} callback - convenience function that calls Rendersheet.once('render', callback)
+     * @param {function} callback - convenience function that calls RenderSheet.once('render', callback)
      */
     render(callback)
     {
@@ -309,7 +309,7 @@ class RenderSheet extends Events
         c.width = this.maxSize
         c.height = this.maxSize
         const context = c.getContext('2d')
-        const multiplier = this.scale * this.resolution
+        const multiplier = Math.ceil(this.scale * this.resolution)
         for (let key in this.textures)
         {
             const texture = this.textures[key]
@@ -322,8 +322,8 @@ class RenderSheet extends Events
                     break
 
                 case IMAGE: case DATA:
-                    texture.width = texture.image.width * multiplier
-                    texture.height = texture.image.height * multiplier
+                    texture.width = Math.ceil(texture.image.width * multiplier)
+                    texture.height = Math.ceil(texture.image.height * multiplier)
                     break
             }
             this.sorted.push(texture)
@@ -383,7 +383,7 @@ class RenderSheet extends Events
     draw()
     {
         let current, context
-        const multiplier = this.scale * this.resolution
+        const multiplier = Math.ceil(this.scale * this.resolution)
         for (let key in this.textures)
         {
             const texture = this.textures[key]
@@ -399,11 +399,11 @@ class RenderSheet extends Events
                 context.scale(multiplier, multiplier)
             }
             context.save()
-            context.translate(texture.x / multiplier, texture.y / multiplier)
+            context.translate(Math.ceil(texture.x / multiplier), Math.ceil(texture.y / multiplier))
             if (this.testBoxes)
             {
                 context.fillStyle = this.randomColor()
-                context.fillRect(0, 0, texture.width / multiplier, texture.height / multiplier)
+                context.fillRect(0, 0, Math.ceil(texture.width / multiplier), Math.ceil(texture.height / multiplier))
             }
             switch (texture.type)
             {
