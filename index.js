@@ -26,6 +26,7 @@ class RenderSheet extends Events
      * @param {number} [options.buffer=5] around each texture
      * @param {number} [options.scale=1] of texture
      * @param {number} [options.resolution=1] of rendersheet
+     * @param {number} [options.extrude] the edges--useful for removing gaps in sprites when tiling
      * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
      * @param {boolean} [options.testBoxes] draw a different colored boxes behind each rendering (useful for debugging)
      * @param {number|boolean} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet (use =true for PIXI.SCALE_MODES.NEAREST for pixel art)
@@ -45,6 +46,11 @@ class RenderSheet extends Events
         this.scaleMode = options.scaleMode === true ? PIXI.SCALE_MODES.NEAREST : options.scaleMode
         this.resolution = options.resolution || 1
         this.show = options.show
+        this.extrude = options.extrude
+        if (this.extrude && this.buffer < 2)
+        {
+            this.buffer = 2
+        }
         this.packer = options.useSimplePacker ? SimplePacker : GrowingPacker
         this.canvases = []
         this.baseTextures = []
@@ -415,9 +421,64 @@ class RenderSheet extends Events
                     context.drawImage(texture.image, 0, 0)
                     break
             }
+            if (this.extrude)
+            {
+                this.extrudeEntry(texture, context, current)
+            }
             context.restore()
         }
         context.restore()
+    }
+
+    /**
+     * extrude pixels for entry
+     * @param {object} texture
+     * @param {CanvasRenderingContext2D} context
+     * @private
+     */
+    extrudeEntry(texture, context, current)
+    {
+        function get(x, y)
+        {
+            const entry = (x + y * texture.width) * 4
+            const d = data.data
+            return 'rgba(' + d[entry] + ',' + d[entry + 1] + ',' + d[entry + 2] + ',' + d[entry + 3] + ')'
+        }
+
+        const canvas = this.canvases[current]
+        const data = context.getImageData(texture.x, texture.y, texture.width, texture.height)
+        if (texture.x !== 0)
+        {
+            for (let y = 0; y < texture.height; y++)
+            {
+                context.fillStyle = get(0, y)
+                context.fillRect(-1, y, 1, 1)
+            }
+        }
+        if (texture.x !== canvas.width - 1)
+        {
+            for (let y = 0; y < texture.height; y++)
+            {
+                context.fillStyle = get(texture.width - 1, y)
+                context.fillRect(texture.width, y, 1, 1)
+            }
+        }
+        if (texture.y !== 0)
+        {
+            for (let x = 0; x < texture.width; x++)
+            {
+                context.fillStyle = get(x, 0)
+                context.fillRect(x, -1, 1, 1)
+            }
+        }
+        if (texture.y !== canvas.height - 1)
+        {
+            for (let x = 0; x < texture.width; x++)
+            {
+                context.fillStyle = get(x, texture.height - 1)
+                context.fillRect(x, texture.height, 1, 1)
+            }
+        }
     }
 
     /**
