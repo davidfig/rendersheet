@@ -7,7 +7,7 @@ const RenderSheet = require('..')
 let renderer, counter, n = 0, size = 500, total
 
 // set up rendersheet
-const sheet = new RenderSheet({ width: 2048, height: 2048, extrude: true, scaleMode: true })
+const sheet = new RenderSheet({ width: 2048, height: 2048 })
 
 // surround textures with boxes (for debug purposes)
 // sheet.testBoxes = true;
