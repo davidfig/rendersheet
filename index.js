@@ -454,6 +454,11 @@ class RenderSheet extends Events
                 context.fillStyle = get(0, y)
                 context.fillRect(-1, y, 1, 1)
             }
+            if (texture.y !== 0)
+            {
+                context.fillStyle = get(0, 0)
+                context.fillRect(-1, -1, 1, 1)
+            }
         }
         if (texture.x !== canvas.width - 1)
         {
@@ -461,6 +466,11 @@ class RenderSheet extends Events
             {
                 context.fillStyle = get(texture.width - 1, y)
                 context.fillRect(texture.width, y, 1, 1)
+            }
+            if (texture.y !== canvas.height - 1)
+            {
+                context.fillStyle = get(texture.width - 1, texture.height - 1)
+                context.fillRect(texture.width, texture.height, 1, 1)
             }
         }
         if (texture.y !== 0)
