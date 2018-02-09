@@ -460,14 +460,14 @@ class RenderSheet extends Events
                 context.fillRect(-1, -1, 1, 1)
             }
         }
-        if (texture.x !== canvas.width - 1)
+        if (texture.x + texture.width !== canvas.width - 1)
         {
             for (let y = 0; y < texture.height; y++)
             {
                 context.fillStyle = get(texture.width - 1, y)
                 context.fillRect(texture.width, y, 1, 1)
             }
-            if (texture.y !== canvas.height - 1)
+            if (texture.y + texture.height !== canvas.height - 1)
             {
                 context.fillStyle = get(texture.width - 1, texture.height - 1)
                 context.fillRect(texture.width, texture.height, 1, 1)
@@ -481,7 +481,7 @@ class RenderSheet extends Events
                 context.fillRect(x, -1, 1, 1)
             }
         }
-        if (texture.y !== canvas.height - 1)
+        if (texture.y + texture.height !== canvas.height - 1)
         {
             for (let x = 0; x < texture.width; x++)
             {
