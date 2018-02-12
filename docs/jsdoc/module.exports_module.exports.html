@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>yy-rendersheet API Documentation</title>
+    
+    <meta name="description" content="Documentation for yy-rendersheet library" />
+    
+        <meta name="keywords" content="docs, documentation, html5, javascript, jsdoc, spritesheet, rendersheet, canvas, pixi.js" />
+        <meta name="keyword" content="docs, documentation, html5, javascript, jsdoc, spritesheet, rendersheet, canvas, pixi.js" />
+    
+    
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <script src="scripts/jquery.min.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link href="https://fonts.googleapis.com/css?family=Libre+Franklin:400,700" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/bootstrap.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/main.css">
+
+    
+    <script>
+    var config = {"monospaceLinks":false,"cleverLinks":false,"default":{"outputSourceFiles":true},"applicationName":"yy-rendersheet","footer":"by YOPEY YOPEY LLC (yopeyopey.com)","copyright":"Copyright © 2018 YOPEY YOPEY LLC.","meta":{"title":"yy-rendersheet API Documentation","description":"Documentation for yy-rendersheet library","keyword":"docs, documentation, html5, javascript, jsdoc, spritesheet, rendersheet, canvas, pixi.js"},"matomo":{"url":"https://analytics.yopeyopey.com/piwik/","id":17}};
+    </script>
+    
+
+    
+    <script type="text/javascript">
+    var _paq = _paq || [];
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+        var u="https://analytics.yopeyopey.com/piwik/";
+        _paq.push(['setTrackerUrl', u+'piwik.php']);
+        _paq.push(['setSiteId', '17']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+    })();
+    </script>
+    
+</head>
+<body>
+<div id="wrap" class="clearfix">
+    
+<div class="navigation">
+    <h3 class="applicationName"><a href="index.html">yy-rendersheet</a></h3>
+    <button id="menuToggle" class="btn btn-link btn-lg menu-toggle">
+        <span class="glyphicon glyphicon-menu-hamburger"></span>
+    </button>
+    <div class="search">
+        <input id="search" type="text" class="form-control input-md" placeholder="Search...">
+    </div>
+    <ul class="list">
+    
+        
+    
+        
+        <li class="item" data-name="module.exports#module.exports">
+            <span class="title  ">
+                
+                <a href="module.exports_module.exports.html">module.exports#module.exports</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        
+        <li class="item" data-name="RenderSheet">
+            <span class="title  ">
+                
+                <a href="RenderSheet.html">RenderSheet</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li class="parent  " data-name="RenderSheet#add"><a href="RenderSheet.html#add">add</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#addData"><a href="RenderSheet.html#addData">addData</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#addImage"><a href="RenderSheet.html#addImage">addImage</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#changeDraw"><a href="RenderSheet.html#changeDraw">changeDraw</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#checkLoaded"><a href="RenderSheet.html#checkLoaded">checkLoaded</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#debug"><a href="RenderSheet.html#debug">debug</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#entries"><a href="RenderSheet.html#entries">entries</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#exists"><a href="RenderSheet.html#exists">exists</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#get"><a href="RenderSheet.html#get">get</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#getIndex"><a href="RenderSheet.html#getIndex">getIndex</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#getSprite"><a href="RenderSheet.html#getSprite">getSprite</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#getTexture"><a href="RenderSheet.html#getTexture">getTexture</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#render"><a href="RenderSheet.html#render">render</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            <span class="subtitle">Events</span>
+            
+                <li class="parent" data-name="RenderSheet#event:render"><a href="RenderSheet.html#event:render">render</a></li>
+            
+            </ul>
+        </li>
+    
+    </ul>
+</div>
+    <div class="main">
+        
+        <h1 class="page-title" data-filename="Viewport">Class: exports</h1>
+        
+        
+
+
+
+<section>
+
+<header>
+    <div class="header content-size">
+        <h2>exports
+        </h2>
+        
+    </div>
+</header>
+
+<article class="content-size">
+    <div class="container-overview">
+    
+
+    
+        
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id="exports">
+            <a class="share-icon" href="#exports"><span class="glyphicon glyphicon-link"></span></a>
+            <span class="">
+                new module.exports#module.exports
+            </span>
+            <span class="signature">(max, first, buffer)</span>
+            
+            
+            
+            
+        </h4>
+
+        
+        <div class="tag-source">
+            <a href="src_simplepacker.js.html#line17">simplepacker.js:17</a>
+        </div>
+        
+    </div>
+
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>ridiculously simple packer, optimized (if you can call it that) only for speed</p>
+    </div>
+    
+
+    
+
+    
+
+    
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>max</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>size</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>first</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>block</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>buffer</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>between each block</p></td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+        
+
+        <footer class="content-size">
+            <div class="footer">
+                Documentation generated by <a target="_blank" href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Feb 12 2018 08:21:10 GMT+0800 (DST)
+            </div>
+        </footer>
+    </div>
+</div>
+<script>prettyPrint();</script>
+<script src="scripts/main.js"></script>
+</body>
+</html>

@@ -2,7 +2,7 @@ const PIXI = require('pixi.js')
 const Counter = require('yy-counter')
 const Random = require('yy-random')
 
-const RenderSheet = require('..')
+const RenderSheet = require('../dist/rendersheet')
 
 let renderer, counter, n = 0, size = 500, total
 

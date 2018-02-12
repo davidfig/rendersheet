@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>yy-rendersheet API Documentation</title>
+    
+    <meta name="description" content="Documentation for yy-rendersheet library" />
+    
+        <meta name="keywords" content="docs, documentation, html5, javascript, jsdoc, spritesheet, rendersheet, canvas, pixi.js" />
+        <meta name="keyword" content="docs, documentation, html5, javascript, jsdoc, spritesheet, rendersheet, canvas, pixi.js" />
+    
+    
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <script src="scripts/jquery.min.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link href="https://fonts.googleapis.com/css?family=Libre+Franklin:400,700" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/bootstrap.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/main.css">
+
+    
+    <script>
+    var config = {"monospaceLinks":false,"cleverLinks":false,"default":{"outputSourceFiles":true},"applicationName":"yy-rendersheet","footer":"by YOPEY YOPEY LLC (yopeyopey.com)","copyright":"Copyright © 2018 YOPEY YOPEY LLC.","meta":{"title":"yy-rendersheet API Documentation","description":"Documentation for yy-rendersheet library","keyword":"docs, documentation, html5, javascript, jsdoc, spritesheet, rendersheet, canvas, pixi.js"},"matomo":{"url":"https://analytics.yopeyopey.com/piwik/","id":17}};
+    </script>
+    
+
+    
+    <script type="text/javascript">
+    var _paq = _paq || [];
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+        var u="https://analytics.yopeyopey.com/piwik/";
+        _paq.push(['setTrackerUrl', u+'piwik.php']);
+        _paq.push(['setSiteId', '17']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+    })();
+    </script>
+    
+</head>
+<body>
+<div id="wrap" class="clearfix">
+    
+<div class="navigation">
+    <h3 class="applicationName"><a href="index.html">yy-rendersheet</a></h3>
+    <button id="menuToggle" class="btn btn-link btn-lg menu-toggle">
+        <span class="glyphicon glyphicon-menu-hamburger"></span>
+    </button>
+    <div class="search">
+        <input id="search" type="text" class="form-control input-md" placeholder="Search...">
+    </div>
+    <ul class="list">
+    
+        
+    
+        
+        <li class="item" data-name="module.exports#module.exports">
+            <span class="title  ">
+                
+                <a href="module.exports_module.exports.html">module.exports#module.exports</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        
+        <li class="item" data-name="RenderSheet">
+            <span class="title  ">
+                
+                <a href="RenderSheet.html">RenderSheet</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li class="parent  " data-name="RenderSheet#add"><a href="RenderSheet.html#add">add</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#addData"><a href="RenderSheet.html#addData">addData</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#addImage"><a href="RenderSheet.html#addImage">addImage</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#changeDraw"><a href="RenderSheet.html#changeDraw">changeDraw</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#checkLoaded"><a href="RenderSheet.html#checkLoaded">checkLoaded</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#debug"><a href="RenderSheet.html#debug">debug</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#entries"><a href="RenderSheet.html#entries">entries</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#exists"><a href="RenderSheet.html#exists">exists</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#get"><a href="RenderSheet.html#get">get</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#getIndex"><a href="RenderSheet.html#getIndex">getIndex</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#getSprite"><a href="RenderSheet.html#getSprite">getSprite</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#getTexture"><a href="RenderSheet.html#getTexture">getTexture</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#render"><a href="RenderSheet.html#render">render</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            <span class="subtitle">Events</span>
+            
+                <li class="parent" data-name="RenderSheet#event:render"><a href="RenderSheet.html#event:render">render</a></li>
+            
+            </ul>
+        </li>
+    
+    </ul>
+</div>
+    <div class="main">
+        
+        <h1 class="page-title" data-filename="Viewport">Source: src/growingpacker.js</h1>
+        
+        
+
+
+    
+    <section>
+        <header>
+            <div class="header content-size">
+                <h2>src/growingpacker.js</h2>
+            </div>
+        </header>
+        <article>
+            <pre id="source-code" class="prettyprint source "><code>/**
+ * @file growingpacker.js
+ * @author David Figatner
+ * @license MIT
+ * @copyright YOPEY YOPEY LLC 2016
+ * {@link https://github.com/davidfig/rendersheet}
+ *
+ * based on
+ * packer.growing.js {@link https://github.com/jakesgordon/bin-packing/}
+ * by Jake Gordon
+ * MIT license
+ * Copyright (c) 2011-2016 Jake Gordon and contributors
+ */
+
+class GrowingPacker
+{
+    constructor(max, first, buffer)
+    {
+        this.max = max
+        this.buffer = buffer
+        this.root = { x: 0, y: 0, w: first.width + buffer, h: first.height + buffer }
+    }
+
+    finish(maxSize)
+    {
+        let n = 1, next
+        const squared = []
+        do
+        {
+            next = Math.pow(2, n++)
+            squared.push(next)
+        } while (next &lt;= maxSize)
+
+        const max = Math.max(this.root.w, this.root.h)
+
+        for (let i = squared.length - 1; i >= 0; i--)
+        {
+            if (squared[i] &lt; max)
+            {
+                return squared[i + 1]
+            }
+        }
+    }
+
+    add(block, canvasNumber)
+    {
+        let result, node
+        if (node = this.findNode(this.root, block.width + this.buffer, block.height + this.buffer))
+        {
+            result = this.splitNode(node, block.width + this.buffer, block.height + this.buffer)
+        }
+        else
+        {
+            result = this.growNode(block.width + this.buffer, block.height + this.buffer)
+            if (!result)
+            {
+                return false
+            }
+        }
+        block.x = result.x
+        block.y = result.y
+        block.canvas = canvasNumber
+        return true
+    }
+
+    findNode(root, w, h)
+    {
+        if (root.used)
+        {
+            return this.findNode(root.right, w, h) || this.findNode(root.down, w, h)
+        }
+        else if ((w &lt;= root.w) &amp;&amp; (h &lt;= root.h))
+        {
+            return root
+        }
+        else
+        {
+            return null
+        }
+    }
+
+    splitNode(node, w, h)
+    {
+        node.used = true
+        node.down  = { x: node.x,     y: node.y + h, w: node.w,     h: node.h - h }
+        node.right = { x: node.x + w, y: node.y,     w: node.w - w, h: h          }
+        return node
+    }
+
+    growNode(w, h)
+    {
+        const canGrowDown  = (w &lt;= this.root.w)
+        const canGrowRight = (h &lt;= this.root.h)
+
+        const shouldGrowRight = canGrowRight &amp;&amp; (this.root.h >= (this.root.w + w)) // attempt to keep square-ish by growing right when height is much greater than width
+        const shouldGrowDown  = canGrowDown  &amp;&amp; (this.root.w >= (this.root.h + h)) // attempt to keep square-ish by growing down  when width  is much greater than height
+
+        if (shouldGrowRight)
+        {
+            return this.growRight(w, h)
+        }
+        else if (shouldGrowDown)
+        {
+            return this.growDown(w, h)
+        }
+        else if (canGrowRight)
+        {
+            return this.growRight(w, h)
+        }
+        else if (canGrowDown)
+        {
+            return this.growDown(w, h)
+        }
+        else
+        {
+            return null
+        }
+    }
+
+    growRight(w, h)
+    {
+        if (this.root.w + w >= this.max)
+        {
+            return null
+        }
+        this.root = {
+            used: true,
+            x: 0,
+            y: 0,
+            w: this.root.w + w,
+            h: this.root.h,
+            down: this.root,
+            right: { x: this.root.w, y: 0, w: w, h: this.root.h }
+        }
+        let node
+        if (node = this.findNode(this.root, w, h))
+        {
+            return this.splitNode(node, w, h)
+        }
+        else
+        {
+            return null
+        }
+    }
+
+    growDown(w, h)
+    {
+        if (this.root.h + h >= this.max)
+        {
+            return null
+        }
+        this.root = {
+            used: true,
+            x: 0,
+            y: 0,
+            w: this.root.w,
+            h: this.root.h + h,
+            down:  { x: 0, y: this.root.h, w: this.root.w, h: h },
+            right: this.root
+        }
+        let node
+        if (node = this.findNode(this.root, w, h))
+        {
+            return this.splitNode(node, w, h)
+        }
+        else
+        {
+            return null
+        }
+    }
+}
+
+module.exports = GrowingPacker</code></pre>
+        </article>
+    </section>
+
+
+
+
+
+
+        
+
+        <footer class="content-size">
+            <div class="footer">
+                Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Feb 12 2018 08:21:10 GMT+0800 (DST)
+            </div>
+        </footer>
+    </div>
+</div>
+<script>prettyPrint();</script>
+<script src="scripts/main.js"></script>
+</body>
+</html>

@@ -1,4 +1,135 @@
-// yy-rendersheet
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>yy-rendersheet API Documentation</title>
+    
+    <meta name="description" content="Documentation for yy-rendersheet library" />
+    
+        <meta name="keywords" content="docs, documentation, html5, javascript, jsdoc, spritesheet, rendersheet, canvas, pixi.js" />
+        <meta name="keyword" content="docs, documentation, html5, javascript, jsdoc, spritesheet, rendersheet, canvas, pixi.js" />
+    
+    
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <script src="scripts/jquery.min.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link href="https://fonts.googleapis.com/css?family=Libre+Franklin:400,700" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/bootstrap.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/main.css">
+
+    
+    <script>
+    var config = {"monospaceLinks":false,"cleverLinks":false,"default":{"outputSourceFiles":true},"applicationName":"yy-rendersheet","footer":"by YOPEY YOPEY LLC (yopeyopey.com)","copyright":"Copyright © 2018 YOPEY YOPEY LLC.","meta":{"title":"yy-rendersheet API Documentation","description":"Documentation for yy-rendersheet library","keyword":"docs, documentation, html5, javascript, jsdoc, spritesheet, rendersheet, canvas, pixi.js"},"matomo":{"url":"https://analytics.yopeyopey.com/piwik/","id":17}};
+    </script>
+    
+
+    
+    <script type="text/javascript">
+    var _paq = _paq || [];
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+        var u="https://analytics.yopeyopey.com/piwik/";
+        _paq.push(['setTrackerUrl', u+'piwik.php']);
+        _paq.push(['setSiteId', '17']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+    })();
+    </script>
+    
+</head>
+<body>
+<div id="wrap" class="clearfix">
+    
+<div class="navigation">
+    <h3 class="applicationName"><a href="index.html">yy-rendersheet</a></h3>
+    <button id="menuToggle" class="btn btn-link btn-lg menu-toggle">
+        <span class="glyphicon glyphicon-menu-hamburger"></span>
+    </button>
+    <div class="search">
+        <input id="search" type="text" class="form-control input-md" placeholder="Search...">
+    </div>
+    <ul class="list">
+    
+        
+        <li class="item" data-name="RenderSheet">
+            <span class="title  ">
+                
+                <a href="RenderSheet.html">RenderSheet</a>
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li class="parent  " data-name="RenderSheet#add"><a href="RenderSheet.html#add">add</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#addData"><a href="RenderSheet.html#addData">addData</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#addImage"><a href="RenderSheet.html#addImage">addImage</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#changeDraw"><a href="RenderSheet.html#changeDraw">changeDraw</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#checkLoaded"><a href="RenderSheet.html#checkLoaded">checkLoaded</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#debug"><a href="RenderSheet.html#debug">debug</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#entries"><a href="RenderSheet.html#entries">entries</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#exists"><a href="RenderSheet.html#exists">exists</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#get"><a href="RenderSheet.html#get">get</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#getIndex"><a href="RenderSheet.html#getIndex">getIndex</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#getSprite"><a href="RenderSheet.html#getSprite">getSprite</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#getTexture"><a href="RenderSheet.html#getTexture">getTexture</a></li>
+            
+                <li class="parent  " data-name="RenderSheet#render"><a href="RenderSheet.html#render">render</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            <span class="subtitle">Events</span>
+            
+                <li class="parent" data-name="RenderSheet#event:render"><a href="RenderSheet.html#event:render">render</a></li>
+            
+            </ul>
+        </li>
+    
+    </ul>
+</div>
+    <div class="main">
+        
+        <h1 class="page-title" data-filename="RenderSheet">Source: /mnt/c/Users/dsfig/programming/components/rendersheet/src/rendersheet.js</h1>
+        
+        
+
+
+    
+    <section>
+        <header>
+            <div class="header content-size">
+                <h2>/mnt/c/Users/dsfig/programming/components/rendersheet/src/rendersheet.js</h2>
+            </div>
+        </header>
+        <article>
+            <pre id="source-code" class="prettyprint source "><code>// yy-rendersheet
 // by David Figatner
 // (c) YOPEY YOPEY LLC 2017
 // MIT License
@@ -32,7 +163,7 @@ class RenderSheet extends Events
      * @param {number|boolean} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet (use =true for PIXI.SCALE_MODES.NEAREST for pixel art)
      * @param {boolean} [options.useSimplePacker] use a stupidly simple packer instead of growing packer algorithm
      * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
-     * @event render - emitted when RenderSheet.render completes
+     * @fire render
      */
     constructor(options)
     {
@@ -47,7 +178,7 @@ class RenderSheet extends Events
         this.resolution = options.resolution || 1
         this.show = options.show
         this.extrude = options.extrude
-        if (this.extrude && this.buffer < 2)
+        if (this.extrude &amp;&amp; this.buffer &lt; 2)
         {
             this.buffer = 2
         }
@@ -89,7 +220,7 @@ class RenderSheet extends Events
     /**
      * adds a data source (e.g., a PNG file in data format)
      * @param {object} data of rendering (not filename)
-     * @param {string="data:image/png;base64,"} [header] for data
+     * @param {string} [header=data:image/png;base64,] for data
      * @return {object} rendersheet object for texture
      */
     addData(name, data, header)
@@ -122,7 +253,7 @@ class RenderSheet extends Events
             }
         }
         const percent = 1 / this.canvases.length
-        for (let i = 0; i < this.canvases.length; i++)
+        for (let i = 0; i &lt; this.canvases.length; i++)
         {
             const canvas = this.canvases[i]
             const style = canvas.style
@@ -199,7 +330,7 @@ class RenderSheet extends Events
     /**
      * alias for getSprite()
      * @param {string} name of texture
-     * @return {PIXI.Sprite)}
+     * @return {PIXI.Sprite}
      */
     get(name)
     {
@@ -219,7 +350,7 @@ class RenderSheet extends Events
      */
     debug()
     {
-        for (let i = 0; i < this.canvases.length; i++)
+        for (let i = 0; i &lt; this.canvases.length; i++)
         {
             const canvas = this.canvases[i]
             console.log('yy-rendersheet: Sheet #' + (i + 1) + ' | size: ' + canvas.width + 'x' + canvas.height + ' | resolution: ' + this.resolution)
@@ -254,7 +385,7 @@ class RenderSheet extends Events
         for (let key in this.textures)
         {
             const current = this.textures[key]
-            if ((current.type === IMAGE || current.type === DATA) && !current.loaded)
+            if ((current.type === IMAGE || current.type === DATA) &amp;&amp; !current.loaded)
             {
                 return false
             }
@@ -449,7 +580,7 @@ class RenderSheet extends Events
         const data = context.getImageData(texture.x, texture.y, texture.width, texture.height)
         if (texture.x !== 0)
         {
-            for (let y = 0; y < texture.height; y++)
+            for (let y = 0; y &lt; texture.height; y++)
             {
                 context.fillStyle = get(0, y)
                 context.fillRect(-1, y, 1, 1)
@@ -462,7 +593,7 @@ class RenderSheet extends Events
         }
         if (texture.x + texture.width !== canvas.width - 1)
         {
-            for (let y = 0; y < texture.height; y++)
+            for (let y = 0; y &lt; texture.height; y++)
             {
                 context.fillStyle = get(texture.width - 1, y)
                 context.fillRect(texture.width, y, 1, 1)
@@ -475,7 +606,7 @@ class RenderSheet extends Events
         }
         if (texture.y !== 0)
         {
-            for (let x = 0; x < texture.width; x++)
+            for (let x = 0; x &lt; texture.width; x++)
             {
                 context.fillStyle = get(x, 0)
                 context.fillRect(x, -1, 1, 1)
@@ -483,7 +614,7 @@ class RenderSheet extends Events
         }
         if (texture.y + texture.height !== canvas.height - 1)
         {
-            for (let x = 0; x < texture.width; x++)
+            for (let x = 0; x &lt; texture.width; x++)
             {
                 context.fillStyle = get(x, texture.height - 1)
                 context.fillRect(x, texture.height, 1, 1)
@@ -500,7 +631,7 @@ class RenderSheet extends Events
         {
             this.baseTextures.pop().destroy()
         }
-        for (let i = 0; i < this.canvases.length; i++)
+        for (let i = 0; i &lt; this.canvases.length; i++)
         {
             const base = PIXI.BaseTexture.fromCanvas(this.canvases[i])
             if (this.scaleMode)
@@ -518,11 +649,11 @@ class RenderSheet extends Events
     pack()
     {
         const packers = [new this.packer(this.maxSize, this.sorted[0], this.buffer)]
-        for (let i = 0; i < this.sorted.length; i++)
+        for (let i = 0; i &lt; this.sorted.length; i++)
         {
             const block = this.sorted[i]
             let packed = false
-            for (var j = 0; j < packers.length; j++)
+            for (var j = 0; j &lt; packers.length; j++)
             {
                 if (packers[j].add(block, j))
                 {
@@ -546,7 +677,7 @@ class RenderSheet extends Events
             }
         }
 
-        for (let i = 0; i < packers.length; i++)
+        for (let i = 0; i &lt; packers.length; i++)
         {
             const size = packers[i].finish(this.maxSize)
             this.createCanvas(size)
@@ -580,3 +711,29 @@ class RenderSheet extends Events
 }
 
 module.exports = RenderSheet
+
+/**
+ * fires when render completes
+ * @event RenderSheet#render
+ */</code></pre>
+        </article>
+    </section>
+
+
+
+
+
+
+        
+
+        <footer class="content-size">
+            <div class="footer">
+                Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Feb 12 2018 08:23:56 GMT+0800 (DST)
+            </div>
+        </footer>
+    </div>
+</div>
+<script>prettyPrint();</script>
+<script src="scripts/main.js"></script>
+</body>
+</html>
