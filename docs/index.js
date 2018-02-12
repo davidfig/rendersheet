@@ -1,10 +1,849 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(){function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s}return e})()({1:[function(require,module,exports){
+"use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @file growingpacker.js
+ * @author David Figatner
+ * @license MIT
+ * @copyright YOPEY YOPEY LLC 2016
+ * {@link https://github.com/davidfig/rendersheet}
+ *
+ * based on
+ * packer.growing.js {@link https://github.com/jakesgordon/bin-packing/}
+ * by Jake Gordon
+ * MIT license
+ * Copyright (c) 2011-2016 Jake Gordon and contributors
+ */
+
+var GrowingPacker = function () {
+    function GrowingPacker(max, first, buffer) {
+        _classCallCheck(this, GrowingPacker);
+
+        this.max = max;
+        this.buffer = buffer;
+        this.root = { x: 0, y: 0, w: first.width + buffer, h: first.height + buffer };
+    }
+
+    _createClass(GrowingPacker, [{
+        key: "finish",
+        value: function finish(maxSize) {
+            var n = 1,
+                next = void 0;
+            var squared = [];
+            do {
+                next = Math.pow(2, n++);
+                squared.push(next);
+            } while (next <= maxSize);
+
+            var max = Math.max(this.root.w, this.root.h);
+
+            for (var i = squared.length - 1; i >= 0; i--) {
+                if (squared[i] < max) {
+                    return squared[i + 1];
+                }
+            }
+        }
+    }, {
+        key: "add",
+        value: function add(block, canvasNumber) {
+            var result = void 0,
+                node = void 0;
+            if (node = this.findNode(this.root, block.width + this.buffer, block.height + this.buffer)) {
+                result = this.splitNode(node, block.width + this.buffer, block.height + this.buffer);
+            } else {
+                result = this.growNode(block.width + this.buffer, block.height + this.buffer);
+                if (!result) {
+                    return false;
+                }
+            }
+            block.x = result.x;
+            block.y = result.y;
+            block.canvas = canvasNumber;
+            return true;
+        }
+    }, {
+        key: "findNode",
+        value: function findNode(root, w, h) {
+            if (root.used) {
+                return this.findNode(root.right, w, h) || this.findNode(root.down, w, h);
+            } else if (w <= root.w && h <= root.h) {
+                return root;
+            } else {
+                return null;
+            }
+        }
+    }, {
+        key: "splitNode",
+        value: function splitNode(node, w, h) {
+            node.used = true;
+            node.down = { x: node.x, y: node.y + h, w: node.w, h: node.h - h };
+            node.right = { x: node.x + w, y: node.y, w: node.w - w, h: h };
+            return node;
+        }
+    }, {
+        key: "growNode",
+        value: function growNode(w, h) {
+            var canGrowDown = w <= this.root.w;
+            var canGrowRight = h <= this.root.h;
+
+            var shouldGrowRight = canGrowRight && this.root.h >= this.root.w + w; // attempt to keep square-ish by growing right when height is much greater than width
+            var shouldGrowDown = canGrowDown && this.root.w >= this.root.h + h; // attempt to keep square-ish by growing down  when width  is much greater than height
+
+            if (shouldGrowRight) {
+                return this.growRight(w, h);
+            } else if (shouldGrowDown) {
+                return this.growDown(w, h);
+            } else if (canGrowRight) {
+                return this.growRight(w, h);
+            } else if (canGrowDown) {
+                return this.growDown(w, h);
+            } else {
+                return null;
+            }
+        }
+    }, {
+        key: "growRight",
+        value: function growRight(w, h) {
+            if (this.root.w + w >= this.max) {
+                return null;
+            }
+            this.root = {
+                used: true,
+                x: 0,
+                y: 0,
+                w: this.root.w + w,
+                h: this.root.h,
+                down: this.root,
+                right: { x: this.root.w, y: 0, w: w, h: this.root.h }
+            };
+            var node = void 0;
+            if (node = this.findNode(this.root, w, h)) {
+                return this.splitNode(node, w, h);
+            } else {
+                return null;
+            }
+        }
+    }, {
+        key: "growDown",
+        value: function growDown(w, h) {
+            if (this.root.h + h >= this.max) {
+                return null;
+            }
+            this.root = {
+                used: true,
+                x: 0,
+                y: 0,
+                w: this.root.w,
+                h: this.root.h + h,
+                down: { x: 0, y: this.root.h, w: this.root.w, h: h },
+                right: this.root
+            };
+            var node = void 0;
+            if (node = this.findNode(this.root, w, h)) {
+                return this.splitNode(node, w, h);
+            } else {
+                return null;
+            }
+        }
+    }]);
+
+    return GrowingPacker;
+}();
+
+module.exports = GrowingPacker;
+
+},{}],2:[function(require,module,exports){
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+// yy-rendersheet
+// by David Figatner
+// (c) YOPEY YOPEY LLC 2017
+// MIT License
+// https://github.com/davidfig/rendersheet
+
+var PIXI = require('pixi.js');
+var Events = require('eventemitter3');
+
+var GrowingPacker = require('./growingpacker');
+var SimplePacker = require('./simplepacker');
+
+// types
+var CANVAS = 0; // default
+var IMAGE = 1; // image url
+var DATA = 2; // data src (e.g., result of .toDataURL())
+
+// default ms to wait to check if an image has finished loading
+var WAIT = 250;
+
+var RenderSheet = function (_Events) {
+    _inherits(RenderSheet, _Events);
+
+    /**
+     * @param {object} options
+     * @param {number} [options.maxSize=2048]
+     * @param {number} [options.buffer=5] around each texture
+     * @param {number} [options.scale=1] of texture
+     * @param {number} [options.resolution=1] of rendersheet
+     * @param {number} [options.extrude] the edges--useful for removing gaps in sprites when tiling
+     * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
+     * @param {boolean} [options.testBoxes] draw a different colored boxes behind each rendering (useful for debugging)
+     * @param {number|boolean} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet (use =true for PIXI.SCALE_MODES.NEAREST for pixel art)
+     * @param {boolean} [options.useSimplePacker] use a stupidly simple packer instead of growing packer algorithm
+     * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
+     * @fire render
+     */
+    function RenderSheet(options) {
+        _classCallCheck(this, RenderSheet);
+
+        var _this = _possibleConstructorReturn(this, (RenderSheet.__proto__ || Object.getPrototypeOf(RenderSheet)).call(this));
+
+        options = options || {};
+        _this.wait = options.wait || WAIT;
+        _this.testBoxes = options.testBoxes || false;
+        _this.maxSize = options.maxSize || 2048;
+        _this.buffer = options.buffer || 5;
+        _this.scale = options.scale || 1;
+        _this.scaleMode = options.scaleMode === true ? PIXI.SCALE_MODES.NEAREST : options.scaleMode;
+        _this.resolution = options.resolution || 1;
+        _this.show = options.show;
+        _this.extrude = options.extrude;
+        if (_this.extrude && _this.buffer < 2) {
+            _this.buffer = 2;
+        }
+        _this.packer = options.useSimplePacker ? SimplePacker : GrowingPacker;
+        _this.canvases = [];
+        _this.baseTextures = [];
+        _this.textures = {};
+        return _this;
+    }
+
+    /**
+     * adds a canvas rendering
+     * @param {string} name of rendering
+     * @param {Function} draw function(context) - use the context to draw within the bounds of the measure function
+     * @param {Function} measure function(context) - needs to return {width: width, height: height} for the rendering
+     * @param {object} params - object to pass the draw() and measure() functions
+     * @return {object} rendersheet object for texture
+     */
+
+
+    _createClass(RenderSheet, [{
+        key: 'add',
+        value: function add(name, draw, measure, param) {
+            var object = this.textures[name] = { name: name, draw: draw, measure: measure, param: param, type: CANVAS, texture: new PIXI.Texture(PIXI.Texture.EMPTY) };
+            return object;
+        }
+
+        /**
+         * adds an image rendering
+         * @param {string} name of rendering
+         * @param {string} src for image
+         * @return {object} rendersheet object for texture
+         */
+
+    }, {
+        key: 'addImage',
+        value: function addImage(name, src) {
+            var object = this.textures[name] = { name: name, file: src, type: IMAGE, texture: new PIXI.Texture(PIXI.Texture.EMPTY) };
+            object.image = new Image();
+            object.image.onload = function () {
+                return object.loaded = true;
+            };
+            object.image.src = src;
+            return object;
+        }
+
+        /**
+         * adds a data source (e.g., a PNG file in data format)
+         * @param {object} data of rendering (not filename)
+         * @param {string} [header=data:image/png;base64,] for data
+         * @return {object} rendersheet object for texture
+         */
+
+    }, {
+        key: 'addData',
+        value: function addData(name, data, header) {
+            header = typeof header !== 'undefined' ? header : 'data:image/png;base64,';
+            var object = this.textures[name] = { name: name, type: DATA, texture: new PIXI.Texture(PIXI.Texture.EMPTY) };
+            object.image = new Image();
+            object.image.src = header + data;
+            object.image.onload = function () {
+                return object.loaded = true;
+            };
+            return object;
+        }
+
+        /**
+         * attaches RenderSheet to DOM for testing
+         * @param {object} styles - CSS styles to use for rendersheet
+         * @private
+         */
+
+    }, {
+        key: 'showCanvases',
+        value: function showCanvases() {
+            if (!this.divCanvases) {
+                this.divCanvases = document.createElement('div');
+                document.body.appendChild(this.divCanvases);
+            } else {
+                while (this.divCanvases.hasChildNodes()) {
+                    this.divCanvases.removeChild(this.divCanvases.lastChild);
+                }
+            }
+            var percent = 1 / this.canvases.length;
+            for (var i = 0; i < this.canvases.length; i++) {
+                var canvas = this.canvases[i];
+                var style = canvas.style;
+                style.position = 'fixed';
+                style.left = '0px';
+                style.top = i * Math.round(percent * 100) + '%';
+                style.width = 'auto';
+                style.height = Math.round(percent * 100) + '%';
+                style.zIndex = 1000;
+                if (this.scaleMode === PIXI.SCALE_MODES.NEAREST) {
+                    style.imageRendering = 'pixelated';
+                }
+                style.background = this.randomColor();
+                if (_typeof(this.show) === 'object') {
+                    for (var key in this.show) {
+                        style[key] = this.show[key];
+                    }
+                }
+                this.divCanvases.appendChild(canvas);
+            }
+        }
+
+        /**
+         * tests whether a texture exists
+         * @param {string} name of texture
+         * @return {boolean}
+         */
+
+    }, {
+        key: 'exists',
+        value: function exists(name) {
+            return this.textures[name] ? true : false;
+        }
+
+        /**
+         * @param {string} name of texture
+         * @return {(PIXI.Texture|null)}
+         */
+
+    }, {
+        key: 'getTexture',
+        value: function getTexture(name) {
+            var texture = this.textures[name];
+            if (texture) {
+                return texture.texture;
+            } else {
+                console.warn('yy-rendersheet: texture ' + name + ' not found in spritesheet.');
+                return null;
+            }
+        }
+
+        /**
+         * returns a PIXI.Sprite (with anchor set to 0.5, because that's where it should be)
+         * @param {string} name of texture
+         * @return {PIXI.Sprite}
+         */
+
+    }, {
+        key: 'getSprite',
+        value: function getSprite(name) {
+            var texture = this.getTexture(name);
+            if (texture) {
+                var sprite = new PIXI.Sprite(texture);
+                sprite.anchor.set(0.5);
+                return sprite;
+            } else {
+                return null;
+            }
+        }
+
+        /**
+         * alias for getSprite()
+         * @param {string} name of texture
+         * @return {PIXI.Sprite}
+         */
+
+    }, {
+        key: 'get',
+        value: function get(name) {
+            return this.getSprite(name);
+        }
+
+        /**
+         * @return {number} amount of textures in this rendersheet
+         */
+
+    }, {
+        key: 'entries',
+        value: function entries() {
+            return Object.keys(this.textures).length;
+        }
+
+        /**
+         * prints statistics of canvases to console.log
+         */
+
+    }, {
+        key: 'debug',
+        value: function debug() {
+            for (var i = 0; i < this.canvases.length; i++) {
+                var canvas = this.canvases[i];
+                console.log('yy-rendersheet: Sheet #' + (i + 1) + ' | size: ' + canvas.width + 'x' + canvas.height + ' | resolution: ' + this.resolution);
+            }
+        }
+
+        /**
+         * find the index of the texture based on the texture object
+         * @param {number} find this indexed texture
+         * @returns {PIXI.Texture}
+         */
+
+    }, {
+        key: 'getIndex',
+        value: function getIndex(find) {
+            var i = 0;
+            for (var key in this.textures) {
+                if (i === find) {
+                    return this.textures[key].texture;
+                }
+                i++;
+            }
+            return null;
+        }
+
+        /**
+         * checks if all textures are loaded
+         * @return {boolean}
+         */
+
+    }, {
+        key: 'checkLoaded',
+        value: function checkLoaded() {
+            for (var key in this.textures) {
+                var current = this.textures[key];
+                if ((current.type === IMAGE || current.type === DATA) && !current.loaded) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /**
+         * create (or refresh) the rendersheet
+         * @param {function} callback - convenience function that calls RenderSheet.once('render', callback)
+         */
+
+    }, {
+        key: 'render',
+        value: function render(callback) {
+            var _this2 = this;
+
+            if (callback) {
+                this.once('render', callback);
+            }
+            if (!Object.keys(this.textures).length) {
+                this.emit('render');
+                return;
+            }
+            if (!this.checkLoaded()) {
+                window.setTimeout(function () {
+                    return _this2.render();
+                }, WAIT);
+                return;
+            }
+            this.canvases = [];
+            this.sorted = [];
+
+            this.measure();
+            this.sort();
+            this.pack();
+            this.draw();
+            this.createBaseTextures();
+
+            for (var key in this.textures) {
+                var current = this.textures[key];
+                current.texture.baseTexture = this.baseTextures[current.canvas];
+                current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height);
+                current.texture.update();
+            }
+            if (this.show) {
+                this.showCanvases();
+            }
+            this.emit('render');
+        }
+
+        /**
+         * measures canvas renderings
+         * @private
+         */
+
+    }, {
+        key: 'measure',
+        value: function measure() {
+            var c = document.createElement('canvas');
+            c.width = this.maxSize;
+            c.height = this.maxSize;
+            var context = c.getContext('2d');
+            var multiplier = Math.ceil(this.scale * this.resolution);
+            for (var key in this.textures) {
+                var texture = this.textures[key];
+                switch (texture.type) {
+                    case CANVAS:
+                        var size = texture.measure(context, texture.param);
+                        texture.width = Math.ceil(size.width * multiplier);
+                        texture.height = Math.ceil(size.height * multiplier);
+                        break;
+
+                    case IMAGE:case DATA:
+                        texture.width = Math.ceil(texture.image.width * multiplier);
+                        texture.height = Math.ceil(texture.image.height * multiplier);
+                        break;
+                }
+                this.sorted.push(texture);
+            }
+        }
+
+        /**
+         * sort textures by largest dimension
+         * @private
+         */
+
+    }, {
+        key: 'sort',
+        value: function sort() {
+            this.sorted.sort(function (a, b) {
+                var aSize = Math.max(a.height, a.width);
+                var bSize = Math.max(b.height, b.width);
+                if (aSize === bSize) {
+                    aSize = Math.min(a.height, a.width);
+                    bSize = Math.max(b.height, b.width);
+                }
+                return bSize - aSize;
+            });
+        }
+
+        /**
+         * create square canvas
+         * @param {number} [size=this.maxSize]
+         * @private
+         */
+
+    }, {
+        key: 'createCanvas',
+        value: function createCanvas(size) {
+            var canvas = document.createElement('canvas');
+            canvas.width = canvas.height = size || this.maxSize;
+            this.canvases.push(canvas);
+        }
+
+        /**
+         * returns a random rgb color
+         * @private
+         */
+
+    }, {
+        key: 'randomColor',
+        value: function randomColor() {
+            function r() {
+                return Math.floor(Math.random() * 255);
+            }
+            return 'rgba(' + r() + ',' + r() + ',' + r() + ', 0.2)';
+        }
+
+        /**
+         * draw renderings to rendertexture
+         * @private
+         */
+
+    }, {
+        key: 'draw',
+        value: function draw() {
+            var current = void 0,
+                context = void 0;
+            var multiplier = Math.ceil(this.scale * this.resolution);
+            for (var key in this.textures) {
+                var texture = this.textures[key];
+                if (texture.canvas !== current) {
+                    if (typeof current !== 'undefined') {
+                        context.restore();
+                    }
+                    current = texture.canvas;
+                    context = this.canvases[current].getContext('2d');
+                    context.save();
+                    context.scale(multiplier, multiplier);
+                }
+                context.save();
+                context.translate(Math.ceil(texture.x / multiplier), Math.ceil(texture.y / multiplier));
+                if (this.testBoxes) {
+                    context.fillStyle = this.randomColor();
+                    context.fillRect(0, 0, Math.ceil(texture.width / multiplier), Math.ceil(texture.height / multiplier));
+                }
+                switch (texture.type) {
+                    case CANVAS:
+                        texture.draw(context, texture.param);
+                        break;
+
+                    case IMAGE:case DATA:
+                        context.drawImage(texture.image, 0, 0);
+                        break;
+                }
+                if (this.extrude) {
+                    this.extrudeEntry(texture, context, current);
+                }
+                context.restore();
+            }
+            context.restore();
+        }
+
+        /**
+         * extrude pixels for entry
+         * @param {object} texture
+         * @param {CanvasRenderingContext2D} context
+         * @private
+         */
+
+    }, {
+        key: 'extrudeEntry',
+        value: function extrudeEntry(texture, context, current) {
+            function get(x, y) {
+                var entry = (x + y * texture.width) * 4;
+                var d = data.data;
+                return 'rgba(' + d[entry] + ',' + d[entry + 1] + ',' + d[entry + 2] + ',' + d[entry + 3] + ')';
+            }
+
+            var canvas = this.canvases[current];
+            var data = context.getImageData(texture.x, texture.y, texture.width, texture.height);
+            if (texture.x !== 0) {
+                for (var y = 0; y < texture.height; y++) {
+                    context.fillStyle = get(0, y);
+                    context.fillRect(-1, y, 1, 1);
+                }
+                if (texture.y !== 0) {
+                    context.fillStyle = get(0, 0);
+                    context.fillRect(-1, -1, 1, 1);
+                }
+            }
+            if (texture.x + texture.width !== canvas.width - 1) {
+                for (var _y = 0; _y < texture.height; _y++) {
+                    context.fillStyle = get(texture.width - 1, _y);
+                    context.fillRect(texture.width, _y, 1, 1);
+                }
+                if (texture.y + texture.height !== canvas.height - 1) {
+                    context.fillStyle = get(texture.width - 1, texture.height - 1);
+                    context.fillRect(texture.width, texture.height, 1, 1);
+                }
+            }
+            if (texture.y !== 0) {
+                for (var x = 0; x < texture.width; x++) {
+                    context.fillStyle = get(x, 0);
+                    context.fillRect(x, -1, 1, 1);
+                }
+            }
+            if (texture.y + texture.height !== canvas.height - 1) {
+                for (var _x = 0; _x < texture.width; _x++) {
+                    context.fillStyle = get(_x, texture.height - 1);
+                    context.fillRect(_x, texture.height, 1, 1);
+                }
+            }
+        }
+
+        /**
+         * @private
+         */
+
+    }, {
+        key: 'createBaseTextures',
+        value: function createBaseTextures() {
+            while (this.baseTextures.length) {
+                this.baseTextures.pop().destroy();
+            }
+            for (var i = 0; i < this.canvases.length; i++) {
+                var base = PIXI.BaseTexture.fromCanvas(this.canvases[i]);
+                if (this.scaleMode) {
+                    base.scaleMode = this.scaleMode;
+                }
+                this.baseTextures.push(base);
+            }
+        }
+
+        /**
+         * pack textures after measurement
+         * @private
+         */
+
+    }, {
+        key: 'pack',
+        value: function pack() {
+            var packers = [new this.packer(this.maxSize, this.sorted[0], this.buffer)];
+            for (var i = 0; i < this.sorted.length; i++) {
+                var block = this.sorted[i];
+                var packed = false;
+                for (var j = 0; j < packers.length; j++) {
+                    if (packers[j].add(block, j)) {
+                        block.canvas = j;
+                        packed = true;
+                        break;
+                    }
+                }
+                if (!packed) {
+                    packers.push(new this.packer(this.maxSize, block, this.buffer));
+                    if (!packers[j].add(block, j)) {
+                        console.warn('yy-rendersheet: ' + block.name + ' is too big for the spritesheet.');
+                        return;
+                    } else {
+                        block.canvas = j;
+                    }
+                }
+            }
+
+            for (var _i = 0; _i < packers.length; _i++) {
+                var size = packers[_i].finish(this.maxSize);
+                this.createCanvas(size);
+            }
+        }
+
+        /**
+         * Changes the drawing function of a texture
+         * NOTE: this only works if the texture remains the same size; use Sheet.render() to resize the texture
+         * @param {string} name
+         * @param {function} draw
+         */
+
+    }, {
+        key: 'changeDraw',
+        value: function changeDraw(name, draw) {
+            var texture = this.textures[name];
+            if (texture.type !== CANVAS) {
+                console.warn('yy-sheet.changeTextureDraw only works with type: CANVAS.');
+                return;
+            }
+            texture.draw = draw;
+            var context = this.canvases[texture.canvas].getContext('2d');
+            var multiplier = this.scale * this.resolution;
+            context.save();
+            context.scale(multiplier, multiplier);
+            context.translate(texture.x / multiplier, texture.y / multiplier);
+            texture.draw(context, texture.param);
+            context.restore();
+            texture.texture.update();
+        }
+    }]);
+
+    return RenderSheet;
+}(Events);
+
+module.exports = RenderSheet;
+
+/**
+ * fires when render completes
+ * @event RenderSheet#render
+ */
+
+},{"./growingpacker":1,"./simplepacker":3,"eventemitter3":9,"pixi.js":326}],3:[function(require,module,exports){
+"use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @file simple-packer.js
+ * @author David Figatner
+ * @license MIT
+ * @copyright YOPEY YOPEY LLC 2016
+ * {@link https://github.com/davidfig/rendersheet}
+ */
+
+module.exports = function () {
+    /**
+     * ridiculously simple packer, optimized (if you can call it that) only for speed
+     * @param {number} max size
+     * @param {boolean} first block
+     * @param {number} buffer between each block
+     */
+    function SimplePacker(max, first, buffer) {
+        _classCallCheck(this, SimplePacker);
+
+        this.max = max;
+        this.buffer = buffer;
+        this.list = [];
+        this.x = 0;
+        this.y = 0;
+        this.largest = 0;
+    }
+
+    _createClass(SimplePacker, [{
+        key: "finish",
+        value: function finish(maxSize) {
+            var n = 1,
+                next = void 0;
+            var squared = [];
+            do {
+                next = Math.pow(2, n++);
+                squared.push(next);
+            } while (next <= maxSize);
+
+            var max = Math.max(this.x - this.buffer, this.y - this.buffer);
+
+            for (var i = squared.length - 1; i >= 0; i--) {
+                if (squared[i] < max) {
+                    return squared[i + 1];
+                }
+            }
+        }
+    }, {
+        key: "add",
+        value: function add(block, canvasNumber) {
+            if (this.x + block.width < this.max) {
+                if (this.y + block.height < this.max) {
+                    block.x = this.x;
+                    block.y = this.y;
+                    block.canvas = canvasNumber;
+                    this.largest = block.height > this.largest ? block.height : this.largest;
+                    this.x += block.width + this.buffer;
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                this.y += this.largest + this.buffer;
+                if (this.y > this.max) {
+                    return false;
+                }
+                this.x = 0;
+                this.largest = 0;
+                return this.add(block, canvasNumber);
+            }
+        }
+    }]);
+
+    return SimplePacker;
+}();
+
+},{}],4:[function(require,module,exports){
 const PIXI = require('pixi.js')
-const Renderer = require('yy-renderer')
 const Counter = require('yy-counter')
 const Random = require('yy-random')
 
-const RenderSheet = require('..')
+const RenderSheet = require('../dist/rendersheet')
 
 let renderer, counter, n = 0, size = 500, total
 
@@ -15,7 +854,7 @@ const sheet = new RenderSheet({ width: 2048, height: 2048 })
 // sheet.testBoxes = true;
 
 // show the rendersheet (for debug purposes)
-sheet.show = {opacity: 0.6, pointerEvents: 'none'}
+sheet.show = { opacity: 0.6, pointerEvents: 'none' }
 
 function setupSheet()
 {
@@ -65,14 +904,18 @@ function testTextures()
     sprite.y = window.innerHeight / 4
 
     // cycle the texture of the sprite from all textures in the rendersheet
-    renderer.interval(
-        function()
+    let time = 0
+    PIXI.ticker.shared.add((t) =>
+    {
+        time += t
+        if (time > 5)
         {
+            time = 0
             const n = Random.get(total)
             sprite.texture = sheet.getTexture('texture_' + n)
             counter.log('texture #' + n)
-            renderer.dirty = true
-        }, 200)
+        }
+    })
 
     const data = renderer.stage.addChild(sheet.get('data-test'))
     data.position.set(window.innerWidth - data.width, window.innerHeight - data.height)
@@ -99,7 +942,7 @@ function triangleDraw(c, params)
 // returns the size of the drawn texture
 function triangleMeasure(c, params)
 {
-    return {width: params.size, height: params.size}
+    return { width: params.size, height: params.size }
 }
 
 function draw(c, params)
@@ -113,20 +956,24 @@ function draw(c, params)
 
 function testChangingTextures()
 {
-    const sprite = renderer.add(sheet.get('texture_0'))
+    const sprite = renderer.stage.addChild(sheet.get('texture_0'))
     sprite.anchor.set(0.5)
     sprite.alpha = 0.25
     renderer.stage.addChild(sprite)
     sprite.x = window.innerWidth / 2
     sprite.y = 3 * window.innerHeight / 4
 
-    renderer.interval(
-        function ()
+    let time = 0
+
+    PIXI.ticker.shared.add((t) =>
+    {
+        time += t
+        if (time > 10)
         {
+            time = 0
             sheet.changeDraw('texture_0', draw)
-            renderer.dirty = true
-        }, 1000
-    )
+        }
+    })
 }
 
 function tests()
@@ -138,14 +985,16 @@ function tests()
 
 window.onload = function ()
 {
-    renderer = new Renderer({ debug: true })
+    renderer = new PIXI.Application({ transparent: true, width: window.innerWidth, height: window.innerHeight, autoResize: true })
+    document.body.appendChild(renderer.view)
+
     counter = new Counter({ side: 'bottom-left' })
     setupSheet()
     sheet.once('render', tests)
     sheet.render()
     require('./highlight')('https://github.com/davidfig/rendersheet')
 }
-},{"..":4,"./highlight":2,"pixi.js":324,"yy-counter":375,"yy-random":380,"yy-renderer":381}],2:[function(require,module,exports){
+},{"../dist/rendersheet":2,"./highlight":5,"pixi.js":326,"yy-counter":383,"yy-random":384}],5:[function(require,module,exports){
 const forkMe = require('fork-me-github')
 
 module.exports = function highlight(url)
@@ -165,693 +1014,7 @@ module.exports = function highlight(url)
 
 // for eslint
 /* globals window, XMLHttpRequest, document */
-},{"fork-me-github":9,"highlight.js":11}],3:[function(require,module,exports){
-/**
- * @file growingpacker.js
- * @author David Figatner
- * @license MIT
- * @copyright YOPEY YOPEY LLC 2016
- * {@link https://github.com/davidfig/rendersheet}
- *
- * based on
- * packer.growing.js {@link https://github.com/jakesgordon/bin-packing/}
- * by Jake Gordon
- * MIT license
- * Copyright (c) 2011-2016 Jake Gordon and contributors
- */
-
-class GrowingPacker
-{
-    constructor(max, first, buffer)
-    {
-        this.max = max
-        this.buffer = buffer
-        this.root = { x: 0, y: 0, w: first.width + buffer, h: first.height + buffer }
-    }
-
-    finish(maxSize)
-    {
-        let n = 1, next
-        const squared = []
-        do
-        {
-            next = Math.pow(2, n++)
-            squared.push(next)
-        } while (next <= maxSize)
-
-        const max = Math.max(this.root.w, this.root.h)
-
-        for (let i = squared.length - 1; i >= 0; i--)
-        {
-            if (squared[i] < max)
-            {
-                return squared[i + 1]
-            }
-        }
-    }
-
-    add(block, canvasNumber)
-    {
-        let result, node
-        if (node = this.findNode(this.root, block.width + this.buffer, block.height + this.buffer))
-        {
-            result = this.splitNode(node, block.width + this.buffer, block.height + this.buffer)
-        }
-        else
-        {
-            result = this.growNode(block.width + this.buffer, block.height + this.buffer)
-            if (!result)
-            {
-                return false
-            }
-        }
-        block.x = result.x
-        block.y = result.y
-        block.canvas = canvasNumber
-        return true
-    }
-
-    findNode(root, w, h)
-    {
-        if (root.used)
-        {
-            return this.findNode(root.right, w, h) || this.findNode(root.down, w, h)
-        }
-        else if ((w <= root.w) && (h <= root.h))
-        {
-            return root
-        }
-        else
-        {
-            return null
-        }
-    }
-
-    splitNode(node, w, h)
-    {
-        node.used = true
-        node.down  = { x: node.x,     y: node.y + h, w: node.w,     h: node.h - h }
-        node.right = { x: node.x + w, y: node.y,     w: node.w - w, h: h          }
-        return node
-    }
-
-    growNode(w, h)
-    {
-        const canGrowDown  = (w <= this.root.w)
-        const canGrowRight = (h <= this.root.h)
-
-        const shouldGrowRight = canGrowRight && (this.root.h >= (this.root.w + w)) // attempt to keep square-ish by growing right when height is much greater than width
-        const shouldGrowDown  = canGrowDown  && (this.root.w >= (this.root.h + h)) // attempt to keep square-ish by growing down  when width  is much greater than height
-
-        if (shouldGrowRight)
-        {
-            return this.growRight(w, h)
-        }
-        else if (shouldGrowDown)
-        {
-            return this.growDown(w, h)
-        }
-        else if (canGrowRight)
-        {
-            return this.growRight(w, h)
-        }
-        else if (canGrowDown)
-        {
-            return this.growDown(w, h)
-        }
-        else
-        {
-            return null
-        }
-    }
-
-    growRight(w, h)
-    {
-        if (this.root.w + w >= this.max)
-        {
-            return null
-        }
-        this.root = {
-            used: true,
-            x: 0,
-            y: 0,
-            w: this.root.w + w,
-            h: this.root.h,
-            down: this.root,
-            right: { x: this.root.w, y: 0, w: w, h: this.root.h }
-        }
-        let node
-        if (node = this.findNode(this.root, w, h))
-        {
-            return this.splitNode(node, w, h)
-        }
-        else
-        {
-            return null
-        }
-    }
-
-    growDown(w, h)
-    {
-        if (this.root.h + h >= this.max)
-        {
-            return null
-        }
-        this.root = {
-            used: true,
-            x: 0,
-            y: 0,
-            w: this.root.w,
-            h: this.root.h + h,
-            down:  { x: 0, y: this.root.h, w: this.root.w, h: h },
-            right: this.root
-        }
-        let node
-        if (node = this.findNode(this.root, w, h))
-        {
-            return this.splitNode(node, w, h)
-        }
-        else
-        {
-            return null
-        }
-    }
-}
-
-module.exports = GrowingPacker
-},{}],4:[function(require,module,exports){
-// yy-rendersheet
-// by David Figatner
-// (c) YOPEY YOPEY LLC 2017
-// MIT License
-// https://github.com/davidfig/rendersheet
-
-const PIXI = require('pixi.js')
-const Events = require('eventemitter3')
-
-const GrowingPacker = require('./growingpacker')
-const SimplePacker = require('./simplepacker')
-
-// types
-const CANVAS = 0 // default
-const IMAGE = 1 // image url
-const DATA = 2 // data src (e.g., result of .toDataURL())
-
-// default ms to wait to reload an image to load
-const WAIT = 250
-
-class RenderSheet extends Events
-{
-    /**
-     * @param {object} options
-     * @param {number} [options.maxSize=2048]
-     * @param {number} [options.buffer=5] around each texture
-     * @param {number} [options.scale=1] of texture
-     * @param {number} [options.resolution=1] of rendersheet
-     * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
-     * @param {boolean} [options.testBoxes] draw a different colored boxes behind each rendering (useful for debugging)
-     * @param {number|boolean} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet (use =true for PIXI.SCALE_MODES.NEAREST for pixel art)
-     * @param {boolean} [options.useSimplePacker] use a stupidly simple packer instead of growing packer algorithm
-     * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
-     * @event render - emitted when RenderSheet.render completes
-     */
-    constructor(options)
-    {
-        super()
-        options = options || {}
-        this.wait = options.wait || WAIT
-        this.testBoxes = options.testBoxes || false
-        this.maxSize = options.maxSize || 2048
-        this.buffer = options.buffer || 5
-        this.scale = options.scale || 1
-        this.scaleMode = options.scaleMode === true ? PIXI.SCALE_MODES.NEAREST : options.scaleMode
-        this.resolution = options.resolution || 1
-        this.show = options.show
-        this.packer = options.useSimplePacker ? SimplePacker : GrowingPacker
-        this.canvases = []
-        this.baseTextures = []
-        this.textures = {}
-    }
-
-    /**
-     * adds a canvas rendering
-     * @param {string} name of rendering
-     * @param {Function} draw function(context) - use the context to draw within the bounds of the measure function
-     * @param {Function} measure function(context) - needs to return {width: width, height: height} for the rendering
-     * @param {object} params - object to pass the draw() and measure() functions
-     * @return {object} rendersheet object for texture
-     */
-    add(name, draw, measure, param)
-    {
-        const object = this.textures[name] = { name: name, draw: draw, measure: measure, param: param, type: CANVAS, texture: new PIXI.Texture(PIXI.Texture.EMPTY) }
-        return object
-    }
-
-    /**
-     * adds an image rendering
-     * @param {string} name of rendering
-     * @param {string} src for image
-     * @return {object} rendersheet object for texture
-     */
-    addImage(name, src)
-    {
-        const object = this.textures[name] = { name, file: src, type: IMAGE, texture: new PIXI.Texture(PIXI.Texture.EMPTY)  }
-        object.image = new Image()
-        object.image.onload = () => object.loaded = true
-        object.image.src = src
-        return object
-    }
-
-    /**
-     * adds a data source (e.g., a PNG file in data format)
-     * @param {object} data of rendering (not filename)
-     * @param {string="data:image/png;base64,"} [header] for data
-     * @return {object} rendersheet object for texture
-     */
-    addData(name, data, header)
-    {
-        header = typeof header !== 'undefined' ? header : 'data:image/png;base64,'
-        const object = this.textures[name] = { name, type: DATA, texture: new PIXI.Texture(PIXI.Texture.EMPTY) }
-        object.image = new Image()
-        object.image.src = header + data
-        object.image.onload = () => object.loaded = true
-        return object
-    }
-
-    /**
-     * attaches RenderSheet to DOM for testing
-     * @param {object} styles - CSS styles to use for rendersheet
-     * @private
-     */
-    showCanvases()
-    {
-        if (!this.divCanvases)
-        {
-            this.divCanvases = document.createElement('div')
-            document.body.appendChild(this.divCanvases)
-        }
-        else
-        {
-            while (this.divCanvases.hasChildNodes())
-            {
-                this.divCanvases.removeChild(this.divCanvases.lastChild)
-            }
-        }
-        const percent = 1 / this.canvases.length
-        for (let i = 0; i < this.canvases.length; i++)
-        {
-            const canvas = this.canvases[i]
-            const style = canvas.style
-            style.position = 'fixed'
-            style.left = '0px'
-            style.top = i * Math.round(percent * 100) + '%'
-            style.width = 'auto'
-            style.height = Math.round(percent * 100) + '%'
-            style.zIndex = 1000
-            if (this.scaleMode === PIXI.SCALE_MODES.NEAREST)
-            {
-                style.imageRendering = 'pixelated'
-            }
-            style.background = this.randomColor()
-            if (typeof this.show === 'object')
-            {
-                for (let key in this.show)
-                {
-                    style[key] = this.show[key]
-                }
-            }
-            this.divCanvases.appendChild(canvas)
-        }
-    }
-
-    /**
-     * tests whether a texture exists
-     * @param {string} name of texture
-     * @return {boolean}
-     */
-    exists(name)
-    {
-        return this.textures[name] ? true : false
-    }
-
-    /**
-     * @param {string} name of texture
-     * @return {(PIXI.Texture|null)}
-     */
-    getTexture(name)
-    {
-        const texture = this.textures[name]
-        if (texture)
-        {
-            return texture.texture
-        }
-        else
-        {
-            console.warn('yy-rendersheet: texture ' + name + ' not found in spritesheet.')
-            return null
-        }
-    }
-
-    /**
-     * returns a PIXI.Sprite (with anchor set to 0.5, because that's where it should be)
-     * @param {string} name of texture
-     * @return {PIXI.Sprite}
-     */
-    getSprite(name)
-    {
-        const texture = this.getTexture(name)
-        if (texture)
-        {
-            const sprite = new PIXI.Sprite(texture)
-            sprite.anchor.set(0.5)
-            return sprite
-        }
-        else
-        {
-            return null
-        }
-    }
-
-    /**
-     * alias for getSprite()
-     * @param {string} name of texture
-     * @return {PIXI.Sprite)}
-     */
-    get(name)
-    {
-        return this.getSprite(name)
-    }
-
-    /**
-     * @return {number} amount of textures in this rendersheet
-     */
-    entries()
-    {
-        return Object.keys(this.textures).length
-    }
-
-    /**
-     * prints statistics of canvases to console.log
-     */
-    debug()
-    {
-        for (let i = 0; i < this.canvases.length; i++)
-        {
-            const canvas = this.canvases[i]
-            console.log('yy-rendersheet: Sheet #' + (i + 1) + ' | size: ' + canvas.width + 'x' + canvas.height + ' | resolution: ' + this.resolution)
-        }
-    }
-
-    /**
-     * find the index of the texture based on the texture object
-     * @param {number} find this indexed texture
-     * @returns {PIXI.Texture}
-     */
-    getIndex(find)
-    {
-        let i = 0
-        for (let key in this.textures)
-        {
-            if (i === find)
-            {
-                return this.textures[key].texture
-            }
-            i++
-        }
-        return null
-    }
-
-    /**
-     * checks if all textures are loaded
-     * @return {boolean}
-     */
-    checkLoaded()
-    {
-        for (let key in this.textures)
-        {
-            const current = this.textures[key]
-            if ((current.type === IMAGE || current.type === DATA) && !current.loaded)
-            {
-                return false
-            }
-        }
-        return true
-    }
-
-    /**
-     * create (or refresh) the rendersheet
-     * @param {function} callback - convenience function that calls Rendersheet.once('render', callback)
-     */
-    render(callback)
-    {
-        if (callback)
-        {
-            this.once('render', callback)
-        }
-        if (!Object.keys(this.textures).length)
-        {
-            this.emit('render')
-            return
-        }
-        if (!this.checkLoaded())
-        {
-            window.setTimeout(() => this.render(), WAIT)
-            return
-        }
-        this.canvases = []
-        this.sorted = []
-
-        this.measure()
-        this.sort()
-        this.pack()
-        this.draw()
-        this.createBaseTextures()
-
-        for (let key in this.textures)
-        {
-            const current = this.textures[key]
-            current.texture.baseTexture = this.baseTextures[current.canvas]
-            current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height)
-            current.texture.update()
-        }
-        if (this.show)
-        {
-            this.showCanvases()
-        }
-        this.emit('render')
-    }
-
-    /**
-     * measures canvas renderings
-     * @private
-     */
-    measure()
-    {
-        const c = document.createElement('canvas')
-        c.width = this.maxSize
-        c.height = this.maxSize
-        const context = c.getContext('2d')
-        const multiplier = this.scale * this.resolution
-        for (let key in this.textures)
-        {
-            const texture = this.textures[key]
-            switch (texture.type)
-            {
-                case CANVAS:
-                    const size = texture.measure(context, texture.param)
-                    texture.width = Math.ceil(size.width * multiplier)
-                    texture.height = Math.ceil(size.height * multiplier)
-                    break
-
-                case IMAGE: case DATA:
-                    texture.width = texture.image.width * multiplier
-                    texture.height = texture.image.height * multiplier
-                    break
-            }
-            this.sorted.push(texture)
-        }
-    }
-
-    /**
-     * sort textures by largest dimension
-     * @private
-     */
-    sort()
-    {
-        this.sorted.sort(
-            function(a, b)
-            {
-                let aSize = Math.max(a.height, a.width)
-                let bSize = Math.max(b.height, b.width)
-                if (aSize === bSize)
-                {
-                    aSize = Math.min(a.height, a.width)
-                    bSize = Math.max(b.height, b.width)
-                }
-                return bSize - aSize
-            }
-        )
-    }
-
-    /**
-     * create square canvas
-     * @param {number} [size=this.maxSize]
-     * @private
-     */
-    createCanvas(size)
-    {
-        const canvas = document.createElement('canvas')
-        canvas.width = canvas.height = size || this.maxSize
-        this.canvases.push(canvas)
-    }
-
-    /**
-     * returns a random rgb color
-     * @private
-     */
-    randomColor()
-    {
-        function r()
-        {
-            return Math.floor(Math.random() * 255)
-        }
-        return 'rgba(' + r() + ',' + r() + ',' + r() + ', 0.2)'
-    }
-
-    /**
-     * draw renderings to rendertexture
-     * @private
-     */
-    draw()
-    {
-        let current, context
-        const multiplier = this.scale * this.resolution
-        for (let key in this.textures)
-        {
-            const texture = this.textures[key]
-            if (texture.canvas !== current)
-            {
-                if (typeof current !== 'undefined')
-                {
-                    context.restore()
-                }
-                current = texture.canvas
-                context = this.canvases[current].getContext('2d')
-                context.save()
-                context.scale(multiplier, multiplier)
-            }
-            context.save()
-            context.translate(texture.x / multiplier, texture.y / multiplier)
-            if (this.testBoxes)
-            {
-                context.fillStyle = this.randomColor()
-                context.fillRect(0, 0, texture.width / multiplier, texture.height / multiplier)
-            }
-            switch (texture.type)
-            {
-                case CANVAS:
-                    texture.draw(context, texture.param)
-                    break
-
-                case IMAGE: case DATA:
-                    context.drawImage(texture.image, 0, 0)
-                    break
-            }
-            context.restore()
-        }
-        context.restore()
-    }
-
-    /**
-     * @private
-     */
-    createBaseTextures()
-    {
-        while (this.baseTextures.length)
-        {
-            this.baseTextures.pop().destroy()
-        }
-        for (let i = 0; i < this.canvases.length; i++)
-        {
-            const base = PIXI.BaseTexture.fromCanvas(this.canvases[i])
-            if (this.scaleMode)
-            {
-                base.scaleMode = this.scaleMode
-            }
-            this.baseTextures.push(base)
-        }
-    }
-
-    /**
-     * pack textures after measurement
-     * @private
-     */
-    pack()
-    {
-        const packers = [new this.packer(this.maxSize, this.sorted[0], this.buffer)]
-        for (let i = 0; i < this.sorted.length; i++)
-        {
-            const block = this.sorted[i]
-            let packed = false
-            for (var j = 0; j < packers.length; j++)
-            {
-                if (packers[j].add(block, j))
-                {
-                    block.canvas = j
-                    packed = true
-                    break
-                }
-            }
-            if (!packed)
-            {
-                packers.push(new this.packer(this.maxSize, block, this.buffer))
-                if (!packers[j].add(block, j))
-                {
-                    console.warn('yy-rendersheet: ' + block.name + ' is too big for the spritesheet.')
-                    return
-                }
-                else
-                {
-                    block.canvas = j
-                }
-            }
-        }
-
-        for (let i = 0; i < packers.length; i++)
-        {
-            const size = packers[i].finish(this.maxSize)
-            this.createCanvas(size)
-        }
-    }
-
-    /**
-     * Changes the drawing function of a texture
-     * NOTE: this only works if the texture remains the same size; use Sheet.render() to resize the texture
-     * @param {string} name
-     * @param {function} draw
-     */
-    changeDraw(name, draw)
-    {
-        const texture = this.textures[name]
-        if (texture.type !== CANVAS)
-        {
-            console.warn('yy-sheet.changeTextureDraw only works with type: CANVAS.')
-            return
-        }
-        texture.draw = draw
-        const context = this.canvases[texture.canvas].getContext('2d')
-        const multiplier = this.scale * this.resolution
-        context.save()
-        context.scale(multiplier, multiplier)
-        context.translate(texture.x / multiplier, texture.y / multiplier)
-        texture.draw(context, texture.param)
-        context.restore()
-        texture.texture.update()
-    }
-}
-
-module.exports = RenderSheet
-},{"./growingpacker":3,"./simplepacker":382,"eventemitter3":7,"pixi.js":324}],5:[function(require,module,exports){
+},{"fork-me-github":10,"highlight.js":12}],6:[function(require,module,exports){
 /**
  * Bit twiddling hacks for JavaScript.
  *
@@ -1057,7 +1220,9 @@ exports.nextCombination = function(v) {
 }
 
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
+
+},{}],8:[function(require,module,exports){
 'use strict';
 
 module.exports = earcut;
@@ -1697,7 +1862,7 @@ earcut.flatten = function (data) {
     return result;
 };
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty
@@ -2035,20 +2200,7 @@ if ('undefined' !== typeof module) {
   module.exports = EventEmitter;
 }
 
-},{}],8:[function(require,module,exports){
-module.exports = exists;
-
-module.exports.allExist = allExist;
-
-function exists (v) {
-  return v !== null && v !== undefined;
-}
-
-function allExist (/* vals */) {
-  var vals = Array.prototype.slice.call(arguments);
-  return vals.every(exists);
-}
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 // Programatically add fork me on github ribbon from javascript without making changes to CSS, HTML, or adding image files
 // by David Figatner
 // copyright 2017 YOPEY YOPEY LLC
@@ -2202,7 +2354,7 @@ module.exports = function forkMe(url, options)
     sheet.insertRule('.' + a.className + '::before' + before + '}')
     sheet.insertRule('.' + a.className + '::after' + after + '}')
 }
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /*
 Syntax highlighting with language autodetection.
 https://highlightjs.org/
@@ -3020,7 +3172,7 @@ https://highlightjs.org/
   return hljs;
 }));
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var hljs = require('./highlight');
 
 hljs.registerLanguage('1c', require('./languages/1c'));
@@ -3201,7 +3353,7 @@ hljs.registerLanguage('xquery', require('./languages/xquery'));
 hljs.registerLanguage('zephir', require('./languages/zephir'));
 
 module.exports = hljs;
-},{"./highlight":10,"./languages/1c":12,"./languages/abnf":13,"./languages/accesslog":14,"./languages/actionscript":15,"./languages/ada":16,"./languages/apache":17,"./languages/applescript":18,"./languages/arduino":19,"./languages/armasm":20,"./languages/asciidoc":21,"./languages/aspectj":22,"./languages/autohotkey":23,"./languages/autoit":24,"./languages/avrasm":25,"./languages/awk":26,"./languages/axapta":27,"./languages/bash":28,"./languages/basic":29,"./languages/bnf":30,"./languages/brainfuck":31,"./languages/cal":32,"./languages/capnproto":33,"./languages/ceylon":34,"./languages/clean":35,"./languages/clojure":37,"./languages/clojure-repl":36,"./languages/cmake":38,"./languages/coffeescript":39,"./languages/coq":40,"./languages/cos":41,"./languages/cpp":42,"./languages/crmsh":43,"./languages/crystal":44,"./languages/cs":45,"./languages/csp":46,"./languages/css":47,"./languages/d":48,"./languages/dart":49,"./languages/delphi":50,"./languages/diff":51,"./languages/django":52,"./languages/dns":53,"./languages/dockerfile":54,"./languages/dos":55,"./languages/dsconfig":56,"./languages/dts":57,"./languages/dust":58,"./languages/ebnf":59,"./languages/elixir":60,"./languages/elm":61,"./languages/erb":62,"./languages/erlang":64,"./languages/erlang-repl":63,"./languages/excel":65,"./languages/fix":66,"./languages/flix":67,"./languages/fortran":68,"./languages/fsharp":69,"./languages/gams":70,"./languages/gauss":71,"./languages/gcode":72,"./languages/gherkin":73,"./languages/glsl":74,"./languages/go":75,"./languages/golo":76,"./languages/gradle":77,"./languages/groovy":78,"./languages/haml":79,"./languages/handlebars":80,"./languages/haskell":81,"./languages/haxe":82,"./languages/hsp":83,"./languages/htmlbars":84,"./languages/http":85,"./languages/hy":86,"./languages/inform7":87,"./languages/ini":88,"./languages/irpf90":89,"./languages/java":90,"./languages/javascript":91,"./languages/jboss-cli":92,"./languages/json":93,"./languages/julia":95,"./languages/julia-repl":94,"./languages/kotlin":96,"./languages/lasso":97,"./languages/ldif":98,"./languages/leaf":99,"./languages/less":100,"./languages/lisp":101,"./languages/livecodeserver":102,"./languages/livescript":103,"./languages/llvm":104,"./languages/lsl":105,"./languages/lua":106,"./languages/makefile":107,"./languages/markdown":108,"./languages/mathematica":109,"./languages/matlab":110,"./languages/maxima":111,"./languages/mel":112,"./languages/mercury":113,"./languages/mipsasm":114,"./languages/mizar":115,"./languages/mojolicious":116,"./languages/monkey":117,"./languages/moonscript":118,"./languages/n1ql":119,"./languages/nginx":120,"./languages/nimrod":121,"./languages/nix":122,"./languages/nsis":123,"./languages/objectivec":124,"./languages/ocaml":125,"./languages/openscad":126,"./languages/oxygene":127,"./languages/parser3":128,"./languages/perl":129,"./languages/pf":130,"./languages/php":131,"./languages/pony":132,"./languages/powershell":133,"./languages/processing":134,"./languages/profile":135,"./languages/prolog":136,"./languages/protobuf":137,"./languages/puppet":138,"./languages/purebasic":139,"./languages/python":140,"./languages/q":141,"./languages/qml":142,"./languages/r":143,"./languages/rib":144,"./languages/roboconf":145,"./languages/routeros":146,"./languages/rsl":147,"./languages/ruby":148,"./languages/ruleslanguage":149,"./languages/rust":150,"./languages/scala":151,"./languages/scheme":152,"./languages/scilab":153,"./languages/scss":154,"./languages/shell":155,"./languages/smali":156,"./languages/smalltalk":157,"./languages/sml":158,"./languages/sqf":159,"./languages/sql":160,"./languages/stan":161,"./languages/stata":162,"./languages/step21":163,"./languages/stylus":164,"./languages/subunit":165,"./languages/swift":166,"./languages/taggerscript":167,"./languages/tap":168,"./languages/tcl":169,"./languages/tex":170,"./languages/thrift":171,"./languages/tp":172,"./languages/twig":173,"./languages/typescript":174,"./languages/vala":175,"./languages/vbnet":176,"./languages/vbscript":178,"./languages/vbscript-html":177,"./languages/verilog":179,"./languages/vhdl":180,"./languages/vim":181,"./languages/x86asm":182,"./languages/xl":183,"./languages/xml":184,"./languages/xquery":185,"./languages/yaml":186,"./languages/zephir":187}],12:[function(require,module,exports){
+},{"./highlight":11,"./languages/1c":13,"./languages/abnf":14,"./languages/accesslog":15,"./languages/actionscript":16,"./languages/ada":17,"./languages/apache":18,"./languages/applescript":19,"./languages/arduino":20,"./languages/armasm":21,"./languages/asciidoc":22,"./languages/aspectj":23,"./languages/autohotkey":24,"./languages/autoit":25,"./languages/avrasm":26,"./languages/awk":27,"./languages/axapta":28,"./languages/bash":29,"./languages/basic":30,"./languages/bnf":31,"./languages/brainfuck":32,"./languages/cal":33,"./languages/capnproto":34,"./languages/ceylon":35,"./languages/clean":36,"./languages/clojure":38,"./languages/clojure-repl":37,"./languages/cmake":39,"./languages/coffeescript":40,"./languages/coq":41,"./languages/cos":42,"./languages/cpp":43,"./languages/crmsh":44,"./languages/crystal":45,"./languages/cs":46,"./languages/csp":47,"./languages/css":48,"./languages/d":49,"./languages/dart":50,"./languages/delphi":51,"./languages/diff":52,"./languages/django":53,"./languages/dns":54,"./languages/dockerfile":55,"./languages/dos":56,"./languages/dsconfig":57,"./languages/dts":58,"./languages/dust":59,"./languages/ebnf":60,"./languages/elixir":61,"./languages/elm":62,"./languages/erb":63,"./languages/erlang":65,"./languages/erlang-repl":64,"./languages/excel":66,"./languages/fix":67,"./languages/flix":68,"./languages/fortran":69,"./languages/fsharp":70,"./languages/gams":71,"./languages/gauss":72,"./languages/gcode":73,"./languages/gherkin":74,"./languages/glsl":75,"./languages/go":76,"./languages/golo":77,"./languages/gradle":78,"./languages/groovy":79,"./languages/haml":80,"./languages/handlebars":81,"./languages/haskell":82,"./languages/haxe":83,"./languages/hsp":84,"./languages/htmlbars":85,"./languages/http":86,"./languages/hy":87,"./languages/inform7":88,"./languages/ini":89,"./languages/irpf90":90,"./languages/java":91,"./languages/javascript":92,"./languages/jboss-cli":93,"./languages/json":94,"./languages/julia":96,"./languages/julia-repl":95,"./languages/kotlin":97,"./languages/lasso":98,"./languages/ldif":99,"./languages/leaf":100,"./languages/less":101,"./languages/lisp":102,"./languages/livecodeserver":103,"./languages/livescript":104,"./languages/llvm":105,"./languages/lsl":106,"./languages/lua":107,"./languages/makefile":108,"./languages/markdown":109,"./languages/mathematica":110,"./languages/matlab":111,"./languages/maxima":112,"./languages/mel":113,"./languages/mercury":114,"./languages/mipsasm":115,"./languages/mizar":116,"./languages/mojolicious":117,"./languages/monkey":118,"./languages/moonscript":119,"./languages/n1ql":120,"./languages/nginx":121,"./languages/nimrod":122,"./languages/nix":123,"./languages/nsis":124,"./languages/objectivec":125,"./languages/ocaml":126,"./languages/openscad":127,"./languages/oxygene":128,"./languages/parser3":129,"./languages/perl":130,"./languages/pf":131,"./languages/php":132,"./languages/pony":133,"./languages/powershell":134,"./languages/processing":135,"./languages/profile":136,"./languages/prolog":137,"./languages/protobuf":138,"./languages/puppet":139,"./languages/purebasic":140,"./languages/python":141,"./languages/q":142,"./languages/qml":143,"./languages/r":144,"./languages/rib":145,"./languages/roboconf":146,"./languages/routeros":147,"./languages/rsl":148,"./languages/ruby":149,"./languages/ruleslanguage":150,"./languages/rust":151,"./languages/scala":152,"./languages/scheme":153,"./languages/scilab":154,"./languages/scss":155,"./languages/shell":156,"./languages/smali":157,"./languages/smalltalk":158,"./languages/sml":159,"./languages/sqf":160,"./languages/sql":161,"./languages/stan":162,"./languages/stata":163,"./languages/step21":164,"./languages/stylus":165,"./languages/subunit":166,"./languages/swift":167,"./languages/taggerscript":168,"./languages/tap":169,"./languages/tcl":170,"./languages/tex":171,"./languages/thrift":172,"./languages/tp":173,"./languages/twig":174,"./languages/typescript":175,"./languages/vala":176,"./languages/vbnet":177,"./languages/vbscript":179,"./languages/vbscript-html":178,"./languages/verilog":180,"./languages/vhdl":181,"./languages/vim":182,"./languages/x86asm":183,"./languages/xl":184,"./languages/xml":185,"./languages/xquery":186,"./languages/yaml":187,"./languages/zephir":188}],13:[function(require,module,exports){
 module.exports = function(hljs){
 
   // общий паттерн для определения идентификаторов
@@ -3711,7 +3863,7 @@ module.exports = function(hljs){
     ]  
   }
 };
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 module.exports = function(hljs) {
     var regexes = {
         ruleDeclaration: "^[a-zA-Z][a-zA-Z0-9-]*",
@@ -3782,7 +3934,7 @@ module.exports = function(hljs) {
       ]
     };
 };
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -3820,7 +3972,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE = '[a-zA-Z_$][a-zA-Z0-9_$]*';
   var IDENT_FUNC_RETURN_TYPE_RE = '([*]|[a-zA-Z_$][a-zA-Z0-9_$]*)';
@@ -3894,7 +4046,7 @@ module.exports = function(hljs) {
     illegal: /#/
   };
 };
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 module.exports = // We try to support full Ada2012
 //
 // We highlight all appearances of types, keywords, literals (string, char, number, bool)
@@ -4067,7 +4219,7 @@ function(hljs) {
         ]
     };
 };
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 module.exports = function(hljs) {
   var NUMBER = {className: 'number', begin: '[\\$%]\\d+'};
   return {
@@ -4113,7 +4265,7 @@ module.exports = function(hljs) {
     illegal: /\S/
   };
 };
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 module.exports = function(hljs) {
   var STRING = hljs.inherit(hljs.QUOTE_STRING_MODE, {illegal: ''});
   var PARAMS = {
@@ -4199,7 +4351,7 @@ module.exports = function(hljs) {
     illegal: '//|->|=>|\\[\\['
   };
 };
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 module.exports = function(hljs) {
   var CPP = hljs.getLanguage('cpp').exports;
 	return {
@@ -4299,7 +4451,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 module.exports = function(hljs) {
     //local labels: %?[FB]?[AT]?\d{1,2}\w+
   return {
@@ -4391,7 +4543,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['adoc'],
@@ -4579,7 +4731,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 module.exports = function (hljs) {
   var KEYWORDS =
     'false synchronized int abstract float private char boolean static null if const ' +
@@ -4724,7 +4876,7 @@ module.exports = function (hljs) {
     ]
   };
 };
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 module.exports = function(hljs) {
   var BACKTICK_ESCAPE = {
     begin: '`[\\s\\S]'
@@ -4783,7 +4935,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 module.exports = function(hljs) {
     var KEYWORDS = 'ByRef Case Const ContinueCase ContinueLoop ' +
         'Default Dim Do Else ElseIf EndFunc EndIf EndSelect ' +
@@ -4919,7 +5071,7 @@ module.exports = function(hljs) {
         ]
     }
 };
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -4981,7 +5133,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 module.exports = function(hljs) {
   var VARIABLE = {
     className: 'variable',
@@ -5034,7 +5186,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: 'false int abstract private char boolean static null if for true ' +
@@ -5065,7 +5217,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 module.exports = function(hljs) {
   var VAR = {
     className: 'variable',
@@ -5140,7 +5292,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -5191,7 +5343,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 module.exports = function(hljs){
   return {
     contains: [
@@ -5220,7 +5372,7 @@ module.exports = function(hljs){
     ]
   };
 };
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 module.exports = function(hljs){
   var LITERAL = {
     className: 'literal',
@@ -5257,7 +5409,7 @@ module.exports = function(hljs){
     ]
   };
 };
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS =
     'div mod in and or not xor asserterror begin case do downto else end exit for if of repeat then to ' +
@@ -5337,7 +5489,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['capnp'],
@@ -5386,7 +5538,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 module.exports = function(hljs) {
   // 2.3. Identifiers and keywords
   var KEYWORDS =
@@ -5453,7 +5605,7 @@ module.exports = function(hljs) {
     ].concat(EXPRESSIONS)
   };
 };
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['clean','icl','dcl'],
@@ -5478,7 +5630,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -5493,7 +5645,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 module.exports = function(hljs) {
   var keywords = {
     'builtin-name':
@@ -5589,7 +5741,7 @@ module.exports = function(hljs) {
     contains: [LIST, STRING, HINT, HINT_COL, COMMENT, KEY, COLLECTION, NUMBER, LITERAL]
   }
 };
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['cmake.in'],
@@ -5627,7 +5779,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -5773,7 +5925,7 @@ module.exports = function(hljs) {
     ])
   };
 };
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -5840,7 +5992,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 module.exports = function cos (hljs) {
 
   var STRINGS = {
@@ -5964,7 +6116,7 @@ module.exports = function cos (hljs) {
     ]
   };
 };
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 module.exports = function(hljs) {
   var CPP_PRIMITIVE_TYPES = {
     className: 'keyword',
@@ -6139,7 +6291,7 @@ module.exports = function(hljs) {
     }
   };
 };
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 module.exports = function(hljs) {
   var RESOURCES = 'primitive rsc_template';
 
@@ -6233,7 +6385,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 module.exports = function(hljs) {
   var NUM_SUFFIX = '(_[uif](8|16|32|64))?';
   var CRYSTAL_IDENT_RE = '[a-zA-Z_]\\w*[!?=]?';
@@ -6427,7 +6579,7 @@ module.exports = function(hljs) {
     contains: CRYSTAL_DEFAULT_CONTAINS
   };
 };
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -6604,7 +6756,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: false,
@@ -6626,7 +6778,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE = '[a-zA-Z-][a-zA-Z0-9_-]*';
   var RULE = {
@@ -6731,7 +6883,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 module.exports = /**
  * Known issues:
  *
@@ -6989,7 +7141,7 @@ function(hljs) {
     ]
   };
 };
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 module.exports = function (hljs) {
   var SUBST = {
     className: 'subst',
@@ -7090,7 +7242,7 @@ module.exports = function (hljs) {
     ]
   }
 };
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS =
     'exports register file shl array record property for mod while set ally label uses raise not ' +
@@ -7159,7 +7311,7 @@ module.exports = function(hljs) {
     ].concat(COMMENT_MODES)
   };
 };
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['patch'],
@@ -7199,7 +7351,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 module.exports = function(hljs) {
   var FILTER = {
     begin: /\|[A-Za-z]+:?/,
@@ -7263,7 +7415,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],53:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['bind', 'zone'],
@@ -7292,7 +7444,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['docker'],
@@ -7314,7 +7466,7 @@ module.exports = function(hljs) {
     illegal: '</'
   }
 };
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 module.exports = function(hljs) {
   var COMMENT = hljs.COMMENT(
     /^\s*@?rem\b/, /$/,
@@ -7366,7 +7518,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],56:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 module.exports = function(hljs) {
   var QUOTED_PROPERTY = {
     className: 'string',
@@ -7413,7 +7565,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],57:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 module.exports = function(hljs) {
   var STRINGS = {
     className: 'string',
@@ -7537,7 +7689,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 module.exports = function(hljs) {
   var EXPRESSION_KEYWORDS = 'if eq ne lt lte gt gte select default math sep';
   return {
@@ -7569,7 +7721,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],59:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 module.exports = function(hljs) {
     var commentMode = hljs.COMMENT(/\(\*/, /\*\)/);
 
@@ -7602,7 +7754,7 @@ module.exports = function(hljs) {
         ]
     };
 };
-},{}],60:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 module.exports = function(hljs) {
   var ELIXIR_IDENT_RE = '[a-zA-Z_][a-zA-Z0-9_]*(\\!|\\?)?';
   var ELIXIR_METHOD_RE = '[a-zA-Z_]\\w*[!?=]?|[-+~]\\@|<<|>>|=~|===?|<=>|[<>]=?|\\*\\*|[-/+%^&*~`|]|\\[\\]=?';
@@ -7699,7 +7851,7 @@ module.exports = function(hljs) {
     contains: ELIXIR_DEFAULT_CONTAINS
   };
 };
-},{}],61:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 module.exports = function(hljs) {
   var COMMENT = {
     variants: [
@@ -7783,7 +7935,7 @@ module.exports = function(hljs) {
     illegal: /;/
   };
 };
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     subLanguage: 'xml',
@@ -7798,7 +7950,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],63:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -7844,7 +7996,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],64:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 module.exports = function(hljs) {
   var BASIC_ATOM_RE = '[a-z\'][a-zA-Z0-9_\']*';
   var FUNCTION_NAME_RE = '(' + BASIC_ATOM_RE + ':' + BASIC_ATOM_RE + '|' + BASIC_ATOM_RE + ')';
@@ -7990,7 +8142,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['xlsx', 'xls'],
@@ -8038,7 +8190,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -8067,7 +8219,7 @@ module.exports = function(hljs) {
     case_insensitive: true
   };
 };
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 module.exports = function (hljs) {
 
     var CHAR = {
@@ -8112,7 +8264,7 @@ module.exports = function (hljs) {
         ]
     };
 };
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 module.exports = function(hljs) {
   var PARAMS = {
     className: 'params',
@@ -8183,7 +8335,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],69:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 module.exports = function(hljs) {
   var TYPEPARAM = {
     begin: '<', end: '>',
@@ -8242,7 +8394,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],70:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 module.exports = function (hljs) {
   var KEYWORDS = {
     'keyword':
@@ -8396,7 +8548,7 @@ module.exports = function (hljs) {
     ]
   };
 };
-},{}],71:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword: 'and bool break call callexe checkinterrupt clear clearg closeall cls comlog compile ' +
@@ -8620,7 +8772,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports = function(hljs) {
     var GCODE_IDENT_RE = '[A-Z_][A-Z0-9_.]*';
     var GCODE_CLOSE_RE = '\\%';
@@ -8687,7 +8839,7 @@ module.exports = function(hljs) {
         ].concat(GCODE_CODE)
     };
 };
-},{}],73:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 module.exports = function (hljs) {
   return {
     aliases: ['feature'],
@@ -8724,7 +8876,7 @@ module.exports = function (hljs) {
     ]
   };
 };
-},{}],74:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -8841,7 +8993,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],75:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 module.exports = function(hljs) {
   var GO_KEYWORDS = {
     keyword:
@@ -8895,7 +9047,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],76:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 module.exports = function(hljs) {
     return {
       keywords: {
@@ -8918,7 +9070,7 @@ module.exports = function(hljs) {
       ]
     }
 };
-},{}],77:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -8953,7 +9105,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],78:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 module.exports = function(hljs) {
     return {
         keywords: {
@@ -9047,7 +9199,7 @@ module.exports = function(hljs) {
         illegal: /#|<\//
     }
 };
-},{}],79:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 module.exports = // TODO support filter tags like :javascript, support inline HTML
 function(hljs) {
   return {
@@ -9154,7 +9306,7 @@ function(hljs) {
     ]
   };
 };
-},{}],80:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 module.exports = function(hljs) {
   var BUILT_INS = {'builtin-name': 'each in with if else unless bindattr action collection debugger log outlet template unbound view yield'};
   return {
@@ -9188,7 +9340,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],81:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 module.exports = function(hljs) {
   var COMMENT = {
     variants: [
@@ -9310,7 +9462,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE = '[a-zA-Z_$][a-zA-Z0-9_$]*';
   var IDENT_FUNC_RETURN_TYPE_RE = '([*]|[a-zA-Z_$][a-zA-Z0-9_$]*)';
@@ -9422,7 +9574,7 @@ module.exports = function(hljs) {
     illegal: /<\//
   };
 };
-},{}],83:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -9468,7 +9620,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],84:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 module.exports = function(hljs) {
   var BUILT_INS = 'action collection component concat debugger each each-in else get hash if input link-to loc log mut outlet partial query-params render textarea unbound unless with yield view';
 
@@ -9539,7 +9691,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],85:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 module.exports = function(hljs) {
   var VERSION = 'HTTP/[0-9\\.]+';
   return {
@@ -9580,7 +9732,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],86:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 module.exports = function(hljs) {
   var keywords = {
     'builtin-name':
@@ -9682,7 +9834,7 @@ module.exports = function(hljs) {
     contains: [SHEBANG, LIST, STRING, HINT, HINT_COL, COMMENT, KEY, COLLECTION, NUMBER, LITERAL]
   }
 };
-},{}],87:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 module.exports = function(hljs) {
   var START_BRACKET = '\\[';
   var END_BRACKET = '\\]';
@@ -9739,7 +9891,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],88:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 module.exports = function(hljs) {
   var STRING = {
     className: "string",
@@ -9805,7 +9957,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],89:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 module.exports = function(hljs) {
   var PARAMS = {
     className: 'params',
@@ -9881,7 +10033,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],90:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 module.exports = function(hljs) {
   var JAVA_IDENT_RE = '[\u00C0-\u02B8a-zA-Z_$][\u00C0-\u02B8a-zA-Z_$0-9]*';
   var GENERIC_IDENT_RE = JAVA_IDENT_RE + '(<' + JAVA_IDENT_RE + '(\\s*,\\s*' + JAVA_IDENT_RE + ')*>)?';
@@ -9989,7 +10141,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],91:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE = '[A-Za-z$_][0-9A-Za-z$_]*';
   var KEYWORDS = {
@@ -10160,7 +10312,7 @@ module.exports = function(hljs) {
     illegal: /#(?!!)/
   };
 };
-},{}],92:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 module.exports = function (hljs) {
   var PARAM = {
     begin: /[\w-]+ *=/, returnBegin: true,
@@ -10207,7 +10359,7 @@ module.exports = function (hljs) {
     ]
   }
 };
-},{}],93:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 module.exports = function(hljs) {
   var LITERALS = {literal: 'true false null'};
   var TYPES = [
@@ -10244,7 +10396,7 @@ module.exports = function(hljs) {
     illegal: '\\S'
   };
 };
-},{}],94:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -10268,7 +10420,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],95:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 module.exports = function(hljs) {
   // Since there are numerous special names in Julia, it is too much trouble
   // to maintain them by hand. Hence these names (i.e. keywords, literals and
@@ -10430,7 +10582,7 @@ module.exports = function(hljs) {
 
   return DEFAULT;
 };
-},{}],96:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -10604,7 +10756,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],97:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 module.exports = function(hljs) {
   var LASSO_IDENT_RE = '[a-zA-Z_][\\w.]*';
   var LASSO_ANGLE_RE = '<\\?(lasso(script)?|=)';
@@ -10767,7 +10919,7 @@ module.exports = function(hljs) {
     ].concat(LASSO_CODE)
   };
 };
-},{}],98:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -10790,7 +10942,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],99:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 module.exports = function (hljs) {
   return {
     contains: [
@@ -10830,7 +10982,7 @@ module.exports = function (hljs) {
     ]
   };
 };
-},{}],100:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE        = '[\\w-]+'; // yes, Less identifiers may begin with a digit
   var INTERP_IDENT_RE = '(' + IDENT_RE + '|@{' + IDENT_RE + '})';
@@ -10970,7 +11122,7 @@ module.exports = function(hljs) {
     contains: RULES
   };
 };
-},{}],101:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 module.exports = function(hljs) {
   var LISP_IDENT_RE = '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*';
   var MEC_RE = '\\|[^]*?\\|';
@@ -11073,7 +11225,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],102:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 module.exports = function(hljs) {
   var VARIABLE = {
     begin: '\\b[gtps][A-Z]+[A-Za-z0-9_\\-]*\\b|\\$_[A-Z]+',
@@ -11230,7 +11382,7 @@ module.exports = function(hljs) {
     illegal: ';$|^\\[|^=|&|{'
   };
 };
-},{}],103:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -11379,7 +11531,7 @@ module.exports = function(hljs) {
     ])
   };
 };
-},{}],104:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 module.exports = function(hljs) {
   var identifier = '([-a-zA-Z$._][\\w\\-$.]*)';
   return {
@@ -11468,7 +11620,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],105:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 module.exports = function(hljs) {
 
     var LSL_STRING_ESCAPE_CHARS = {
@@ -11551,7 +11703,7 @@ module.exports = function(hljs) {
         ]
     };
 };
-},{}],106:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 module.exports = function(hljs) {
   var OPENING_LONG_BRACKET = '\\[=*\\[';
   var CLOSING_LONG_BRACKET = '\\]=*\\]';
@@ -11617,7 +11769,7 @@ module.exports = function(hljs) {
     ])
   };
 };
-},{}],107:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 module.exports = function(hljs) {
   /* Variables: simple (eg $(var)) and special (eg $@) */
   var VARIABLE = {
@@ -11698,7 +11850,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],108:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['md', 'mkdown', 'mkd'],
@@ -11806,7 +11958,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],109:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['mma'],
@@ -11864,7 +12016,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],110:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 module.exports = function(hljs) {
   var COMMON_CONTAINS = [
     hljs.C_NUMBER_MODE,
@@ -11952,7 +12104,7 @@ module.exports = function(hljs) {
     ].concat(COMMON_CONTAINS)
   };
 };
-},{}],111:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = 'if then else elseif for thru do while unless step in and or not';
   var LITERALS = 'true false unknown inf minf ind und %e %i %pi %phi %gamma';
@@ -12358,7 +12510,7 @@ module.exports = function(hljs) {
     illegal: /@/
   }
 };
-},{}],112:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords:
@@ -12583,7 +12735,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],113:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -12665,7 +12817,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],114:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 module.exports = function(hljs) {
     //local labels: %?[FB]?[AT]?\d{1,2}\w+
   return {
@@ -12751,7 +12903,7 @@ module.exports = function(hljs) {
     illegal: '\/'
   };
 };
-},{}],115:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords:
@@ -12770,7 +12922,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],116:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     subLanguage: 'xml',
@@ -12795,7 +12947,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],117:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 module.exports = function(hljs) {
   var NUMBER = {
     className: 'number', relevance: 0,
@@ -12870,7 +13022,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],118:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -12982,7 +13134,7 @@ module.exports = function(hljs) {
     ])
   };
 };
-},{}],119:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -13051,7 +13203,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],120:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 module.exports = function(hljs) {
   var VAR = {
     className: 'variable',
@@ -13144,7 +13296,7 @@ module.exports = function(hljs) {
     illegal: '[^\\s\\}]'
   };
 };
-},{}],121:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['nim'],
@@ -13199,7 +13351,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],122:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 module.exports = function(hljs) {
   var NIX_KEYWORDS = {
     keyword:
@@ -13248,7 +13400,7 @@ module.exports = function(hljs) {
     contains: EXPRESSIONS
   };
 };
-},{}],123:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 module.exports = function(hljs) {
   var CONSTANTS = {
     className: 'variable',
@@ -13354,7 +13506,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],124:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 module.exports = function(hljs) {
   var API_CLASS = {
     className: 'built_in',
@@ -13445,7 +13597,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],125:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 module.exports = function(hljs) {
   /* missing support for heredoc-like string (OCaml 4.0.2+) */
   return {
@@ -13516,7 +13668,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],126:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 module.exports = function(hljs) {
 	var SPECIAL_VARS = {
 		className: 'keyword',
@@ -13573,7 +13725,7 @@ module.exports = function(hljs) {
 		]
 	}
 };
-},{}],127:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 module.exports = function(hljs) {
   var OXYGENE_KEYWORDS = 'abstract add and array as asc aspect assembly async begin break block by case class concat const copy constructor continue '+
     'create default delegate desc distinct div do downto dynamic each else empty end ensure enum equals event except exit extension external false '+
@@ -13643,7 +13795,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],128:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 module.exports = function(hljs) {
   var CURLY_SUBCOMMENT = hljs.COMMENT(
     '{',
@@ -13691,7 +13843,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],129:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 module.exports = function(hljs) {
   var PERL_KEYWORDS = 'getpwent getservent quotemeta msgrcv scalar kill dbmclose undef lc ' +
     'ma syswrite tr send umask sysopen shmwrite vec qx utime local oct semctl localtime ' +
@@ -13848,7 +14000,7 @@ module.exports = function(hljs) {
     contains: PERL_DEFAULT_CONTAINS
   };
 };
-},{}],130:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 module.exports = function(hljs) {
   var MACRO = {
     className: 'variable',
@@ -13900,7 +14052,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],131:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 module.exports = function(hljs) {
   var VARIABLE = {
     begin: '\\$+[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*'
@@ -14027,7 +14179,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],132:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -14118,7 +14270,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],133:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 module.exports = function(hljs) {
   var BACKTICK_ESCAPE = {
     begin: '`[\\s\\S]',
@@ -14199,7 +14351,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],134:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -14247,7 +14399,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],135:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -14277,7 +14429,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],136:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 module.exports = function(hljs) {
 
   var ATOM = {
@@ -14365,7 +14517,7 @@ module.exports = function(hljs) {
     ])
   };
 };
-},{}],137:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -14401,7 +14553,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],138:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 module.exports = function(hljs) {
 
   var PUPPET_KEYWORDS = {
@@ -14516,7 +14668,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],139:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 module.exports = // Base deafult colors in PB IDE: background: #FFFFDF; foreground: #000000;
 
 function(hljs) {
@@ -14574,7 +14726,7 @@ function(hljs) {
     ]
   };
 };
-},{}],140:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -14690,7 +14842,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],141:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 module.exports = function(hljs) {
   var Q_KEYWORDS = {
   keyword:
@@ -14713,7 +14865,7 @@ module.exports = function(hljs) {
      ]
   };
 };
-},{}],142:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
       keyword:
@@ -14882,7 +15034,7 @@ module.exports = function(hljs) {
     illegal: /#/
   };
 };
-},{}],143:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE = '([a-zA-Z]|\\.[a-zA-Z.])[a-zA-Z0-9._]*';
 
@@ -14952,7 +15104,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],144:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords:
@@ -14979,7 +15131,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],145:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENTIFIER = '[a-zA-Z-_][^\\n{]+\\{';
 
@@ -15046,7 +15198,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],146:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 module.exports = // Colors from RouterOS terminal:
 //   green        - #0E9A00
 //   teal         - #0C9A9A
@@ -15205,7 +15357,7 @@ function(hljs) {
     ]
   };
 };
-},{}],147:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -15241,7 +15393,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],148:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 module.exports = function(hljs) {
   var RUBY_METHOD_RE = '[a-zA-Z_]\\w*[!?=]?|[-+~]\\@|<<|>>|=~|===?|<=>|[<>]=?|\\*\\*|[-/+%^&*~`|]|\\[\\]=?';
   var RUBY_KEYWORDS = {
@@ -15418,7 +15570,7 @@ module.exports = function(hljs) {
     contains: COMMENT_MODES.concat(IRB_DEFAULT).concat(RUBY_DEFAULT_CONTAINS)
   };
 };
-},{}],149:[function(require,module,exports){
+},{}],150:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -15479,7 +15631,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],150:[function(require,module,exports){
+},{}],151:[function(require,module,exports){
 module.exports = function(hljs) {
   var NUM_SUFFIX = '([ui](8|16|32|64|128|size)|f(32|64))\?';
   var KEYWORDS =
@@ -15587,7 +15739,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],151:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 module.exports = function(hljs) {
 
   var ANNOTATION = { className: 'meta', begin: '@[A-Za-z]+' };
@@ -15702,7 +15854,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],152:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 module.exports = function(hljs) {
   var SCHEME_IDENT_RE = '[^\\(\\)\\[\\]\\{\\}",\'`;#|\\\\\\s]+';
   var SCHEME_SIMPLE_NUMBER_RE = '(\\-|\\+)?\\d+([./]\\d+)?';
@@ -15846,7 +15998,7 @@ module.exports = function(hljs) {
     contains: [SHEBANG, NUMBER, STRING, QUOTED_IDENT, QUOTED_LIST, LIST].concat(COMMENT_MODES)
   };
 };
-},{}],153:[function(require,module,exports){
+},{}],154:[function(require,module,exports){
 module.exports = function(hljs) {
 
   var COMMON_CONTAINS = [
@@ -15900,7 +16052,7 @@ module.exports = function(hljs) {
     ].concat(COMMON_CONTAINS)
   };
 };
-},{}],154:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 module.exports = function(hljs) {
   var IDENT_RE = '[a-zA-Z-][a-zA-Z0-9_-]*';
   var VARIABLE = {
@@ -15998,7 +16150,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],155:[function(require,module,exports){
+},{}],156:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['console'],
@@ -16013,7 +16165,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],156:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 module.exports = function(hljs) {
   var smali_instr_low_prio = ['add', 'and', 'cmp', 'cmpg', 'cmpl', 'const', 'div', 'double', 'float', 'goto', 'if', 'int', 'long', 'move', 'mul', 'neg', 'new', 'nop', 'not', 'or', 'rem', 'return', 'shl', 'shr', 'sput', 'sub', 'throw', 'ushr', 'xor'];
   var smali_instr_high_prio = ['aget', 'aput', 'array', 'check', 'execute', 'fill', 'filled', 'goto/16', 'goto/32', 'iget', 'instance', 'invoke', 'iput', 'monitor', 'packed', 'sget', 'sparse'];
@@ -16069,7 +16221,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],157:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 module.exports = function(hljs) {
   var VAR_IDENT_RE = '[a-z][a-zA-Z0-9_]*';
   var CHAR = {
@@ -16119,7 +16271,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],158:[function(require,module,exports){
+},{}],159:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['ml'],
@@ -16185,7 +16337,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],159:[function(require,module,exports){
+},{}],160:[function(require,module,exports){
 module.exports = function(hljs) {
   var CPP = hljs.getLanguage('cpp').exports;
 
@@ -16556,7 +16708,7 @@ module.exports = function(hljs) {
     illegal: /#/
   };
 };
-},{}],160:[function(require,module,exports){
+},{}],161:[function(require,module,exports){
 module.exports = function(hljs) {
   var COMMENT_MODE = hljs.COMMENT('--', '$');
   return {
@@ -16716,7 +16868,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],161:[function(require,module,exports){
+},{}],162:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     contains: [
@@ -16799,7 +16951,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],162:[function(require,module,exports){
+},{}],163:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['do', 'ado'],
@@ -16837,7 +16989,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],163:[function(require,module,exports){
+},{}],164:[function(require,module,exports){
 module.exports = function(hljs) {
   var STEP21_IDENT_RE = '[A-Z_][A-Z0-9_.]*';
   var STEP21_KEYWORDS = {
@@ -16884,7 +17036,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],164:[function(require,module,exports){
+},{}],165:[function(require,module,exports){
 module.exports = function(hljs) {
 
   var VARIABLE = {
@@ -17338,7 +17490,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],165:[function(require,module,exports){
+},{}],166:[function(require,module,exports){
 module.exports = function(hljs) {
   var DETAILS = {
     className: 'string',
@@ -17372,7 +17524,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],166:[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 module.exports = function(hljs) {
   var SWIFT_KEYWORDS = {
       keyword: '__COLUMN__ __FILE__ __FUNCTION__ __LINE__ as as! as? associativity ' +
@@ -17489,7 +17641,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],167:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
 module.exports = function(hljs) {
 
   var COMMENT = {
@@ -17533,7 +17685,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],168:[function(require,module,exports){
+},{}],169:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -17569,7 +17721,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],169:[function(require,module,exports){
+},{}],170:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['tk'],
@@ -17630,7 +17782,7 @@ module.exports = function(hljs) {
     ]
   }
 };
-},{}],170:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
 module.exports = function(hljs) {
   var COMMAND = {
     className: 'tag',
@@ -17692,7 +17844,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],171:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 module.exports = function(hljs) {
   var BUILT_IN_TYPES = 'bool byte i16 i32 i64 double string binary';
   return {
@@ -17727,7 +17879,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],172:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 module.exports = function(hljs) {
   var TPID = {
     className: 'number',
@@ -17811,7 +17963,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],173:[function(require,module,exports){
+},{}],174:[function(require,module,exports){
 module.exports = function(hljs) {
   var PARAMS = {
     className: 'params',
@@ -17877,7 +18029,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],174:[function(require,module,exports){
+},{}],175:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = {
     keyword:
@@ -18033,7 +18185,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],175:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     keywords: {
@@ -18083,7 +18235,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],176:[function(require,module,exports){
+},{}],177:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['vb'],
@@ -18139,7 +18291,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],177:[function(require,module,exports){
+},{}],178:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     subLanguage: 'xml',
@@ -18151,7 +18303,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],178:[function(require,module,exports){
+},{}],179:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     aliases: ['vbs'],
@@ -18190,7 +18342,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],179:[function(require,module,exports){
+},{}],180:[function(require,module,exports){
 module.exports = function(hljs) {
   var SV_KEYWORDS = {
     keyword:
@@ -18289,7 +18441,7 @@ module.exports = function(hljs) {
     ]
   }; // return
 };
-},{}],180:[function(require,module,exports){
+},{}],181:[function(require,module,exports){
 module.exports = function(hljs) {
   // Regular expression for VHDL numeric literals.
 
@@ -18350,7 +18502,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],181:[function(require,module,exports){
+},{}],182:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     lexemes: /[!#@\w]+/,
@@ -18456,7 +18608,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],182:[function(require,module,exports){
+},{}],183:[function(require,module,exports){
 module.exports = function(hljs) {
   return {
     case_insensitive: true,
@@ -18592,7 +18744,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],183:[function(require,module,exports){
+},{}],184:[function(require,module,exports){
 module.exports = function(hljs) {
   var BUILTIN_MODULES =
     'ObjectLoader Animate MovieCredits Slides Filters Shading Materials LensFlare Mapping VLCAudioVideo ' +
@@ -18665,7 +18817,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],184:[function(require,module,exports){
+},{}],185:[function(require,module,exports){
 module.exports = function(hljs) {
   var XML_IDENT_RE = '[A-Za-z0-9\\._:-]+';
   var TAG_INTERNALS = {
@@ -18768,7 +18920,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],185:[function(require,module,exports){
+},{}],186:[function(require,module,exports){
 module.exports = function(hljs) {
   var KEYWORDS = 'for let if while then else return where group by xquery encoding version' +
     'module namespace boundary-space preserve strip default collation base-uri ordering' +
@@ -18839,7 +18991,7 @@ module.exports = function(hljs) {
     contains: CONTAINS
   };
 };
-},{}],186:[function(require,module,exports){
+},{}],187:[function(require,module,exports){
 module.exports = function(hljs) {
   var LITERALS = 'true false yes no null';
 
@@ -18927,7 +19079,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],187:[function(require,module,exports){
+},{}],188:[function(require,module,exports){
 module.exports = function(hljs) {
   var STRING = {
     className: 'string',
@@ -19034,7 +19186,7 @@ module.exports = function(hljs) {
     ]
   };
 };
-},{}],188:[function(require,module,exports){
+},{}],189:[function(require,module,exports){
 /**
  * isMobile.js v0.4.1
  *
@@ -19173,7 +19325,7 @@ module.exports = function(hljs) {
 
 })(this);
 
-},{}],189:[function(require,module,exports){
+},{}],190:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -19340,7 +19492,7 @@ MiniSignal.MiniSignalBinding = MiniSignalBinding;
 exports['default'] = MiniSignal;
 module.exports = exports['default'];
 
-},{}],190:[function(require,module,exports){
+},{}],191:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -19432,7 +19584,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],191:[function(require,module,exports){
+},{}],192:[function(require,module,exports){
 'use strict'
 
 module.exports = function parseURI (str, opts) {
@@ -19464,7 +19616,235 @@ module.exports = function parseURI (str, opts) {
   return uri
 }
 
-},{}],192:[function(require,module,exports){
+},{}],193:[function(require,module,exports){
+(function (process){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// resolves . and .. elements in a path array with directory names there
+// must be no slashes, empty elements, or device names (c:\) in the array
+// (so also no leading and trailing slashes - it does not distinguish
+// relative and absolute paths)
+function normalizeArray(parts, allowAboveRoot) {
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = parts.length - 1; i >= 0; i--) {
+    var last = parts[i];
+    if (last === '.') {
+      parts.splice(i, 1);
+    } else if (last === '..') {
+      parts.splice(i, 1);
+      up++;
+    } else if (up) {
+      parts.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (allowAboveRoot) {
+    for (; up--; up) {
+      parts.unshift('..');
+    }
+  }
+
+  return parts;
+}
+
+// Split a filename into [root, dir, basename, ext], unix version
+// 'root' is just a slash, or nothing.
+var splitPathRe =
+    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+var splitPath = function(filename) {
+  return splitPathRe.exec(filename).slice(1);
+};
+
+// path.resolve([from ...], to)
+// posix version
+exports.resolve = function() {
+  var resolvedPath = '',
+      resolvedAbsolute = false;
+
+  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+    var path = (i >= 0) ? arguments[i] : process.cwd();
+
+    // Skip empty and invalid entries
+    if (typeof path !== 'string') {
+      throw new TypeError('Arguments to path.resolve must be strings');
+    } else if (!path) {
+      continue;
+    }
+
+    resolvedPath = path + '/' + resolvedPath;
+    resolvedAbsolute = path.charAt(0) === '/';
+  }
+
+  // At this point the path should be resolved to a full absolute path, but
+  // handle relative paths to be safe (might happen when process.cwd() fails)
+
+  // Normalize the path
+  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+    return !!p;
+  }), !resolvedAbsolute).join('/');
+
+  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+};
+
+// path.normalize(path)
+// posix version
+exports.normalize = function(path) {
+  var isAbsolute = exports.isAbsolute(path),
+      trailingSlash = substr(path, -1) === '/';
+
+  // Normalize the path
+  path = normalizeArray(filter(path.split('/'), function(p) {
+    return !!p;
+  }), !isAbsolute).join('/');
+
+  if (!path && !isAbsolute) {
+    path = '.';
+  }
+  if (path && trailingSlash) {
+    path += '/';
+  }
+
+  return (isAbsolute ? '/' : '') + path;
+};
+
+// posix version
+exports.isAbsolute = function(path) {
+  return path.charAt(0) === '/';
+};
+
+// posix version
+exports.join = function() {
+  var paths = Array.prototype.slice.call(arguments, 0);
+  return exports.normalize(filter(paths, function(p, index) {
+    if (typeof p !== 'string') {
+      throw new TypeError('Arguments to path.join must be strings');
+    }
+    return p;
+  }).join('/'));
+};
+
+
+// path.relative(from, to)
+// posix version
+exports.relative = function(from, to) {
+  from = exports.resolve(from).substr(1);
+  to = exports.resolve(to).substr(1);
+
+  function trim(arr) {
+    var start = 0;
+    for (; start < arr.length; start++) {
+      if (arr[start] !== '') break;
+    }
+
+    var end = arr.length - 1;
+    for (; end >= 0; end--) {
+      if (arr[end] !== '') break;
+    }
+
+    if (start > end) return [];
+    return arr.slice(start, end - start + 1);
+  }
+
+  var fromParts = trim(from.split('/'));
+  var toParts = trim(to.split('/'));
+
+  var length = Math.min(fromParts.length, toParts.length);
+  var samePartsLength = length;
+  for (var i = 0; i < length; i++) {
+    if (fromParts[i] !== toParts[i]) {
+      samePartsLength = i;
+      break;
+    }
+  }
+
+  var outputParts = [];
+  for (var i = samePartsLength; i < fromParts.length; i++) {
+    outputParts.push('..');
+  }
+
+  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+  return outputParts.join('/');
+};
+
+exports.sep = '/';
+exports.delimiter = ':';
+
+exports.dirname = function(path) {
+  var result = splitPath(path),
+      root = result[0],
+      dir = result[1];
+
+  if (!root && !dir) {
+    // No dirname whatsoever
+    return '.';
+  }
+
+  if (dir) {
+    // It has a dirname, strip trailing slash
+    dir = dir.substr(0, dir.length - 1);
+  }
+
+  return root + dir;
+};
+
+
+exports.basename = function(path, ext) {
+  var f = splitPath(path)[2];
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
+};
+
+
+exports.extname = function(path) {
+  return splitPath(path)[3];
+};
+
+function filter (xs, f) {
+    if (xs.filter) return xs.filter(f);
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        if (f(xs[i], i, xs)) res.push(xs[i]);
+    }
+    return res;
+}
+
+// String.prototype.substr - negative index don't work in IE8
+var substr = 'ab'.substr(-1) === 'b'
+    ? function (str, start, len) { return str.substr(start, len) }
+    : function (str, start, len) {
+        if (start < 0) start = str.length + start;
+        return str.substr(start, len);
+    }
+;
+
+}).call(this,require('_process'))
+},{"_process":361}],194:[function(require,module,exports){
 var EMPTY_ARRAY_BUFFER = new ArrayBuffer(0);
 
 /**
@@ -19585,7 +19965,7 @@ Buffer.prototype.destroy = function(){
 
 module.exports = Buffer;
 
-},{}],193:[function(require,module,exports){
+},{}],195:[function(require,module,exports){
 
 var Texture = require('./GLTexture');
 
@@ -19813,7 +20193,7 @@ Framebuffer.createFloat32 = function(gl, width, height, data)
 
 module.exports = Framebuffer;
 
-},{"./GLTexture":195}],194:[function(require,module,exports){
+},{"./GLTexture":197}],196:[function(require,module,exports){
 
 var compileProgram = require('./shader/compileProgram'),
 	extractAttributes = require('./shader/extractAttributes'),
@@ -19909,7 +20289,7 @@ Shader.prototype.destroy = function()
 
 module.exports = Shader;
 
-},{"./shader/compileProgram":200,"./shader/extractAttributes":202,"./shader/extractUniforms":203,"./shader/generateUniformAccessObject":204,"./shader/setPrecision":208}],195:[function(require,module,exports){
+},{"./shader/compileProgram":202,"./shader/extractAttributes":204,"./shader/extractUniforms":205,"./shader/generateUniformAccessObject":206,"./shader/setPrecision":210}],197:[function(require,module,exports){
 
 /**
  * Helper class to create a WebGL Texture
@@ -20244,7 +20624,7 @@ Texture.fromData = function(gl, data, width, height)
 
 module.exports = Texture;
 
-},{}],196:[function(require,module,exports){
+},{}],198:[function(require,module,exports){
 
 // state object//
 var setVertexAttribArrays = require( './setVertexAttribArrays' );
@@ -20512,7 +20892,7 @@ VertexArrayObject.prototype.getSize = function()
     return attrib.buffer.data.length / (( attrib.stride/4 ) || attrib.attribute.size);
 };
 
-},{"./setVertexAttribArrays":199}],197:[function(require,module,exports){
+},{"./setVertexAttribArrays":201}],199:[function(require,module,exports){
 
 /**
  * Helper class to create a webGL Context
@@ -20540,7 +20920,7 @@ var createContext = function(canvas, options)
 
 module.exports = createContext;
 
-},{}],198:[function(require,module,exports){
+},{}],200:[function(require,module,exports){
 var gl = {
     createContext:          require('./createContext'),
     setVertexAttribArrays:  require('./setVertexAttribArrays'),
@@ -20567,7 +20947,7 @@ if (typeof window !== 'undefined')
     window.PIXI.glCore = gl;
 }
 
-},{"./GLBuffer":192,"./GLFramebuffer":193,"./GLShader":194,"./GLTexture":195,"./VertexArrayObject":196,"./createContext":197,"./setVertexAttribArrays":199,"./shader":205}],199:[function(require,module,exports){
+},{"./GLBuffer":194,"./GLFramebuffer":195,"./GLShader":196,"./GLTexture":197,"./VertexArrayObject":198,"./createContext":199,"./setVertexAttribArrays":201,"./shader":207}],201:[function(require,module,exports){
 // var GL_MAP = {};
 
 /**
@@ -20624,7 +21004,7 @@ var setVertexAttribArrays = function (gl, attribs, state)
 
 module.exports = setVertexAttribArrays;
 
-},{}],200:[function(require,module,exports){
+},{}],202:[function(require,module,exports){
 
 /**
  * @class
@@ -20706,7 +21086,7 @@ var compileShader = function (gl, type, src)
 
 module.exports = compileProgram;
 
-},{}],201:[function(require,module,exports){
+},{}],203:[function(require,module,exports){
 /**
  * @class
  * @memberof PIXI.glCore.shader
@@ -20786,7 +21166,7 @@ var booleanArray = function(size)
 
 module.exports = defaultValue;
 
-},{}],202:[function(require,module,exports){
+},{}],204:[function(require,module,exports){
 
 var mapType = require('./mapType');
 var mapSize = require('./mapSize');
@@ -20829,7 +21209,7 @@ var pointer = function(type, normalized, stride, start){
 
 module.exports = extractAttributes;
 
-},{"./mapSize":206,"./mapType":207}],203:[function(require,module,exports){
+},{"./mapSize":208,"./mapType":209}],205:[function(require,module,exports){
 var mapType = require('./mapType');
 var defaultValue = require('./defaultValue');
 
@@ -20866,7 +21246,7 @@ var extractUniforms = function(gl, program)
 
 module.exports = extractUniforms;
 
-},{"./defaultValue":201,"./mapType":207}],204:[function(require,module,exports){
+},{"./defaultValue":203,"./mapType":209}],206:[function(require,module,exports){
 /**
  * Extracts the attributes
  * @class
@@ -20989,7 +21369,7 @@ function getUniformGroup(nameTokens, uniform)
 
 module.exports = generateUniformAccessObject;
 
-},{}],205:[function(require,module,exports){
+},{}],207:[function(require,module,exports){
 module.exports = {
     compileProgram: require('./compileProgram'),
     defaultValue: require('./defaultValue'),
@@ -21000,7 +21380,7 @@ module.exports = {
     mapSize: require('./mapSize'),
     mapType: require('./mapType')
 };
-},{"./compileProgram":200,"./defaultValue":201,"./extractAttributes":202,"./extractUniforms":203,"./generateUniformAccessObject":204,"./mapSize":206,"./mapType":207,"./setPrecision":208}],206:[function(require,module,exports){
+},{"./compileProgram":202,"./defaultValue":203,"./extractAttributes":204,"./extractUniforms":205,"./generateUniformAccessObject":206,"./mapSize":208,"./mapType":209,"./setPrecision":210}],208:[function(require,module,exports){
 /**
  * @class
  * @memberof PIXI.glCore.shader
@@ -21038,7 +21418,7 @@ var GLSL_TO_SIZE = {
 
 module.exports = mapSize;
 
-},{}],207:[function(require,module,exports){
+},{}],209:[function(require,module,exports){
 
 
 var mapType = function(gl, type) 
@@ -21086,7 +21466,7 @@ var GL_TO_GLSL_TYPES = {
 
 module.exports = mapType;
 
-},{}],208:[function(require,module,exports){
+},{}],210:[function(require,module,exports){
 /**
  * Sets the float precision on the shader. If the precision is already present this function will do nothing
  * @param {string} src       the shader source
@@ -21106,7 +21486,7 @@ var setPrecision = function(src, precision)
 
 module.exports = setPrecision;
 
-},{}],209:[function(require,module,exports){
+},{}],211:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -21600,7 +21980,7 @@ exports.default = AccessibilityManager;
 core.WebGLRenderer.registerPlugin('accessibility', AccessibilityManager);
 core.CanvasRenderer.registerPlugin('accessibility', AccessibilityManager);
 
-},{"../core":234,"./accessibleTarget":210,"ismobilejs":188}],210:[function(require,module,exports){
+},{"../core":236,"./accessibleTarget":212,"ismobilejs":189}],212:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -21658,7 +22038,7 @@ exports.default = {
   _accessibleDiv: false
 };
 
-},{}],211:[function(require,module,exports){
+},{}],213:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -21683,7 +22063,7 @@ Object.defineProperty(exports, 'AccessibilityManager', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-},{"./AccessibilityManager":209,"./accessibleTarget":210}],212:[function(require,module,exports){
+},{"./AccessibilityManager":211,"./accessibleTarget":212}],214:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -21906,7 +22286,7 @@ var Application = function () {
 
 exports.default = Application;
 
-},{"./autoDetectRenderer":214,"./const":215,"./display/Container":217,"./settings":270,"./ticker":290}],213:[function(require,module,exports){
+},{"./autoDetectRenderer":216,"./const":217,"./display/Container":219,"./settings":272,"./ticker":292}],215:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -21970,7 +22350,7 @@ var Shader = function (_GLShader) {
 
 exports.default = Shader;
 
-},{"./settings":270,"pixi-gl-core":198}],214:[function(require,module,exports){
+},{"./settings":272,"pixi-gl-core":200}],216:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -22039,7 +22419,7 @@ function autoDetectRenderer(options, arg1, arg2, arg3) {
     return new _CanvasRenderer2.default(options, arg1, arg2);
 }
 
-},{"./renderers/canvas/CanvasRenderer":246,"./renderers/webgl/WebGLRenderer":253,"./utils":294}],215:[function(require,module,exports){
+},{"./renderers/canvas/CanvasRenderer":248,"./renderers/webgl/WebGLRenderer":255,"./utils":296}],217:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -22382,7 +22762,7 @@ var UPDATE_PRIORITY = exports.UPDATE_PRIORITY = {
   UTILITY: -50
 };
 
-},{}],216:[function(require,module,exports){
+},{}],218:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -22725,7 +23105,7 @@ var Bounds = function () {
 
 exports.default = Bounds;
 
-},{"../math":239}],217:[function(require,module,exports){
+},{"../math":241}],219:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -23343,7 +23723,7 @@ var Container = function (_DisplayObject) {
 exports.default = Container;
 Container.prototype.containerUpdateTransform = Container.prototype.updateTransform;
 
-},{"../utils":294,"./DisplayObject":218}],218:[function(require,module,exports){
+},{"../utils":296,"./DisplayObject":220}],220:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -24035,7 +24415,7 @@ var DisplayObject = function (_EventEmitter) {
 exports.default = DisplayObject;
 DisplayObject.prototype.displayObjectUpdateTransform = DisplayObject.prototype.updateTransform;
 
-},{"../const":215,"../math":239,"../settings":270,"./Bounds":216,"./Transform":219,"./TransformStatic":221,"eventemitter3":358}],219:[function(require,module,exports){
+},{"../const":217,"../math":241,"../settings":272,"./Bounds":218,"./Transform":221,"./TransformStatic":223,"eventemitter3":360}],221:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -24216,7 +24596,7 @@ var Transform = function (_TransformBase) {
 
 exports.default = Transform;
 
-},{"../math":239,"./TransformBase":220}],220:[function(require,module,exports){
+},{"../math":241,"./TransformBase":222}],222:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -24303,7 +24683,7 @@ TransformBase.prototype.updateWorldTransform = TransformBase.prototype.updateTra
 
 TransformBase.IDENTITY = new TransformBase();
 
-},{"../math":239}],221:[function(require,module,exports){
+},{"../math":241}],223:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -24513,7 +24893,7 @@ var TransformStatic = function (_TransformBase) {
 
 exports.default = TransformStatic;
 
-},{"../math":239,"./TransformBase":220}],222:[function(require,module,exports){
+},{"../math":241,"./TransformBase":222}],224:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -25685,7 +26065,7 @@ exports.default = Graphics;
 
 Graphics._SPRITE_TEXTURE = null;
 
-},{"../const":215,"../display/Bounds":216,"../display/Container":217,"../math":239,"../renderers/canvas/CanvasRenderer":246,"../sprites/Sprite":271,"../textures/RenderTexture":282,"../textures/Texture":284,"../utils":294,"./GraphicsData":223,"./utils/bezierCurveTo":225}],223:[function(require,module,exports){
+},{"../const":217,"../display/Bounds":218,"../display/Container":219,"../math":241,"../renderers/canvas/CanvasRenderer":248,"../sprites/Sprite":273,"../textures/RenderTexture":284,"../textures/Texture":286,"../utils":296,"./GraphicsData":225,"./utils/bezierCurveTo":227}],225:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -25807,7 +26187,7 @@ var GraphicsData = function () {
 
 exports.default = GraphicsData;
 
-},{}],224:[function(require,module,exports){
+},{}],226:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -26076,7 +26456,7 @@ exports.default = CanvasGraphicsRenderer;
 
 _CanvasRenderer2.default.registerPlugin('graphics', CanvasGraphicsRenderer);
 
-},{"../../const":215,"../../renderers/canvas/CanvasRenderer":246}],225:[function(require,module,exports){
+},{"../../const":217,"../../renderers/canvas/CanvasRenderer":248}],227:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -26126,7 +26506,7 @@ function bezierCurveTo(fromX, fromY, cpX, cpY, cpX2, cpY2, toX, toY) {
     return path;
 }
 
-},{}],226:[function(require,module,exports){
+},{}],228:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -26391,7 +26771,7 @@ exports.default = GraphicsRenderer;
 
 _WebGLRenderer2.default.registerPlugin('graphics', GraphicsRenderer);
 
-},{"../../const":215,"../../renderers/webgl/WebGLRenderer":253,"../../renderers/webgl/utils/ObjectRenderer":263,"../../utils":294,"./WebGLGraphicsData":227,"./shaders/PrimitiveShader":228,"./utils/buildCircle":229,"./utils/buildPoly":231,"./utils/buildRectangle":232,"./utils/buildRoundedRectangle":233}],227:[function(require,module,exports){
+},{"../../const":217,"../../renderers/webgl/WebGLRenderer":255,"../../renderers/webgl/utils/ObjectRenderer":265,"../../utils":296,"./WebGLGraphicsData":229,"./shaders/PrimitiveShader":230,"./utils/buildCircle":231,"./utils/buildPoly":233,"./utils/buildRectangle":234,"./utils/buildRoundedRectangle":235}],229:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -26534,7 +26914,7 @@ var WebGLGraphicsData = function () {
 
 exports.default = WebGLGraphicsData;
 
-},{"pixi-gl-core":198}],228:[function(require,module,exports){
+},{"pixi-gl-core":200}],230:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -26579,7 +26959,7 @@ var PrimitiveShader = function (_Shader) {
 
 exports.default = PrimitiveShader;
 
-},{"../../../Shader":213}],229:[function(require,module,exports){
+},{"../../../Shader":215}],231:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -26672,7 +27052,7 @@ function buildCircle(graphicsData, webGLData, webGLDataNativeLines) {
     }
 }
 
-},{"../../../const":215,"../../../utils":294,"./buildLine":230}],230:[function(require,module,exports){
+},{"../../../const":217,"../../../utils":296,"./buildLine":232}],232:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -26942,7 +27322,7 @@ function buildNativeLine(graphicsData, webGLData) {
     }
 }
 
-},{"../../../math":239,"../../../utils":294}],231:[function(require,module,exports){
+},{"../../../math":241,"../../../utils":296}],233:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -27028,7 +27408,7 @@ function buildPoly(graphicsData, webGLData, webGLDataNativeLines) {
     }
 }
 
-},{"../../../utils":294,"./buildLine":230,"earcut":6}],232:[function(require,module,exports){
+},{"../../../utils":296,"./buildLine":232,"earcut":8}],234:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -27104,7 +27484,7 @@ function buildRectangle(graphicsData, webGLData, webGLDataNativeLines) {
     }
 }
 
-},{"../../../utils":294,"./buildLine":230}],233:[function(require,module,exports){
+},{"../../../utils":296,"./buildLine":232}],235:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -27260,7 +27640,7 @@ function quadraticBezierCurve(fromX, fromY, cpX, cpY, toX, toY) {
     return points;
 }
 
-},{"../../../utils":294,"./buildLine":230,"earcut":6}],234:[function(require,module,exports){
+},{"../../../utils":296,"./buildLine":232,"earcut":8}],236:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -27646,7 +28026,7 @@ exports.WebGLRenderer = _WebGLRenderer2.default; /**
                                                   * @namespace PIXI
                                                   */
 
-},{"./Application":212,"./Shader":213,"./autoDetectRenderer":214,"./const":215,"./display/Bounds":216,"./display/Container":217,"./display/DisplayObject":218,"./display/Transform":219,"./display/TransformBase":220,"./display/TransformStatic":221,"./graphics/Graphics":222,"./graphics/GraphicsData":223,"./graphics/canvas/CanvasGraphicsRenderer":224,"./graphics/webgl/GraphicsRenderer":226,"./math":239,"./renderers/canvas/CanvasRenderer":246,"./renderers/canvas/utils/CanvasRenderTarget":248,"./renderers/webgl/WebGLRenderer":253,"./renderers/webgl/filters/Filter":255,"./renderers/webgl/filters/spriteMask/SpriteMaskFilter":258,"./renderers/webgl/managers/WebGLManager":262,"./renderers/webgl/utils/ObjectRenderer":263,"./renderers/webgl/utils/Quad":264,"./renderers/webgl/utils/RenderTarget":265,"./settings":270,"./sprites/Sprite":271,"./sprites/canvas/CanvasSpriteRenderer":272,"./sprites/canvas/CanvasTinter":273,"./sprites/webgl/SpriteRenderer":275,"./text/Text":277,"./text/TextMetrics":278,"./text/TextStyle":279,"./textures/BaseRenderTexture":280,"./textures/BaseTexture":281,"./textures/RenderTexture":282,"./textures/Spritesheet":283,"./textures/Texture":284,"./textures/TextureMatrix":285,"./textures/TextureUvs":286,"./textures/VideoBaseTexture":287,"./ticker":290,"./utils":294,"pixi-gl-core":198}],235:[function(require,module,exports){
+},{"./Application":214,"./Shader":215,"./autoDetectRenderer":216,"./const":217,"./display/Bounds":218,"./display/Container":219,"./display/DisplayObject":220,"./display/Transform":221,"./display/TransformBase":222,"./display/TransformStatic":223,"./graphics/Graphics":224,"./graphics/GraphicsData":225,"./graphics/canvas/CanvasGraphicsRenderer":226,"./graphics/webgl/GraphicsRenderer":228,"./math":241,"./renderers/canvas/CanvasRenderer":248,"./renderers/canvas/utils/CanvasRenderTarget":250,"./renderers/webgl/WebGLRenderer":255,"./renderers/webgl/filters/Filter":257,"./renderers/webgl/filters/spriteMask/SpriteMaskFilter":260,"./renderers/webgl/managers/WebGLManager":264,"./renderers/webgl/utils/ObjectRenderer":265,"./renderers/webgl/utils/Quad":266,"./renderers/webgl/utils/RenderTarget":267,"./settings":272,"./sprites/Sprite":273,"./sprites/canvas/CanvasSpriteRenderer":274,"./sprites/canvas/CanvasTinter":275,"./sprites/webgl/SpriteRenderer":277,"./text/Text":279,"./text/TextMetrics":280,"./text/TextStyle":281,"./textures/BaseRenderTexture":282,"./textures/BaseTexture":283,"./textures/RenderTexture":284,"./textures/Spritesheet":285,"./textures/Texture":286,"./textures/TextureMatrix":287,"./textures/TextureUvs":288,"./textures/VideoBaseTexture":289,"./ticker":292,"./utils":296,"pixi-gl-core":200}],237:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -27839,7 +28219,7 @@ var GroupD8 = {
 
 exports.default = GroupD8;
 
-},{"./Matrix":236}],236:[function(require,module,exports){
+},{"./Matrix":238}],238:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -28370,7 +28750,7 @@ var Matrix = function () {
 
 exports.default = Matrix;
 
-},{"./Point":238}],237:[function(require,module,exports){
+},{"./Point":240}],239:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -28487,7 +28867,7 @@ var ObservablePoint = function () {
 
 exports.default = ObservablePoint;
 
-},{}],238:[function(require,module,exports){
+},{}],240:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -28578,7 +28958,7 @@ var Point = function () {
 
 exports.default = Point;
 
-},{}],239:[function(require,module,exports){
+},{}],241:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -28666,7 +29046,7 @@ Object.defineProperty(exports, 'RoundedRectangle', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-},{"./GroupD8":235,"./Matrix":236,"./ObservablePoint":237,"./Point":238,"./shapes/Circle":240,"./shapes/Ellipse":241,"./shapes/Polygon":242,"./shapes/Rectangle":243,"./shapes/RoundedRectangle":244}],240:[function(require,module,exports){
+},{"./GroupD8":237,"./Matrix":238,"./ObservablePoint":239,"./Point":240,"./shapes/Circle":242,"./shapes/Ellipse":243,"./shapes/Polygon":244,"./shapes/Rectangle":245,"./shapes/RoundedRectangle":246}],242:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -28780,7 +29160,7 @@ var Circle = function () {
 
 exports.default = Circle;
 
-},{"../../const":215,"./Rectangle":243}],241:[function(require,module,exports){
+},{"../../const":217,"./Rectangle":245}],243:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -28902,7 +29282,7 @@ var Ellipse = function () {
 
 exports.default = Ellipse;
 
-},{"../../const":215,"./Rectangle":243}],242:[function(require,module,exports){
+},{"../../const":217,"./Rectangle":245}],244:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -29033,7 +29413,7 @@ var Polygon = function () {
 
 exports.default = Polygon;
 
-},{"../../const":215,"../Point":238}],243:[function(require,module,exports){
+},{"../../const":217,"../Point":240}],245:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -29296,7 +29676,7 @@ var Rectangle = function () {
 
 exports.default = Rectangle;
 
-},{"../../const":215}],244:[function(require,module,exports){
+},{"../../const":217}],246:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -29429,7 +29809,7 @@ var RoundedRectangle = function () {
 
 exports.default = RoundedRectangle;
 
-},{"../../const":215}],245:[function(require,module,exports){
+},{"../../const":217}],247:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -29794,7 +30174,7 @@ var SystemRenderer = function (_EventEmitter) {
 
 exports.default = SystemRenderer;
 
-},{"../const":215,"../display/Container":217,"../math":239,"../settings":270,"../textures/RenderTexture":282,"../utils":294,"eventemitter3":358}],246:[function(require,module,exports){
+},{"../const":217,"../display/Container":219,"../math":241,"../settings":272,"../textures/RenderTexture":284,"../utils":296,"eventemitter3":360}],248:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -30159,7 +30539,7 @@ var CanvasRenderer = function (_SystemRenderer) {
 exports.default = CanvasRenderer;
 _utils.pluginTarget.mixin(CanvasRenderer);
 
-},{"../../const":215,"../../settings":270,"../../utils":294,"../SystemRenderer":245,"./utils/CanvasMaskManager":247,"./utils/CanvasRenderTarget":248,"./utils/mapCanvasBlendModesToPixi":250}],247:[function(require,module,exports){
+},{"../../const":217,"../../settings":272,"../../utils":296,"../SystemRenderer":247,"./utils/CanvasMaskManager":249,"./utils/CanvasRenderTarget":250,"./utils/mapCanvasBlendModesToPixi":252}],249:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -30328,7 +30708,7 @@ var CanvasMaskManager = function () {
 
 exports.default = CanvasMaskManager;
 
-},{"../../../const":215}],248:[function(require,module,exports){
+},{"../../../const":217}],250:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -30452,7 +30832,7 @@ var CanvasRenderTarget = function () {
 
 exports.default = CanvasRenderTarget;
 
-},{"../../../settings":270}],249:[function(require,module,exports){
+},{"../../../settings":272}],251:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -30513,7 +30893,7 @@ function canUseNewCanvasBlendModes() {
     return data[0] === 255 && data[1] === 0 && data[2] === 0;
 }
 
-},{}],250:[function(require,module,exports){
+},{}],252:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -30585,7 +30965,7 @@ function mapCanvasBlendModesToPixi() {
     return array;
 }
 
-},{"../../../const":215,"./canUseNewCanvasBlendModes":249}],251:[function(require,module,exports){
+},{"../../../const":217,"./canUseNewCanvasBlendModes":251}],253:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -30705,7 +31085,7 @@ var TextureGarbageCollector = function () {
 
 exports.default = TextureGarbageCollector;
 
-},{"../../const":215,"../../settings":270}],252:[function(require,module,exports){
+},{"../../const":217,"../../settings":272}],254:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -30961,7 +31341,7 @@ var TextureManager = function () {
 
 exports.default = TextureManager;
 
-},{"../../const":215,"../../utils":294,"./utils/RenderTarget":265,"pixi-gl-core":198}],253:[function(require,module,exports){
+},{"../../const":217,"../../utils":296,"./utils/RenderTarget":267,"pixi-gl-core":200}],255:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -31778,7 +32158,7 @@ var WebGLRenderer = function (_SystemRenderer) {
 exports.default = WebGLRenderer;
 _utils.pluginTarget.mixin(WebGLRenderer);
 
-},{"../../const":215,"../../textures/BaseTexture":281,"../../utils":294,"../SystemRenderer":245,"./TextureGarbageCollector":251,"./TextureManager":252,"./WebGLState":254,"./managers/FilterManager":259,"./managers/MaskManager":260,"./managers/StencilManager":261,"./utils/ObjectRenderer":263,"./utils/RenderTarget":265,"./utils/mapWebGLDrawModesToPixi":268,"./utils/validateContext":269,"pixi-gl-core":198}],254:[function(require,module,exports){
+},{"../../const":217,"../../textures/BaseTexture":283,"../../utils":296,"../SystemRenderer":247,"./TextureGarbageCollector":253,"./TextureManager":254,"./WebGLState":256,"./managers/FilterManager":261,"./managers/MaskManager":262,"./managers/StencilManager":263,"./utils/ObjectRenderer":265,"./utils/RenderTarget":267,"./utils/mapWebGLDrawModesToPixi":270,"./utils/validateContext":271,"pixi-gl-core":200}],256:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -32058,7 +32438,7 @@ var WebGLState = function () {
 
 exports.default = WebGLState;
 
-},{"./utils/mapWebGLBlendModesToPixi":267}],255:[function(require,module,exports){
+},{"./utils/mapWebGLBlendModesToPixi":269}],257:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -32254,7 +32634,7 @@ var Filter = function () {
 
 exports.default = Filter;
 
-},{"../../../const":215,"../../../settings":270,"../../../utils":294,"./extractUniformsFromSrc":256}],256:[function(require,module,exports){
+},{"../../../const":217,"../../../settings":272,"../../../utils":296,"./extractUniformsFromSrc":258}],258:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -32316,7 +32696,7 @@ function extractUniformsFromString(string) {
     return uniforms;
 }
 
-},{"pixi-gl-core":198}],257:[function(require,module,exports){
+},{"pixi-gl-core":200}],259:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -32375,7 +32755,7 @@ function calculateSpriteMatrix(outputMatrix, filterArea, textureSize, sprite) {
     return mappedMatrix;
 }
 
-},{"../../../math":239}],258:[function(require,module,exports){
+},{"../../../math":241}],260:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -32463,7 +32843,7 @@ var SpriteMaskFilter = function (_Filter) {
 
 exports.default = SpriteMaskFilter;
 
-},{"../../../../math":239,"../../../../textures/TextureMatrix":285,"../Filter":255,"path":384}],259:[function(require,module,exports){
+},{"../../../../math":241,"../../../../textures/TextureMatrix":287,"../Filter":257,"path":193}],261:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -33057,7 +33437,7 @@ var FilterManager = function (_WebGLManager) {
 
 exports.default = FilterManager;
 
-},{"../../../Shader":213,"../../../math":239,"../filters/filterTransforms":257,"../utils/Quad":264,"../utils/RenderTarget":265,"./WebGLManager":262,"bit-twiddle":5}],260:[function(require,module,exports){
+},{"../../../Shader":215,"../../../math":241,"../filters/filterTransforms":259,"../utils/Quad":266,"../utils/RenderTarget":267,"./WebGLManager":264,"bit-twiddle":6}],262:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -33267,7 +33647,7 @@ var MaskManager = function (_WebGLManager) {
 
 exports.default = MaskManager;
 
-},{"../filters/spriteMask/SpriteMaskFilter":258,"./WebGLManager":262}],261:[function(require,module,exports){
+},{"../filters/spriteMask/SpriteMaskFilter":260,"./WebGLManager":264}],263:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -33420,7 +33800,7 @@ var StencilManager = function (_WebGLManager) {
 
 exports.default = StencilManager;
 
-},{"./WebGLManager":262}],262:[function(require,module,exports){
+},{"./WebGLManager":264}],264:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -33475,7 +33855,7 @@ var WebGLManager = function () {
 
 exports.default = WebGLManager;
 
-},{}],263:[function(require,module,exports){
+},{}],265:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -33553,7 +33933,7 @@ var ObjectRenderer = function (_WebGLManager) {
 
 exports.default = ObjectRenderer;
 
-},{"../managers/WebGLManager":262}],264:[function(require,module,exports){
+},{"../managers/WebGLManager":264}],266:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -33734,7 +34114,7 @@ var Quad = function () {
 
 exports.default = Quad;
 
-},{"../../../utils/createIndicesForQuads":292,"pixi-gl-core":198}],265:[function(require,module,exports){
+},{"../../../utils/createIndicesForQuads":294,"pixi-gl-core":200}],267:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -34061,7 +34441,7 @@ var RenderTarget = function () {
 
 exports.default = RenderTarget;
 
-},{"../../../const":215,"../../../math":239,"../../../settings":270,"pixi-gl-core":198}],266:[function(require,module,exports){
+},{"../../../const":217,"../../../math":241,"../../../settings":272,"pixi-gl-core":200}],268:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -34136,7 +34516,7 @@ function generateIfTestSrc(maxIfs) {
     return src;
 }
 
-},{"pixi-gl-core":198}],267:[function(require,module,exports){
+},{"pixi-gl-core":200}],269:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -34185,7 +34565,7 @@ function mapWebGLBlendModesToPixi(gl) {
     return array;
 }
 
-},{"../../../const":215}],268:[function(require,module,exports){
+},{"../../../const":217}],270:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -34217,7 +34597,7 @@ function mapWebGLDrawModesToPixi(gl) {
   return object;
 }
 
-},{"../../../const":215}],269:[function(require,module,exports){
+},{"../../../const":217}],271:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -34233,7 +34613,7 @@ function validateContext(gl) {
     }
 }
 
-},{}],270:[function(require,module,exports){
+},{}],272:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -34468,7 +34848,7 @@ exports.default = {
 
 };
 
-},{"./utils/canUploadSameBuffer":291,"./utils/maxRecommendedTextures":296}],271:[function(require,module,exports){
+},{"./utils/canUploadSameBuffer":293,"./utils/maxRecommendedTextures":298}],273:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -35091,7 +35471,7 @@ var Sprite = function (_Container) {
 
 exports.default = Sprite;
 
-},{"../const":215,"../display/Container":217,"../math":239,"../textures/Texture":284,"../utils":294}],272:[function(require,module,exports){
+},{"../const":217,"../display/Container":219,"../math":241,"../textures/Texture":286,"../utils":296}],274:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -35244,7 +35624,7 @@ exports.default = CanvasSpriteRenderer;
 
 _CanvasRenderer2.default.registerPlugin('sprite', CanvasSpriteRenderer);
 
-},{"../../const":215,"../../math":239,"../../renderers/canvas/CanvasRenderer":246,"./CanvasTinter":273}],273:[function(require,module,exports){
+},{"../../const":217,"../../math":241,"../../renderers/canvas/CanvasRenderer":248,"./CanvasTinter":275}],275:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -35495,7 +35875,7 @@ CanvasTinter.tintMethod = CanvasTinter.canUseMultiply ? CanvasTinter.tintWithMul
 
 exports.default = CanvasTinter;
 
-},{"../../renderers/canvas/utils/canUseNewCanvasBlendModes":249,"../../utils":294}],274:[function(require,module,exports){
+},{"../../renderers/canvas/utils/canUseNewCanvasBlendModes":251,"../../utils":296}],276:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -35548,7 +35928,7 @@ var Buffer = function () {
 
 exports.default = Buffer;
 
-},{}],275:[function(require,module,exports){
+},{}],277:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -36099,7 +36479,7 @@ exports.default = SpriteRenderer;
 
 _WebGLRenderer2.default.registerPlugin('sprite', SpriteRenderer);
 
-},{"../../renderers/webgl/WebGLRenderer":253,"../../renderers/webgl/utils/ObjectRenderer":263,"../../renderers/webgl/utils/checkMaxIfStatmentsInShader":266,"../../settings":270,"../../utils":294,"../../utils/createIndicesForQuads":292,"./BatchBuffer":274,"./generateMultiTextureShader":276,"bit-twiddle":5,"pixi-gl-core":198}],276:[function(require,module,exports){
+},{"../../renderers/webgl/WebGLRenderer":255,"../../renderers/webgl/utils/ObjectRenderer":265,"../../renderers/webgl/utils/checkMaxIfStatmentsInShader":268,"../../settings":272,"../../utils":296,"../../utils/createIndicesForQuads":294,"./BatchBuffer":276,"./generateMultiTextureShader":278,"bit-twiddle":6,"pixi-gl-core":200}],278:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -36162,7 +36542,7 @@ function generateSampleSrc(maxTextures) {
     return src;
 }
 
-},{"../../Shader":213,"path":384}],277:[function(require,module,exports){
+},{"../../Shader":215,"path":193}],279:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -36817,7 +37197,7 @@ var Text = function (_Sprite) {
 
 exports.default = Text;
 
-},{"../const":215,"../math":239,"../settings":270,"../sprites/Sprite":271,"../textures/Texture":284,"../utils":294,"../utils/trimCanvas":299,"./TextMetrics":278,"./TextStyle":279}],278:[function(require,module,exports){
+},{"../const":217,"../math":241,"../settings":272,"../sprites/Sprite":273,"../textures/Texture":286,"../utils":296,"../utils/trimCanvas":301,"./TextMetrics":280,"./TextStyle":281}],280:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -37120,7 +37500,7 @@ TextMetrics._context = canvas.getContext('2d');
  */
 TextMetrics._fonts = {};
 
-},{}],279:[function(require,module,exports){
+},{}],281:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -37922,7 +38302,7 @@ function deepCopyProperties(target, source, propertyObj) {
     }
 }
 
-},{"../const":215,"../utils":294}],280:[function(require,module,exports){
+},{"../const":217,"../utils":296}],282:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -38084,7 +38464,7 @@ var BaseRenderTexture = function (_BaseTexture) {
 
 exports.default = BaseRenderTexture;
 
-},{"../settings":270,"./BaseTexture":281}],281:[function(require,module,exports){
+},{"../settings":272,"./BaseTexture":283}],283:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -38930,7 +39310,7 @@ var BaseTexture = function (_EventEmitter) {
 
 exports.default = BaseTexture;
 
-},{"../settings":270,"../utils":294,"../utils/determineCrossOrigin":293,"bit-twiddle":5,"eventemitter3":358}],282:[function(require,module,exports){
+},{"../settings":272,"../utils":296,"../utils/determineCrossOrigin":295,"bit-twiddle":6,"eventemitter3":360}],284:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -39084,7 +39464,7 @@ var RenderTexture = function (_Texture) {
 
 exports.default = RenderTexture;
 
-},{"./BaseRenderTexture":280,"./Texture":284}],283:[function(require,module,exports){
+},{"./BaseRenderTexture":282,"./Texture":286}],285:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -39346,7 +39726,7 @@ var Spritesheet = function () {
 
 exports.default = Spritesheet;
 
-},{"../":234,"../utils":294}],284:[function(require,module,exports){
+},{"../":236,"../utils":296}],286:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -40038,7 +40418,7 @@ Texture.WHITE = createWhiteTexture();
 removeAllHandlers(Texture.WHITE);
 removeAllHandlers(Texture.WHITE.baseTexture);
 
-},{"../math":239,"../settings":270,"../utils":294,"./BaseTexture":281,"./TextureUvs":286,"./VideoBaseTexture":287,"eventemitter3":358}],285:[function(require,module,exports){
+},{"../math":241,"../settings":272,"../utils":296,"./BaseTexture":283,"./TextureUvs":288,"./VideoBaseTexture":289,"eventemitter3":360}],287:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -40202,7 +40582,7 @@ var TextureMatrix = function () {
 
 exports.default = TextureMatrix;
 
-},{"../math/Matrix":236}],286:[function(require,module,exports){
+},{"../math/Matrix":238}],288:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -40307,7 +40687,7 @@ var TextureUvs = function () {
 
 exports.default = TextureUvs;
 
-},{"../math/GroupD8":235}],287:[function(require,module,exports){
+},{"../math/GroupD8":237}],289:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -40649,7 +41029,7 @@ function createSource(path, type) {
     return source;
 }
 
-},{"../const":215,"../ticker":290,"../utils":294,"../utils/determineCrossOrigin":293,"./BaseTexture":281}],288:[function(require,module,exports){
+},{"../const":217,"../ticker":292,"../utils":296,"../utils/determineCrossOrigin":295,"./BaseTexture":283}],290:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -41122,7 +41502,7 @@ var Ticker = function () {
 
 exports.default = Ticker;
 
-},{"../const":215,"../settings":270,"./TickerListener":289}],289:[function(require,module,exports){
+},{"../const":217,"../settings":272,"./TickerListener":291}],291:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -41296,7 +41676,7 @@ var TickerListener = function () {
 
 exports.default = TickerListener;
 
-},{}],290:[function(require,module,exports){
+},{}],292:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -41376,7 +41756,7 @@ shared.destroy = function () {
 exports.shared = shared;
 exports.Ticker = _Ticker2.default;
 
-},{"./Ticker":288}],291:[function(require,module,exports){
+},{"./Ticker":290}],293:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -41390,7 +41770,7 @@ function canUploadSameBuffer() {
 	return !ios;
 }
 
-},{}],292:[function(require,module,exports){
+},{}],294:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -41424,7 +41804,7 @@ function createIndicesForQuads(size) {
     return indices;
 }
 
-},{}],293:[function(require,module,exports){
+},{}],295:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -41480,7 +41860,7 @@ function determineCrossOrigin(url) {
     return '';
 }
 
-},{"url":390}],294:[function(require,module,exports){
+},{"url":381}],296:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -41954,7 +42334,7 @@ function premultiplyTintToRgba(tint, alpha, out, premultiply) {
     return out;
 }
 
-},{"../const":215,"../settings":270,"./mapPremultipliedBlendModes":295,"./mixin":297,"./pluginTarget":298,"eventemitter3":358,"ismobilejs":188,"remove-array-items":359}],295:[function(require,module,exports){
+},{"../const":217,"../settings":272,"./mapPremultipliedBlendModes":297,"./mixin":299,"./pluginTarget":300,"eventemitter3":360,"ismobilejs":189,"remove-array-items":366}],297:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -41997,7 +42377,7 @@ function mapPremultipliedBlendModes() {
     return array;
 }
 
-},{"../const":215}],296:[function(require,module,exports){
+},{"../const":217}],298:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -42019,7 +42399,7 @@ function maxRecommendedTextures(max) {
     return max;
 }
 
-},{"ismobilejs":188}],297:[function(require,module,exports){
+},{"ismobilejs":189}],299:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -42081,7 +42461,7 @@ function performMixins() {
     mixins.length = 0;
 }
 
-},{}],298:[function(require,module,exports){
+},{}],300:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -42147,7 +42527,7 @@ exports.default = {
     }
 };
 
-},{}],299:[function(require,module,exports){
+},{}],301:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -42223,7 +42603,7 @@ function trimCanvas(canvas) {
     };
 }
 
-},{}],300:[function(require,module,exports){
+},{}],302:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -43367,7 +43747,7 @@ function deprecation(core) {
     }
 }
 
-},{}],301:[function(require,module,exports){
+},{}],303:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -43547,7 +43927,7 @@ exports.default = CanvasExtract;
 
 core.CanvasRenderer.registerPlugin('extract', CanvasExtract);
 
-},{"../../core":234}],302:[function(require,module,exports){
+},{"../../core":236}],304:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -43572,7 +43952,7 @@ Object.defineProperty(exports, 'canvas', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-},{"./canvas/CanvasExtract":301,"./webgl/WebGLExtract":303}],303:[function(require,module,exports){
+},{"./canvas/CanvasExtract":303,"./webgl/WebGLExtract":305}],305:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -43795,7 +44175,7 @@ exports.default = WebGLExtract;
 
 core.WebGLRenderer.registerPlugin('extract', WebGLExtract);
 
-},{"../../core":234}],304:[function(require,module,exports){
+},{"../../core":236}],306:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -44204,7 +44584,7 @@ var AnimatedSprite = function (_core$Sprite) {
 
 exports.default = AnimatedSprite;
 
-},{"../core":234}],305:[function(require,module,exports){
+},{"../core":236}],307:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -44795,7 +45175,7 @@ exports.default = BitmapText;
 
 BitmapText.fonts = {};
 
-},{"../core":234,"../core/math/ObservablePoint":237,"../core/settings":270,"../core/utils":294}],306:[function(require,module,exports){
+},{"../core":236,"../core/math/ObservablePoint":239,"../core/settings":272,"../core/utils":296}],308:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -45241,7 +45621,7 @@ var TilingSprite = function (_core$Sprite) {
 
 exports.default = TilingSprite;
 
-},{"../core":234,"../core/sprites/canvas/CanvasTinter":273}],307:[function(require,module,exports){
+},{"../core":236,"../core/sprites/canvas/CanvasTinter":275}],309:[function(require,module,exports){
 'use strict';
 
 var _core = require('../core');
@@ -45645,7 +46025,7 @@ DisplayObject.prototype._cacheAsBitmapDestroy = function _cacheAsBitmapDestroy(o
     this.destroy(options);
 };
 
-},{"../core":234,"../core/textures/BaseTexture":281,"../core/textures/Texture":284,"../core/utils":294}],308:[function(require,module,exports){
+},{"../core":236,"../core/textures/BaseTexture":283,"../core/textures/Texture":286,"../core/utils":296}],310:[function(require,module,exports){
 'use strict';
 
 var _core = require('../core');
@@ -45679,7 +46059,7 @@ core.Container.prototype.getChildByName = function getChildByName(name) {
     return null;
 };
 
-},{"../core":234}],309:[function(require,module,exports){
+},{"../core":236}],311:[function(require,module,exports){
 'use strict';
 
 var _core = require('../core');
@@ -45712,7 +46092,7 @@ core.DisplayObject.prototype.getGlobalPosition = function getGlobalPosition() {
     return point;
 };
 
-},{"../core":234}],310:[function(require,module,exports){
+},{"../core":236}],312:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -45764,7 +46144,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 // imported for side effect of extending the prototype only, contains no exports
 
-},{"./AnimatedSprite":304,"./BitmapText":305,"./TilingSprite":306,"./cacheAsBitmap":307,"./getChildByName":308,"./getGlobalPosition":309,"./webgl/TilingSpriteRenderer":311}],311:[function(require,module,exports){
+},{"./AnimatedSprite":306,"./BitmapText":307,"./TilingSprite":308,"./cacheAsBitmap":309,"./getChildByName":310,"./getGlobalPosition":311,"./webgl/TilingSpriteRenderer":313}],313:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -45926,7 +46306,7 @@ exports.default = TilingSpriteRenderer;
 
 core.WebGLRenderer.registerPlugin('tilingSprite', TilingSpriteRenderer);
 
-},{"../../core":234,"../../core/const":215,"path":384}],312:[function(require,module,exports){
+},{"../../core":236,"../../core/const":217,"path":193}],314:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -46010,7 +46390,7 @@ var AlphaFilter = function (_core$Filter) {
 
 exports.default = AlphaFilter;
 
-},{"../../core":234,"path":384}],313:[function(require,module,exports){
+},{"../../core":236,"path":193}],315:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -46184,7 +46564,7 @@ var BlurFilter = function (_core$Filter) {
 
 exports.default = BlurFilter;
 
-},{"../../core":234,"./BlurXFilter":314,"./BlurYFilter":315}],314:[function(require,module,exports){
+},{"../../core":236,"./BlurXFilter":316,"./BlurYFilter":317}],316:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -46350,7 +46730,7 @@ var BlurXFilter = function (_core$Filter) {
 
 exports.default = BlurXFilter;
 
-},{"../../core":234,"./generateBlurFragSource":316,"./generateBlurVertSource":317,"./getMaxBlurKernelSize":318}],315:[function(require,module,exports){
+},{"../../core":236,"./generateBlurFragSource":318,"./generateBlurVertSource":319,"./getMaxBlurKernelSize":320}],317:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -46515,7 +46895,7 @@ var BlurYFilter = function (_core$Filter) {
 
 exports.default = BlurYFilter;
 
-},{"../../core":234,"./generateBlurFragSource":316,"./generateBlurVertSource":317,"./getMaxBlurKernelSize":318}],316:[function(require,module,exports){
+},{"../../core":236,"./generateBlurFragSource":318,"./generateBlurVertSource":319,"./getMaxBlurKernelSize":320}],318:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -46562,7 +46942,7 @@ function generateFragBlurSource(kernelSize) {
     return fragSource;
 }
 
-},{}],317:[function(require,module,exports){
+},{}],319:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -46606,7 +46986,7 @@ function generateVertBlurSource(kernelSize, x) {
     return vertSource;
 }
 
-},{}],318:[function(require,module,exports){
+},{}],320:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -46622,7 +47002,7 @@ function getMaxKernelSize(gl) {
     return kernelSize;
 }
 
-},{}],319:[function(require,module,exports){
+},{}],321:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47173,7 +47553,7 @@ var ColorMatrixFilter = function (_core$Filter) {
 exports.default = ColorMatrixFilter;
 ColorMatrixFilter.prototype.grayscale = ColorMatrixFilter.prototype.greyscale;
 
-},{"../../core":234,"path":384}],320:[function(require,module,exports){
+},{"../../core":236,"path":193}],322:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47283,7 +47663,7 @@ var DisplacementFilter = function (_core$Filter) {
 
 exports.default = DisplacementFilter;
 
-},{"../../core":234,"path":384}],321:[function(require,module,exports){
+},{"../../core":236,"path":193}],323:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47337,7 +47717,7 @@ var FXAAFilter = function (_core$Filter) {
 
 exports.default = FXAAFilter;
 
-},{"../../core":234,"path":384}],322:[function(require,module,exports){
+},{"../../core":236,"path":193}],324:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47416,7 +47796,7 @@ Object.defineProperty(exports, 'AlphaFilter', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-},{"./alpha/AlphaFilter":312,"./blur/BlurFilter":313,"./blur/BlurXFilter":314,"./blur/BlurYFilter":315,"./colormatrix/ColorMatrixFilter":319,"./displacement/DisplacementFilter":320,"./fxaa/FXAAFilter":321,"./noise/NoiseFilter":323}],323:[function(require,module,exports){
+},{"./alpha/AlphaFilter":314,"./blur/BlurFilter":315,"./blur/BlurXFilter":316,"./blur/BlurYFilter":317,"./colormatrix/ColorMatrixFilter":321,"./displacement/DisplacementFilter":322,"./fxaa/FXAAFilter":323,"./noise/NoiseFilter":325}],325:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47513,7 +47893,7 @@ var NoiseFilter = function (_core$Filter) {
 
 exports.default = NoiseFilter;
 
-},{"../../core":234,"path":384}],324:[function(require,module,exports){
+},{"../../core":236,"path":193}],326:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -47627,7 +48007,7 @@ if (typeof _deprecation2.default === 'function') {
 global.PIXI = exports; // eslint-disable-line
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./accessibility":211,"./core":234,"./deprecation":300,"./extract":302,"./extras":310,"./filters":322,"./interaction":329,"./loaders":332,"./mesh":341,"./particles":344,"./polyfill":350,"./prepare":354}],325:[function(require,module,exports){
+},{"./accessibility":213,"./core":236,"./deprecation":302,"./extract":304,"./extras":312,"./filters":324,"./interaction":331,"./loaders":334,"./mesh":343,"./particles":346,"./polyfill":352,"./prepare":356}],327:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -47851,7 +48231,7 @@ var InteractionData = function () {
 
 exports.default = InteractionData;
 
-},{"../core":234}],326:[function(require,module,exports){
+},{"../core":236}],328:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -47936,7 +48316,7 @@ var InteractionEvent = function () {
 
 exports.default = InteractionEvent;
 
-},{}],327:[function(require,module,exports){
+},{}],329:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -49695,7 +50075,7 @@ exports.default = InteractionManager;
 core.WebGLRenderer.registerPlugin('interaction', InteractionManager);
 core.CanvasRenderer.registerPlugin('interaction', InteractionManager);
 
-},{"../core":234,"./InteractionData":325,"./InteractionEvent":326,"./InteractionTrackingData":328,"./interactiveTarget":330,"eventemitter3":358}],328:[function(require,module,exports){
+},{"../core":236,"./InteractionData":327,"./InteractionEvent":328,"./InteractionTrackingData":330,"./interactiveTarget":332,"eventemitter3":360}],330:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -49871,7 +50251,7 @@ InteractionTrackingData.FLAGS = Object.freeze({
     RIGHT_DOWN: 1 << 2
 });
 
-},{}],329:[function(require,module,exports){
+},{}],331:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -49923,7 +50303,7 @@ Object.defineProperty(exports, 'InteractionEvent', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-},{"./InteractionData":325,"./InteractionEvent":326,"./InteractionManager":327,"./InteractionTrackingData":328,"./interactiveTarget":330}],330:[function(require,module,exports){
+},{"./InteractionData":327,"./InteractionEvent":328,"./InteractionManager":329,"./InteractionTrackingData":330,"./interactiveTarget":332}],332:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -50040,7 +50420,7 @@ exports.default = {
   _trackedPointers: undefined
 };
 
-},{}],331:[function(require,module,exports){
+},{}],333:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -50132,7 +50512,7 @@ function parse(resource, texture) {
     resource.bitmapFont = _extras.BitmapText.registerFont(resource.data, texture);
 }
 
-},{"../core":234,"../extras":310,"path":384,"resource-loader":364}],332:[function(require,module,exports){
+},{"../core":236,"../extras":312,"path":193,"resource-loader":371}],334:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -50260,7 +50640,7 @@ AppPrototype.destroy = function destroy(removeView) {
     this._parentDestroy(removeView);
 };
 
-},{"../core/Application":212,"./bitmapFontParser":331,"./loader":333,"./spritesheetParser":334,"./textureParser":335,"resource-loader":364}],333:[function(require,module,exports){
+},{"../core/Application":214,"./bitmapFontParser":333,"./loader":335,"./spritesheetParser":336,"./textureParser":337,"resource-loader":371}],335:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -50431,7 +50811,7 @@ var Resource = _resourceLoader2.default.Resource;
 
 Resource.setExtensionXhrType('fnt', Resource.XHR_RESPONSE_TYPE.DOCUMENT);
 
-},{"./bitmapFontParser":331,"./spritesheetParser":334,"./textureParser":335,"eventemitter3":358,"resource-loader":364,"resource-loader/lib/middlewares/parsing/blob":365}],334:[function(require,module,exports){
+},{"./bitmapFontParser":333,"./spritesheetParser":336,"./textureParser":337,"eventemitter3":360,"resource-loader":371,"resource-loader/lib/middlewares/parsing/blob":372}],336:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -50490,7 +50870,7 @@ function getResourcePath(resource, baseUrl) {
     return _url2.default.resolve(resource.url.replace(baseUrl, ''), resource.data.meta.image);
 }
 
-},{"../core":234,"resource-loader":364,"url":390}],335:[function(require,module,exports){
+},{"../core":236,"resource-loader":371,"url":381}],337:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -50513,7 +50893,7 @@ var _Texture2 = _interopRequireDefault(_Texture);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-},{"../core/textures/Texture":284,"resource-loader":364}],336:[function(require,module,exports){
+},{"../core/textures/Texture":286,"resource-loader":371}],338:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -50882,7 +51262,7 @@ Mesh.DRAW_MODES = {
   TRIANGLES: 1
 };
 
-},{"../core":234,"../core/textures/Texture":284}],337:[function(require,module,exports){
+},{"../core":236,"../core/textures/Texture":286}],339:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -51268,7 +51648,7 @@ var NineSlicePlane = function (_Plane) {
 
 exports.default = NineSlicePlane;
 
-},{"./Plane":338}],338:[function(require,module,exports){
+},{"./Plane":340}],340:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -51409,7 +51789,7 @@ var Plane = function (_Mesh) {
 
 exports.default = Plane;
 
-},{"./Mesh":336}],339:[function(require,module,exports){
+},{"./Mesh":338}],341:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -51645,7 +52025,7 @@ var Rope = function (_Mesh) {
 
 exports.default = Rope;
 
-},{"./Mesh":336}],340:[function(require,module,exports){
+},{"./Mesh":338}],342:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -51928,7 +52308,7 @@ exports.default = MeshSpriteRenderer;
 
 core.CanvasRenderer.registerPlugin('mesh', MeshSpriteRenderer);
 
-},{"../../core":234,"../Mesh":336}],341:[function(require,module,exports){
+},{"../../core":236,"../Mesh":338}],343:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -51989,7 +52369,7 @@ Object.defineProperty(exports, 'Rope', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-},{"./Mesh":336,"./NineSlicePlane":337,"./Plane":338,"./Rope":339,"./canvas/CanvasMeshRenderer":340,"./webgl/MeshRenderer":342}],342:[function(require,module,exports){
+},{"./Mesh":338,"./NineSlicePlane":339,"./Plane":340,"./Rope":341,"./canvas/CanvasMeshRenderer":342,"./webgl/MeshRenderer":344}],344:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -52140,7 +52520,7 @@ exports.default = MeshRenderer;
 
 core.WebGLRenderer.registerPlugin('mesh', MeshRenderer);
 
-},{"../../core":234,"../Mesh":336,"path":384,"pixi-gl-core":198}],343:[function(require,module,exports){
+},{"../../core":236,"../Mesh":338,"path":193,"pixi-gl-core":200}],345:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -52519,7 +52899,7 @@ var ParticleContainer = function (_core$Container) {
 
 exports.default = ParticleContainer;
 
-},{"../core":234,"../core/utils":294}],344:[function(require,module,exports){
+},{"../core":236,"../core/utils":296}],346:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -52544,7 +52924,7 @@ Object.defineProperty(exports, 'ParticleRenderer', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-},{"./ParticleContainer":343,"./webgl/ParticleRenderer":346}],345:[function(require,module,exports){
+},{"./ParticleContainer":345,"./webgl/ParticleRenderer":348}],347:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -52791,7 +53171,7 @@ var ParticleBuffer = function () {
 
 exports.default = ParticleBuffer;
 
-},{"../../core/utils/createIndicesForQuads":292,"pixi-gl-core":198}],346:[function(require,module,exports){
+},{"../../core/utils/createIndicesForQuads":294,"pixi-gl-core":200}],348:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -53267,7 +53647,7 @@ exports.default = ParticleRenderer;
 
 core.WebGLRenderer.registerPlugin('particle', ParticleRenderer);
 
-},{"../../core":234,"../../core/utils":294,"./ParticleBuffer":345,"./ParticleShader":347}],347:[function(require,module,exports){
+},{"../../core":236,"../../core/utils":296,"./ParticleBuffer":347,"./ParticleShader":349}],349:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -53310,7 +53690,7 @@ var ParticleShader = function (_Shader) {
 
 exports.default = ParticleShader;
 
-},{"../../core/Shader":213}],348:[function(require,module,exports){
+},{"../../core/Shader":215}],350:[function(require,module,exports){
 "use strict";
 
 // References:
@@ -53328,7 +53708,7 @@ if (!Math.sign) {
     };
 }
 
-},{}],349:[function(require,module,exports){
+},{}],351:[function(require,module,exports){
 'use strict';
 
 var _objectAssign = require('object-assign');
@@ -53343,7 +53723,7 @@ if (!Object.assign) {
 // https://github.com/sindresorhus/object-assign
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
 
-},{"object-assign":190}],350:[function(require,module,exports){
+},{"object-assign":191}],352:[function(require,module,exports){
 'use strict';
 
 require('./Object.assign');
@@ -53368,7 +53748,7 @@ if (!window.Uint16Array) {
     window.Uint16Array = Array;
 }
 
-},{"./Math.sign":348,"./Object.assign":349,"./requestAnimationFrame":351}],351:[function(require,module,exports){
+},{"./Math.sign":350,"./Object.assign":351,"./requestAnimationFrame":353}],353:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -53445,7 +53825,7 @@ if (!global.cancelAnimationFrame) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],352:[function(require,module,exports){
+},{}],354:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -53933,7 +54313,7 @@ function findTextStyle(item, queue) {
     return false;
 }
 
-},{"../core":234,"./limiters/CountLimiter":355}],353:[function(require,module,exports){
+},{"../core":236,"./limiters/CountLimiter":357}],355:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -54053,7 +54433,7 @@ function uploadBaseTextures(prepare, item) {
 
 core.CanvasRenderer.registerPlugin('prepare', CanvasPrepare);
 
-},{"../../core":234,"../BasePrepare":352}],354:[function(require,module,exports){
+},{"../../core":236,"../BasePrepare":354}],356:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -54105,7 +54485,7 @@ Object.defineProperty(exports, 'TimeLimiter', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-},{"./BasePrepare":352,"./canvas/CanvasPrepare":353,"./limiters/CountLimiter":355,"./limiters/TimeLimiter":356,"./webgl/WebGLPrepare":357}],355:[function(require,module,exports){
+},{"./BasePrepare":354,"./canvas/CanvasPrepare":355,"./limiters/CountLimiter":357,"./limiters/TimeLimiter":358,"./webgl/WebGLPrepare":359}],357:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -54163,7 +54543,7 @@ var CountLimiter = function () {
 
 exports.default = CountLimiter;
 
-},{}],356:[function(require,module,exports){
+},{}],358:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -54221,7 +54601,7 @@ var TimeLimiter = function () {
 
 exports.default = TimeLimiter;
 
-},{}],357:[function(require,module,exports){
+},{}],359:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -54343,7 +54723,7 @@ function findGraphics(item, queue) {
 
 core.WebGLRenderer.registerPlugin('prepare', WebGLPrepare);
 
-},{"../../core":234,"../BasePrepare":352}],358:[function(require,module,exports){
+},{"../../core":236,"../BasePrepare":354}],360:[function(require,module,exports){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty
@@ -54656,7 +55036,909 @@ if ('undefined' !== typeof module) {
   module.exports = EventEmitter;
 }
 
-},{}],359:[function(require,module,exports){
+},{}],361:[function(require,module,exports){
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],362:[function(require,module,exports){
+(function (global){
+/*! https://mths.be/punycode v1.4.1 by @mathias */
+;(function(root) {
+
+	/** Detect free variables */
+	var freeExports = typeof exports == 'object' && exports &&
+		!exports.nodeType && exports;
+	var freeModule = typeof module == 'object' && module &&
+		!module.nodeType && module;
+	var freeGlobal = typeof global == 'object' && global;
+	if (
+		freeGlobal.global === freeGlobal ||
+		freeGlobal.window === freeGlobal ||
+		freeGlobal.self === freeGlobal
+	) {
+		root = freeGlobal;
+	}
+
+	/**
+	 * The `punycode` object.
+	 * @name punycode
+	 * @type Object
+	 */
+	var punycode,
+
+	/** Highest positive signed 32-bit float value */
+	maxInt = 2147483647, // aka. 0x7FFFFFFF or 2^31-1
+
+	/** Bootstring parameters */
+	base = 36,
+	tMin = 1,
+	tMax = 26,
+	skew = 38,
+	damp = 700,
+	initialBias = 72,
+	initialN = 128, // 0x80
+	delimiter = '-', // '\x2D'
+
+	/** Regular expressions */
+	regexPunycode = /^xn--/,
+	regexNonASCII = /[^\x20-\x7E]/, // unprintable ASCII chars + non-ASCII chars
+	regexSeparators = /[\x2E\u3002\uFF0E\uFF61]/g, // RFC 3490 separators
+
+	/** Error messages */
+	errors = {
+		'overflow': 'Overflow: input needs wider integers to process',
+		'not-basic': 'Illegal input >= 0x80 (not a basic code point)',
+		'invalid-input': 'Invalid input'
+	},
+
+	/** Convenience shortcuts */
+	baseMinusTMin = base - tMin,
+	floor = Math.floor,
+	stringFromCharCode = String.fromCharCode,
+
+	/** Temporary variable */
+	key;
+
+	/*--------------------------------------------------------------------------*/
+
+	/**
+	 * A generic error utility function.
+	 * @private
+	 * @param {String} type The error type.
+	 * @returns {Error} Throws a `RangeError` with the applicable error message.
+	 */
+	function error(type) {
+		throw new RangeError(errors[type]);
+	}
+
+	/**
+	 * A generic `Array#map` utility function.
+	 * @private
+	 * @param {Array} array The array to iterate over.
+	 * @param {Function} callback The function that gets called for every array
+	 * item.
+	 * @returns {Array} A new array of values returned by the callback function.
+	 */
+	function map(array, fn) {
+		var length = array.length;
+		var result = [];
+		while (length--) {
+			result[length] = fn(array[length]);
+		}
+		return result;
+	}
+
+	/**
+	 * A simple `Array#map`-like wrapper to work with domain name strings or email
+	 * addresses.
+	 * @private
+	 * @param {String} domain The domain name or email address.
+	 * @param {Function} callback The function that gets called for every
+	 * character.
+	 * @returns {Array} A new string of characters returned by the callback
+	 * function.
+	 */
+	function mapDomain(string, fn) {
+		var parts = string.split('@');
+		var result = '';
+		if (parts.length > 1) {
+			// In email addresses, only the domain name should be punycoded. Leave
+			// the local part (i.e. everything up to `@`) intact.
+			result = parts[0] + '@';
+			string = parts[1];
+		}
+		// Avoid `split(regex)` for IE8 compatibility. See #17.
+		string = string.replace(regexSeparators, '\x2E');
+		var labels = string.split('.');
+		var encoded = map(labels, fn).join('.');
+		return result + encoded;
+	}
+
+	/**
+	 * Creates an array containing the numeric code points of each Unicode
+	 * character in the string. While JavaScript uses UCS-2 internally,
+	 * this function will convert a pair of surrogate halves (each of which
+	 * UCS-2 exposes as separate characters) into a single code point,
+	 * matching UTF-16.
+	 * @see `punycode.ucs2.encode`
+	 * @see <https://mathiasbynens.be/notes/javascript-encoding>
+	 * @memberOf punycode.ucs2
+	 * @name decode
+	 * @param {String} string The Unicode input string (UCS-2).
+	 * @returns {Array} The new array of code points.
+	 */
+	function ucs2decode(string) {
+		var output = [],
+		    counter = 0,
+		    length = string.length,
+		    value,
+		    extra;
+		while (counter < length) {
+			value = string.charCodeAt(counter++);
+			if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
+				// high surrogate, and there is a next character
+				extra = string.charCodeAt(counter++);
+				if ((extra & 0xFC00) == 0xDC00) { // low surrogate
+					output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
+				} else {
+					// unmatched surrogate; only append this code unit, in case the next
+					// code unit is the high surrogate of a surrogate pair
+					output.push(value);
+					counter--;
+				}
+			} else {
+				output.push(value);
+			}
+		}
+		return output;
+	}
+
+	/**
+	 * Creates a string based on an array of numeric code points.
+	 * @see `punycode.ucs2.decode`
+	 * @memberOf punycode.ucs2
+	 * @name encode
+	 * @param {Array} codePoints The array of numeric code points.
+	 * @returns {String} The new Unicode string (UCS-2).
+	 */
+	function ucs2encode(array) {
+		return map(array, function(value) {
+			var output = '';
+			if (value > 0xFFFF) {
+				value -= 0x10000;
+				output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
+				value = 0xDC00 | value & 0x3FF;
+			}
+			output += stringFromCharCode(value);
+			return output;
+		}).join('');
+	}
+
+	/**
+	 * Converts a basic code point into a digit/integer.
+	 * @see `digitToBasic()`
+	 * @private
+	 * @param {Number} codePoint The basic numeric code point value.
+	 * @returns {Number} The numeric value of a basic code point (for use in
+	 * representing integers) in the range `0` to `base - 1`, or `base` if
+	 * the code point does not represent a value.
+	 */
+	function basicToDigit(codePoint) {
+		if (codePoint - 48 < 10) {
+			return codePoint - 22;
+		}
+		if (codePoint - 65 < 26) {
+			return codePoint - 65;
+		}
+		if (codePoint - 97 < 26) {
+			return codePoint - 97;
+		}
+		return base;
+	}
+
+	/**
+	 * Converts a digit/integer into a basic code point.
+	 * @see `basicToDigit()`
+	 * @private
+	 * @param {Number} digit The numeric value of a basic code point.
+	 * @returns {Number} The basic code point whose value (when used for
+	 * representing integers) is `digit`, which needs to be in the range
+	 * `0` to `base - 1`. If `flag` is non-zero, the uppercase form is
+	 * used; else, the lowercase form is used. The behavior is undefined
+	 * if `flag` is non-zero and `digit` has no uppercase form.
+	 */
+	function digitToBasic(digit, flag) {
+		//  0..25 map to ASCII a..z or A..Z
+		// 26..35 map to ASCII 0..9
+		return digit + 22 + 75 * (digit < 26) - ((flag != 0) << 5);
+	}
+
+	/**
+	 * Bias adaptation function as per section 3.4 of RFC 3492.
+	 * https://tools.ietf.org/html/rfc3492#section-3.4
+	 * @private
+	 */
+	function adapt(delta, numPoints, firstTime) {
+		var k = 0;
+		delta = firstTime ? floor(delta / damp) : delta >> 1;
+		delta += floor(delta / numPoints);
+		for (/* no initialization */; delta > baseMinusTMin * tMax >> 1; k += base) {
+			delta = floor(delta / baseMinusTMin);
+		}
+		return floor(k + (baseMinusTMin + 1) * delta / (delta + skew));
+	}
+
+	/**
+	 * Converts a Punycode string of ASCII-only symbols to a string of Unicode
+	 * symbols.
+	 * @memberOf punycode
+	 * @param {String} input The Punycode string of ASCII-only symbols.
+	 * @returns {String} The resulting string of Unicode symbols.
+	 */
+	function decode(input) {
+		// Don't use UCS-2
+		var output = [],
+		    inputLength = input.length,
+		    out,
+		    i = 0,
+		    n = initialN,
+		    bias = initialBias,
+		    basic,
+		    j,
+		    index,
+		    oldi,
+		    w,
+		    k,
+		    digit,
+		    t,
+		    /** Cached calculation results */
+		    baseMinusT;
+
+		// Handle the basic code points: let `basic` be the number of input code
+		// points before the last delimiter, or `0` if there is none, then copy
+		// the first basic code points to the output.
+
+		basic = input.lastIndexOf(delimiter);
+		if (basic < 0) {
+			basic = 0;
+		}
+
+		for (j = 0; j < basic; ++j) {
+			// if it's not a basic code point
+			if (input.charCodeAt(j) >= 0x80) {
+				error('not-basic');
+			}
+			output.push(input.charCodeAt(j));
+		}
+
+		// Main decoding loop: start just after the last delimiter if any basic code
+		// points were copied; start at the beginning otherwise.
+
+		for (index = basic > 0 ? basic + 1 : 0; index < inputLength; /* no final expression */) {
+
+			// `index` is the index of the next character to be consumed.
+			// Decode a generalized variable-length integer into `delta`,
+			// which gets added to `i`. The overflow checking is easier
+			// if we increase `i` as we go, then subtract off its starting
+			// value at the end to obtain `delta`.
+			for (oldi = i, w = 1, k = base; /* no condition */; k += base) {
+
+				if (index >= inputLength) {
+					error('invalid-input');
+				}
+
+				digit = basicToDigit(input.charCodeAt(index++));
+
+				if (digit >= base || digit > floor((maxInt - i) / w)) {
+					error('overflow');
+				}
+
+				i += digit * w;
+				t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+
+				if (digit < t) {
+					break;
+				}
+
+				baseMinusT = base - t;
+				if (w > floor(maxInt / baseMinusT)) {
+					error('overflow');
+				}
+
+				w *= baseMinusT;
+
+			}
+
+			out = output.length + 1;
+			bias = adapt(i - oldi, out, oldi == 0);
+
+			// `i` was supposed to wrap around from `out` to `0`,
+			// incrementing `n` each time, so we'll fix that now:
+			if (floor(i / out) > maxInt - n) {
+				error('overflow');
+			}
+
+			n += floor(i / out);
+			i %= out;
+
+			// Insert `n` at position `i` of the output
+			output.splice(i++, 0, n);
+
+		}
+
+		return ucs2encode(output);
+	}
+
+	/**
+	 * Converts a string of Unicode symbols (e.g. a domain name label) to a
+	 * Punycode string of ASCII-only symbols.
+	 * @memberOf punycode
+	 * @param {String} input The string of Unicode symbols.
+	 * @returns {String} The resulting Punycode string of ASCII-only symbols.
+	 */
+	function encode(input) {
+		var n,
+		    delta,
+		    handledCPCount,
+		    basicLength,
+		    bias,
+		    j,
+		    m,
+		    q,
+		    k,
+		    t,
+		    currentValue,
+		    output = [],
+		    /** `inputLength` will hold the number of code points in `input`. */
+		    inputLength,
+		    /** Cached calculation results */
+		    handledCPCountPlusOne,
+		    baseMinusT,
+		    qMinusT;
+
+		// Convert the input in UCS-2 to Unicode
+		input = ucs2decode(input);
+
+		// Cache the length
+		inputLength = input.length;
+
+		// Initialize the state
+		n = initialN;
+		delta = 0;
+		bias = initialBias;
+
+		// Handle the basic code points
+		for (j = 0; j < inputLength; ++j) {
+			currentValue = input[j];
+			if (currentValue < 0x80) {
+				output.push(stringFromCharCode(currentValue));
+			}
+		}
+
+		handledCPCount = basicLength = output.length;
+
+		// `handledCPCount` is the number of code points that have been handled;
+		// `basicLength` is the number of basic code points.
+
+		// Finish the basic string - if it is not empty - with a delimiter
+		if (basicLength) {
+			output.push(delimiter);
+		}
+
+		// Main encoding loop:
+		while (handledCPCount < inputLength) {
+
+			// All non-basic code points < n have been handled already. Find the next
+			// larger one:
+			for (m = maxInt, j = 0; j < inputLength; ++j) {
+				currentValue = input[j];
+				if (currentValue >= n && currentValue < m) {
+					m = currentValue;
+				}
+			}
+
+			// Increase `delta` enough to advance the decoder's <n,i> state to <m,0>,
+			// but guard against overflow
+			handledCPCountPlusOne = handledCPCount + 1;
+			if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
+				error('overflow');
+			}
+
+			delta += (m - n) * handledCPCountPlusOne;
+			n = m;
+
+			for (j = 0; j < inputLength; ++j) {
+				currentValue = input[j];
+
+				if (currentValue < n && ++delta > maxInt) {
+					error('overflow');
+				}
+
+				if (currentValue == n) {
+					// Represent delta as a generalized variable-length integer
+					for (q = delta, k = base; /* no condition */; k += base) {
+						t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+						if (q < t) {
+							break;
+						}
+						qMinusT = q - t;
+						baseMinusT = base - t;
+						output.push(
+							stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0))
+						);
+						q = floor(qMinusT / baseMinusT);
+					}
+
+					output.push(stringFromCharCode(digitToBasic(q, 0)));
+					bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
+					delta = 0;
+					++handledCPCount;
+				}
+			}
+
+			++delta;
+			++n;
+
+		}
+		return output.join('');
+	}
+
+	/**
+	 * Converts a Punycode string representing a domain name or an email address
+	 * to Unicode. Only the Punycoded parts of the input will be converted, i.e.
+	 * it doesn't matter if you call it on a string that has already been
+	 * converted to Unicode.
+	 * @memberOf punycode
+	 * @param {String} input The Punycoded domain name or email address to
+	 * convert to Unicode.
+	 * @returns {String} The Unicode representation of the given Punycode
+	 * string.
+	 */
+	function toUnicode(input) {
+		return mapDomain(input, function(string) {
+			return regexPunycode.test(string)
+				? decode(string.slice(4).toLowerCase())
+				: string;
+		});
+	}
+
+	/**
+	 * Converts a Unicode string representing a domain name or an email address to
+	 * Punycode. Only the non-ASCII parts of the domain name will be converted,
+	 * i.e. it doesn't matter if you call it with a domain that's already in
+	 * ASCII.
+	 * @memberOf punycode
+	 * @param {String} input The domain name or email address to convert, as a
+	 * Unicode string.
+	 * @returns {String} The Punycode representation of the given domain name or
+	 * email address.
+	 */
+	function toASCII(input) {
+		return mapDomain(input, function(string) {
+			return regexNonASCII.test(string)
+				? 'xn--' + encode(string)
+				: string;
+		});
+	}
+
+	/*--------------------------------------------------------------------------*/
+
+	/** Define the public API */
+	punycode = {
+		/**
+		 * A string representing the current Punycode.js version number.
+		 * @memberOf punycode
+		 * @type String
+		 */
+		'version': '1.4.1',
+		/**
+		 * An object of methods to convert from JavaScript's internal character
+		 * representation (UCS-2) to Unicode code points, and back.
+		 * @see <https://mathiasbynens.be/notes/javascript-encoding>
+		 * @memberOf punycode
+		 * @type Object
+		 */
+		'ucs2': {
+			'decode': ucs2decode,
+			'encode': ucs2encode
+		},
+		'decode': decode,
+		'encode': encode,
+		'toASCII': toASCII,
+		'toUnicode': toUnicode
+	};
+
+	/** Expose `punycode` */
+	// Some AMD build optimizers, like r.js, check for specific condition patterns
+	// like the following:
+	if (
+		typeof define == 'function' &&
+		typeof define.amd == 'object' &&
+		define.amd
+	) {
+		define('punycode', function() {
+			return punycode;
+		});
+	} else if (freeExports && freeModule) {
+		if (module.exports == freeExports) {
+			// in Node.js, io.js, or RingoJS v0.8.0+
+			freeModule.exports = punycode;
+		} else {
+			// in Narwhal or RingoJS v0.7.0-
+			for (key in punycode) {
+				punycode.hasOwnProperty(key) && (freeExports[key] = punycode[key]);
+			}
+		}
+	} else {
+		// in Rhino or a web browser
+		root.punycode = punycode;
+	}
+
+}(this));
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],363:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+'use strict';
+
+// If obj.hasOwnProperty has been overridden, then calling
+// obj.hasOwnProperty(prop) will break.
+// See: https://github.com/joyent/node/issues/1707
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+module.exports = function(qs, sep, eq, options) {
+  sep = sep || '&';
+  eq = eq || '=';
+  var obj = {};
+
+  if (typeof qs !== 'string' || qs.length === 0) {
+    return obj;
+  }
+
+  var regexp = /\+/g;
+  qs = qs.split(sep);
+
+  var maxKeys = 1000;
+  if (options && typeof options.maxKeys === 'number') {
+    maxKeys = options.maxKeys;
+  }
+
+  var len = qs.length;
+  // maxKeys <= 0 means that we should not limit keys count
+  if (maxKeys > 0 && len > maxKeys) {
+    len = maxKeys;
+  }
+
+  for (var i = 0; i < len; ++i) {
+    var x = qs[i].replace(regexp, '%20'),
+        idx = x.indexOf(eq),
+        kstr, vstr, k, v;
+
+    if (idx >= 0) {
+      kstr = x.substr(0, idx);
+      vstr = x.substr(idx + 1);
+    } else {
+      kstr = x;
+      vstr = '';
+    }
+
+    k = decodeURIComponent(kstr);
+    v = decodeURIComponent(vstr);
+
+    if (!hasOwnProperty(obj, k)) {
+      obj[k] = v;
+    } else if (isArray(obj[k])) {
+      obj[k].push(v);
+    } else {
+      obj[k] = [obj[k], v];
+    }
+  }
+
+  return obj;
+};
+
+var isArray = Array.isArray || function (xs) {
+  return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+},{}],364:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+'use strict';
+
+var stringifyPrimitive = function(v) {
+  switch (typeof v) {
+    case 'string':
+      return v;
+
+    case 'boolean':
+      return v ? 'true' : 'false';
+
+    case 'number':
+      return isFinite(v) ? v : '';
+
+    default:
+      return '';
+  }
+};
+
+module.exports = function(obj, sep, eq, name) {
+  sep = sep || '&';
+  eq = eq || '=';
+  if (obj === null) {
+    obj = undefined;
+  }
+
+  if (typeof obj === 'object') {
+    return map(objectKeys(obj), function(k) {
+      var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
+      if (isArray(obj[k])) {
+        return map(obj[k], function(v) {
+          return ks + encodeURIComponent(stringifyPrimitive(v));
+        }).join(sep);
+      } else {
+        return ks + encodeURIComponent(stringifyPrimitive(obj[k]));
+      }
+    }).join(sep);
+
+  }
+
+  if (!name) return '';
+  return encodeURIComponent(stringifyPrimitive(name)) + eq +
+         encodeURIComponent(stringifyPrimitive(obj));
+};
+
+var isArray = Array.isArray || function (xs) {
+  return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+function map (xs, f) {
+  if (xs.map) return xs.map(f);
+  var res = [];
+  for (var i = 0; i < xs.length; i++) {
+    res.push(f(xs[i], i));
+  }
+  return res;
+}
+
+var objectKeys = Object.keys || function (obj) {
+  var res = [];
+  for (var key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) res.push(key);
+  }
+  return res;
+};
+
+},{}],365:[function(require,module,exports){
+'use strict';
+
+exports.decode = exports.parse = require('./decode');
+exports.encode = exports.stringify = require('./encode');
+
+},{"./decode":363,"./encode":364}],366:[function(require,module,exports){
 'use strict'
 
 /**
@@ -54686,7 +55968,7 @@ module.exports = function removeItems(arr, startIdx, removeCount)
   arr.length = len
 }
 
-},{}],360:[function(require,module,exports){
+},{}],367:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -55304,7 +56586,7 @@ var Loader = function () {
 
 exports.default = Loader;
 
-},{"./Resource":361,"./async":362,"mini-signals":189,"parse-uri":191}],361:[function(require,module,exports){
+},{"./Resource":368,"./async":369,"mini-signals":190,"parse-uri":192}],368:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -56460,7 +57742,7 @@ function reqType(xhr) {
     return xhr.toString().replace('object ', '');
 }
 
-},{"mini-signals":189,"parse-uri":191}],362:[function(require,module,exports){
+},{"mini-signals":190,"parse-uri":192}],369:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -56669,7 +57951,7 @@ function queue(worker, concurrency) {
     return q;
 }
 
-},{}],363:[function(require,module,exports){
+},{}],370:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -56737,7 +58019,7 @@ function encodeBinary(input) {
     return output;
 }
 
-},{}],364:[function(require,module,exports){
+},{}],371:[function(require,module,exports){
 'use strict';
 
 // import Loader from './Loader';
@@ -56761,7 +58043,7 @@ module.exports = Loader;
 // export default Loader;
 module.exports.default = Loader;
 
-},{"./Loader":360,"./Resource":361,"./async":362,"./b64":363}],365:[function(require,module,exports){
+},{"./Loader":367,"./Resource":368,"./async":369,"./b64":370}],372:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -56849,7 +58131,7 @@ function blobMiddlewareFactory() {
     };
 }
 
-},{"../../Resource":361,"../../b64":363}],366:[function(require,module,exports){
+},{"../../Resource":368,"../../b64":370}],373:[function(require,module,exports){
 // A library of seedable RNGs implemented in Javascript.
 //
 // Usage:
@@ -56911,7 +58193,7 @@ sr.tychei = tychei;
 
 module.exports = sr;
 
-},{"./lib/alea":367,"./lib/tychei":368,"./lib/xor128":369,"./lib/xor4096":370,"./lib/xorshift7":371,"./lib/xorwow":372,"./seedrandom":373}],367:[function(require,module,exports){
+},{"./lib/alea":374,"./lib/tychei":375,"./lib/xor128":376,"./lib/xor4096":377,"./lib/xorshift7":378,"./lib/xorwow":379,"./seedrandom":380}],374:[function(require,module,exports){
 // A port of an algorithm by Johannes Baagøe <baagoe@baagoe.com>, 2010
 // http://baagoe.com/en/RandomMusings/javascript/
 // https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
@@ -57027,7 +58309,7 @@ if (module && module.exports) {
 
 
 
-},{}],368:[function(require,module,exports){
+},{}],375:[function(require,module,exports){
 // A Javascript implementaion of the "Tyche-i" prng algorithm by
 // Samuel Neves and Filipe Araujo.
 // See https://eden.dei.uc.pt/~sneves/pubs/2011-snfa2.pdf
@@ -57132,7 +58414,7 @@ if (module && module.exports) {
 
 
 
-},{}],369:[function(require,module,exports){
+},{}],376:[function(require,module,exports){
 // A Javascript implementaion of the "xor128" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -57215,7 +58497,7 @@ if (module && module.exports) {
 
 
 
-},{}],370:[function(require,module,exports){
+},{}],377:[function(require,module,exports){
 // A Javascript implementaion of Richard Brent's Xorgens xor4096 algorithm.
 //
 // This fast non-cryptographic random number generator is designed for
@@ -57363,7 +58645,7 @@ if (module && module.exports) {
   (typeof define) == 'function' && define   // present with an AMD loader
 );
 
-},{}],371:[function(require,module,exports){
+},{}],378:[function(require,module,exports){
 // A Javascript implementaion of the "xorshift7" algorithm by
 // François Panneton and Pierre L'ecuyer:
 // "On the Xorgshift Random Number Generators"
@@ -57462,7 +58744,7 @@ if (module && module.exports) {
 );
 
 
-},{}],372:[function(require,module,exports){
+},{}],379:[function(require,module,exports){
 // A Javascript implementaion of the "xorwow" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -57550,7 +58832,7 @@ if (module && module.exports) {
 
 
 
-},{}],373:[function(require,module,exports){
+},{}],380:[function(require,module,exports){
 /*
 Copyright 2014 David Bau.
 
@@ -57799,3887 +59081,7 @@ if ((typeof module) == 'object' && module.exports) {
   Math    // math: package containing random, pow, and seedrandom
 );
 
-},{"crypto":383}],374:[function(require,module,exports){
-// TinyColor v1.4.1
-// https://github.com/bgrins/TinyColor
-// Brian Grinstead, MIT License
-
-(function(Math) {
-
-var trimLeft = /^\s+/,
-    trimRight = /\s+$/,
-    tinyCounter = 0,
-    mathRound = Math.round,
-    mathMin = Math.min,
-    mathMax = Math.max,
-    mathRandom = Math.random;
-
-function tinycolor (color, opts) {
-
-    color = (color) ? color : '';
-    opts = opts || { };
-
-    // If input is already a tinycolor, return itself
-    if (color instanceof tinycolor) {
-       return color;
-    }
-    // If we are called as a function, call using new instead
-    if (!(this instanceof tinycolor)) {
-        return new tinycolor(color, opts);
-    }
-
-    var rgb = inputToRGB(color);
-    this._originalInput = color,
-    this._r = rgb.r,
-    this._g = rgb.g,
-    this._b = rgb.b,
-    this._a = rgb.a,
-    this._roundA = mathRound(100*this._a) / 100,
-    this._format = opts.format || rgb.format;
-    this._gradientType = opts.gradientType;
-
-    // Don't let the range of [0,255] come back in [0,1].
-    // Potentially lose a little bit of precision here, but will fix issues where
-    // .5 gets interpreted as half of the total, instead of half of 1
-    // If it was supposed to be 128, this was already taken care of by `inputToRgb`
-    if (this._r < 1) { this._r = mathRound(this._r); }
-    if (this._g < 1) { this._g = mathRound(this._g); }
-    if (this._b < 1) { this._b = mathRound(this._b); }
-
-    this._ok = rgb.ok;
-    this._tc_id = tinyCounter++;
-}
-
-tinycolor.prototype = {
-    isDark: function() {
-        return this.getBrightness() < 128;
-    },
-    isLight: function() {
-        return !this.isDark();
-    },
-    isValid: function() {
-        return this._ok;
-    },
-    getOriginalInput: function() {
-      return this._originalInput;
-    },
-    getFormat: function() {
-        return this._format;
-    },
-    getAlpha: function() {
-        return this._a;
-    },
-    getBrightness: function() {
-        //http://www.w3.org/TR/AERT#color-contrast
-        var rgb = this.toRgb();
-        return (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
-    },
-    getLuminance: function() {
-        //http://www.w3.org/TR/2008/REC-WCAG20-20081211/#relativeluminancedef
-        var rgb = this.toRgb();
-        var RsRGB, GsRGB, BsRGB, R, G, B;
-        RsRGB = rgb.r/255;
-        GsRGB = rgb.g/255;
-        BsRGB = rgb.b/255;
-
-        if (RsRGB <= 0.03928) {R = RsRGB / 12.92;} else {R = Math.pow(((RsRGB + 0.055) / 1.055), 2.4);}
-        if (GsRGB <= 0.03928) {G = GsRGB / 12.92;} else {G = Math.pow(((GsRGB + 0.055) / 1.055), 2.4);}
-        if (BsRGB <= 0.03928) {B = BsRGB / 12.92;} else {B = Math.pow(((BsRGB + 0.055) / 1.055), 2.4);}
-        return (0.2126 * R) + (0.7152 * G) + (0.0722 * B);
-    },
-    setAlpha: function(value) {
-        this._a = boundAlpha(value);
-        this._roundA = mathRound(100*this._a) / 100;
-        return this;
-    },
-    toHsv: function() {
-        var hsv = rgbToHsv(this._r, this._g, this._b);
-        return { h: hsv.h * 360, s: hsv.s, v: hsv.v, a: this._a };
-    },
-    toHsvString: function() {
-        var hsv = rgbToHsv(this._r, this._g, this._b);
-        var h = mathRound(hsv.h * 360), s = mathRound(hsv.s * 100), v = mathRound(hsv.v * 100);
-        return (this._a == 1) ?
-          "hsv("  + h + ", " + s + "%, " + v + "%)" :
-          "hsva(" + h + ", " + s + "%, " + v + "%, "+ this._roundA + ")";
-    },
-    toHsl: function() {
-        var hsl = rgbToHsl(this._r, this._g, this._b);
-        return { h: hsl.h * 360, s: hsl.s, l: hsl.l, a: this._a };
-    },
-    toHslString: function() {
-        var hsl = rgbToHsl(this._r, this._g, this._b);
-        var h = mathRound(hsl.h * 360), s = mathRound(hsl.s * 100), l = mathRound(hsl.l * 100);
-        return (this._a == 1) ?
-          "hsl("  + h + ", " + s + "%, " + l + "%)" :
-          "hsla(" + h + ", " + s + "%, " + l + "%, "+ this._roundA + ")";
-    },
-    toHex: function(allow3Char) {
-        return rgbToHex(this._r, this._g, this._b, allow3Char);
-    },
-    toHexString: function(allow3Char) {
-        return '#' + this.toHex(allow3Char);
-    },
-    toHex8: function(allow4Char) {
-        return rgbaToHex(this._r, this._g, this._b, this._a, allow4Char);
-    },
-    toHex8String: function(allow4Char) {
-        return '#' + this.toHex8(allow4Char);
-    },
-    toRgb: function() {
-        return { r: mathRound(this._r), g: mathRound(this._g), b: mathRound(this._b), a: this._a };
-    },
-    toRgbString: function() {
-        return (this._a == 1) ?
-          "rgb("  + mathRound(this._r) + ", " + mathRound(this._g) + ", " + mathRound(this._b) + ")" :
-          "rgba(" + mathRound(this._r) + ", " + mathRound(this._g) + ", " + mathRound(this._b) + ", " + this._roundA + ")";
-    },
-    toPercentageRgb: function() {
-        return { r: mathRound(bound01(this._r, 255) * 100) + "%", g: mathRound(bound01(this._g, 255) * 100) + "%", b: mathRound(bound01(this._b, 255) * 100) + "%", a: this._a };
-    },
-    toPercentageRgbString: function() {
-        return (this._a == 1) ?
-          "rgb("  + mathRound(bound01(this._r, 255) * 100) + "%, " + mathRound(bound01(this._g, 255) * 100) + "%, " + mathRound(bound01(this._b, 255) * 100) + "%)" :
-          "rgba(" + mathRound(bound01(this._r, 255) * 100) + "%, " + mathRound(bound01(this._g, 255) * 100) + "%, " + mathRound(bound01(this._b, 255) * 100) + "%, " + this._roundA + ")";
-    },
-    toName: function() {
-        if (this._a === 0) {
-            return "transparent";
-        }
-
-        if (this._a < 1) {
-            return false;
-        }
-
-        return hexNames[rgbToHex(this._r, this._g, this._b, true)] || false;
-    },
-    toFilter: function(secondColor) {
-        var hex8String = '#' + rgbaToArgbHex(this._r, this._g, this._b, this._a);
-        var secondHex8String = hex8String;
-        var gradientType = this._gradientType ? "GradientType = 1, " : "";
-
-        if (secondColor) {
-            var s = tinycolor(secondColor);
-            secondHex8String = '#' + rgbaToArgbHex(s._r, s._g, s._b, s._a);
-        }
-
-        return "progid:DXImageTransform.Microsoft.gradient("+gradientType+"startColorstr="+hex8String+",endColorstr="+secondHex8String+")";
-    },
-    toString: function(format) {
-        var formatSet = !!format;
-        format = format || this._format;
-
-        var formattedString = false;
-        var hasAlpha = this._a < 1 && this._a >= 0;
-        var needsAlphaFormat = !formatSet && hasAlpha && (format === "hex" || format === "hex6" || format === "hex3" || format === "hex4" || format === "hex8" || format === "name");
-
-        if (needsAlphaFormat) {
-            // Special case for "transparent", all other non-alpha formats
-            // will return rgba when there is transparency.
-            if (format === "name" && this._a === 0) {
-                return this.toName();
-            }
-            return this.toRgbString();
-        }
-        if (format === "rgb") {
-            formattedString = this.toRgbString();
-        }
-        if (format === "prgb") {
-            formattedString = this.toPercentageRgbString();
-        }
-        if (format === "hex" || format === "hex6") {
-            formattedString = this.toHexString();
-        }
-        if (format === "hex3") {
-            formattedString = this.toHexString(true);
-        }
-        if (format === "hex4") {
-            formattedString = this.toHex8String(true);
-        }
-        if (format === "hex8") {
-            formattedString = this.toHex8String();
-        }
-        if (format === "name") {
-            formattedString = this.toName();
-        }
-        if (format === "hsl") {
-            formattedString = this.toHslString();
-        }
-        if (format === "hsv") {
-            formattedString = this.toHsvString();
-        }
-
-        return formattedString || this.toHexString();
-    },
-    clone: function() {
-        return tinycolor(this.toString());
-    },
-
-    _applyModification: function(fn, args) {
-        var color = fn.apply(null, [this].concat([].slice.call(args)));
-        this._r = color._r;
-        this._g = color._g;
-        this._b = color._b;
-        this.setAlpha(color._a);
-        return this;
-    },
-    lighten: function() {
-        return this._applyModification(lighten, arguments);
-    },
-    brighten: function() {
-        return this._applyModification(brighten, arguments);
-    },
-    darken: function() {
-        return this._applyModification(darken, arguments);
-    },
-    desaturate: function() {
-        return this._applyModification(desaturate, arguments);
-    },
-    saturate: function() {
-        return this._applyModification(saturate, arguments);
-    },
-    greyscale: function() {
-        return this._applyModification(greyscale, arguments);
-    },
-    spin: function() {
-        return this._applyModification(spin, arguments);
-    },
-
-    _applyCombination: function(fn, args) {
-        return fn.apply(null, [this].concat([].slice.call(args)));
-    },
-    analogous: function() {
-        return this._applyCombination(analogous, arguments);
-    },
-    complement: function() {
-        return this._applyCombination(complement, arguments);
-    },
-    monochromatic: function() {
-        return this._applyCombination(monochromatic, arguments);
-    },
-    splitcomplement: function() {
-        return this._applyCombination(splitcomplement, arguments);
-    },
-    triad: function() {
-        return this._applyCombination(triad, arguments);
-    },
-    tetrad: function() {
-        return this._applyCombination(tetrad, arguments);
-    }
-};
-
-// If input is an object, force 1 into "1.0" to handle ratios properly
-// String input requires "1.0" as input, so 1 will be treated as 1
-tinycolor.fromRatio = function(color, opts) {
-    if (typeof color == "object") {
-        var newColor = {};
-        for (var i in color) {
-            if (color.hasOwnProperty(i)) {
-                if (i === "a") {
-                    newColor[i] = color[i];
-                }
-                else {
-                    newColor[i] = convertToPercentage(color[i]);
-                }
-            }
-        }
-        color = newColor;
-    }
-
-    return tinycolor(color, opts);
-};
-
-// Given a string or object, convert that input to RGB
-// Possible string inputs:
-//
-//     "red"
-//     "#f00" or "f00"
-//     "#ff0000" or "ff0000"
-//     "#ff000000" or "ff000000"
-//     "rgb 255 0 0" or "rgb (255, 0, 0)"
-//     "rgb 1.0 0 0" or "rgb (1, 0, 0)"
-//     "rgba (255, 0, 0, 1)" or "rgba 255, 0, 0, 1"
-//     "rgba (1.0, 0, 0, 1)" or "rgba 1.0, 0, 0, 1"
-//     "hsl(0, 100%, 50%)" or "hsl 0 100% 50%"
-//     "hsla(0, 100%, 50%, 1)" or "hsla 0 100% 50%, 1"
-//     "hsv(0, 100%, 100%)" or "hsv 0 100% 100%"
-//
-function inputToRGB(color) {
-
-    var rgb = { r: 0, g: 0, b: 0 };
-    var a = 1;
-    var s = null;
-    var v = null;
-    var l = null;
-    var ok = false;
-    var format = false;
-
-    if (typeof color == "string") {
-        color = stringInputToObject(color);
-    }
-
-    if (typeof color == "object") {
-        if (isValidCSSUnit(color.r) && isValidCSSUnit(color.g) && isValidCSSUnit(color.b)) {
-            rgb = rgbToRgb(color.r, color.g, color.b);
-            ok = true;
-            format = String(color.r).substr(-1) === "%" ? "prgb" : "rgb";
-        }
-        else if (isValidCSSUnit(color.h) && isValidCSSUnit(color.s) && isValidCSSUnit(color.v)) {
-            s = convertToPercentage(color.s);
-            v = convertToPercentage(color.v);
-            rgb = hsvToRgb(color.h, s, v);
-            ok = true;
-            format = "hsv";
-        }
-        else if (isValidCSSUnit(color.h) && isValidCSSUnit(color.s) && isValidCSSUnit(color.l)) {
-            s = convertToPercentage(color.s);
-            l = convertToPercentage(color.l);
-            rgb = hslToRgb(color.h, s, l);
-            ok = true;
-            format = "hsl";
-        }
-
-        if (color.hasOwnProperty("a")) {
-            a = color.a;
-        }
-    }
-
-    a = boundAlpha(a);
-
-    return {
-        ok: ok,
-        format: color.format || format,
-        r: mathMin(255, mathMax(rgb.r, 0)),
-        g: mathMin(255, mathMax(rgb.g, 0)),
-        b: mathMin(255, mathMax(rgb.b, 0)),
-        a: a
-    };
-}
-
-
-// Conversion Functions
-// --------------------
-
-// `rgbToHsl`, `rgbToHsv`, `hslToRgb`, `hsvToRgb` modified from:
-// <http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript>
-
-// `rgbToRgb`
-// Handle bounds / percentage checking to conform to CSS color spec
-// <http://www.w3.org/TR/css3-color/>
-// *Assumes:* r, g, b in [0, 255] or [0, 1]
-// *Returns:* { r, g, b } in [0, 255]
-function rgbToRgb(r, g, b){
-    return {
-        r: bound01(r, 255) * 255,
-        g: bound01(g, 255) * 255,
-        b: bound01(b, 255) * 255
-    };
-}
-
-// `rgbToHsl`
-// Converts an RGB color value to HSL.
-// *Assumes:* r, g, and b are contained in [0, 255] or [0, 1]
-// *Returns:* { h, s, l } in [0,1]
-function rgbToHsl(r, g, b) {
-
-    r = bound01(r, 255);
-    g = bound01(g, 255);
-    b = bound01(b, 255);
-
-    var max = mathMax(r, g, b), min = mathMin(r, g, b);
-    var h, s, l = (max + min) / 2;
-
-    if(max == min) {
-        h = s = 0; // achromatic
-    }
-    else {
-        var d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch(max) {
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
-        }
-
-        h /= 6;
-    }
-
-    return { h: h, s: s, l: l };
-}
-
-// `hslToRgb`
-// Converts an HSL color value to RGB.
-// *Assumes:* h is contained in [0, 1] or [0, 360] and s and l are contained [0, 1] or [0, 100]
-// *Returns:* { r, g, b } in the set [0, 255]
-function hslToRgb(h, s, l) {
-    var r, g, b;
-
-    h = bound01(h, 360);
-    s = bound01(s, 100);
-    l = bound01(l, 100);
-
-    function hue2rgb(p, q, t) {
-        if(t < 0) t += 1;
-        if(t > 1) t -= 1;
-        if(t < 1/6) return p + (q - p) * 6 * t;
-        if(t < 1/2) return q;
-        if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-        return p;
-    }
-
-    if(s === 0) {
-        r = g = b = l; // achromatic
-    }
-    else {
-        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-        var p = 2 * l - q;
-        r = hue2rgb(p, q, h + 1/3);
-        g = hue2rgb(p, q, h);
-        b = hue2rgb(p, q, h - 1/3);
-    }
-
-    return { r: r * 255, g: g * 255, b: b * 255 };
-}
-
-// `rgbToHsv`
-// Converts an RGB color value to HSV
-// *Assumes:* r, g, and b are contained in the set [0, 255] or [0, 1]
-// *Returns:* { h, s, v } in [0,1]
-function rgbToHsv(r, g, b) {
-
-    r = bound01(r, 255);
-    g = bound01(g, 255);
-    b = bound01(b, 255);
-
-    var max = mathMax(r, g, b), min = mathMin(r, g, b);
-    var h, s, v = max;
-
-    var d = max - min;
-    s = max === 0 ? 0 : d / max;
-
-    if(max == min) {
-        h = 0; // achromatic
-    }
-    else {
-        switch(max) {
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
-        }
-        h /= 6;
-    }
-    return { h: h, s: s, v: v };
-}
-
-// `hsvToRgb`
-// Converts an HSV color value to RGB.
-// *Assumes:* h is contained in [0, 1] or [0, 360] and s and v are contained in [0, 1] or [0, 100]
-// *Returns:* { r, g, b } in the set [0, 255]
- function hsvToRgb(h, s, v) {
-
-    h = bound01(h, 360) * 6;
-    s = bound01(s, 100);
-    v = bound01(v, 100);
-
-    var i = Math.floor(h),
-        f = h - i,
-        p = v * (1 - s),
-        q = v * (1 - f * s),
-        t = v * (1 - (1 - f) * s),
-        mod = i % 6,
-        r = [v, q, p, p, t, v][mod],
-        g = [t, v, v, q, p, p][mod],
-        b = [p, p, t, v, v, q][mod];
-
-    return { r: r * 255, g: g * 255, b: b * 255 };
-}
-
-// `rgbToHex`
-// Converts an RGB color to hex
-// Assumes r, g, and b are contained in the set [0, 255]
-// Returns a 3 or 6 character hex
-function rgbToHex(r, g, b, allow3Char) {
-
-    var hex = [
-        pad2(mathRound(r).toString(16)),
-        pad2(mathRound(g).toString(16)),
-        pad2(mathRound(b).toString(16))
-    ];
-
-    // Return a 3 character hex if possible
-    if (allow3Char && hex[0].charAt(0) == hex[0].charAt(1) && hex[1].charAt(0) == hex[1].charAt(1) && hex[2].charAt(0) == hex[2].charAt(1)) {
-        return hex[0].charAt(0) + hex[1].charAt(0) + hex[2].charAt(0);
-    }
-
-    return hex.join("");
-}
-
-// `rgbaToHex`
-// Converts an RGBA color plus alpha transparency to hex
-// Assumes r, g, b are contained in the set [0, 255] and
-// a in [0, 1]. Returns a 4 or 8 character rgba hex
-function rgbaToHex(r, g, b, a, allow4Char) {
-
-    var hex = [
-        pad2(mathRound(r).toString(16)),
-        pad2(mathRound(g).toString(16)),
-        pad2(mathRound(b).toString(16)),
-        pad2(convertDecimalToHex(a))
-    ];
-
-    // Return a 4 character hex if possible
-    if (allow4Char && hex[0].charAt(0) == hex[0].charAt(1) && hex[1].charAt(0) == hex[1].charAt(1) && hex[2].charAt(0) == hex[2].charAt(1) && hex[3].charAt(0) == hex[3].charAt(1)) {
-        return hex[0].charAt(0) + hex[1].charAt(0) + hex[2].charAt(0) + hex[3].charAt(0);
-    }
-
-    return hex.join("");
-}
-
-// `rgbaToArgbHex`
-// Converts an RGBA color to an ARGB Hex8 string
-// Rarely used, but required for "toFilter()"
-function rgbaToArgbHex(r, g, b, a) {
-
-    var hex = [
-        pad2(convertDecimalToHex(a)),
-        pad2(mathRound(r).toString(16)),
-        pad2(mathRound(g).toString(16)),
-        pad2(mathRound(b).toString(16))
-    ];
-
-    return hex.join("");
-}
-
-// `equals`
-// Can be called with any tinycolor input
-tinycolor.equals = function (color1, color2) {
-    if (!color1 || !color2) { return false; }
-    return tinycolor(color1).toRgbString() == tinycolor(color2).toRgbString();
-};
-
-tinycolor.random = function() {
-    return tinycolor.fromRatio({
-        r: mathRandom(),
-        g: mathRandom(),
-        b: mathRandom()
-    });
-};
-
-
-// Modification Functions
-// ----------------------
-// Thanks to less.js for some of the basics here
-// <https://github.com/cloudhead/less.js/blob/master/lib/less/functions.js>
-
-function desaturate(color, amount) {
-    amount = (amount === 0) ? 0 : (amount || 10);
-    var hsl = tinycolor(color).toHsl();
-    hsl.s -= amount / 100;
-    hsl.s = clamp01(hsl.s);
-    return tinycolor(hsl);
-}
-
-function saturate(color, amount) {
-    amount = (amount === 0) ? 0 : (amount || 10);
-    var hsl = tinycolor(color).toHsl();
-    hsl.s += amount / 100;
-    hsl.s = clamp01(hsl.s);
-    return tinycolor(hsl);
-}
-
-function greyscale(color) {
-    return tinycolor(color).desaturate(100);
-}
-
-function lighten (color, amount) {
-    amount = (amount === 0) ? 0 : (amount || 10);
-    var hsl = tinycolor(color).toHsl();
-    hsl.l += amount / 100;
-    hsl.l = clamp01(hsl.l);
-    return tinycolor(hsl);
-}
-
-function brighten(color, amount) {
-    amount = (amount === 0) ? 0 : (amount || 10);
-    var rgb = tinycolor(color).toRgb();
-    rgb.r = mathMax(0, mathMin(255, rgb.r - mathRound(255 * - (amount / 100))));
-    rgb.g = mathMax(0, mathMin(255, rgb.g - mathRound(255 * - (amount / 100))));
-    rgb.b = mathMax(0, mathMin(255, rgb.b - mathRound(255 * - (amount / 100))));
-    return tinycolor(rgb);
-}
-
-function darken (color, amount) {
-    amount = (amount === 0) ? 0 : (amount || 10);
-    var hsl = tinycolor(color).toHsl();
-    hsl.l -= amount / 100;
-    hsl.l = clamp01(hsl.l);
-    return tinycolor(hsl);
-}
-
-// Spin takes a positive or negative amount within [-360, 360] indicating the change of hue.
-// Values outside of this range will be wrapped into this range.
-function spin(color, amount) {
-    var hsl = tinycolor(color).toHsl();
-    var hue = (hsl.h + amount) % 360;
-    hsl.h = hue < 0 ? 360 + hue : hue;
-    return tinycolor(hsl);
-}
-
-// Combination Functions
-// ---------------------
-// Thanks to jQuery xColor for some of the ideas behind these
-// <https://github.com/infusion/jQuery-xcolor/blob/master/jquery.xcolor.js>
-
-function complement(color) {
-    var hsl = tinycolor(color).toHsl();
-    hsl.h = (hsl.h + 180) % 360;
-    return tinycolor(hsl);
-}
-
-function triad(color) {
-    var hsl = tinycolor(color).toHsl();
-    var h = hsl.h;
-    return [
-        tinycolor(color),
-        tinycolor({ h: (h + 120) % 360, s: hsl.s, l: hsl.l }),
-        tinycolor({ h: (h + 240) % 360, s: hsl.s, l: hsl.l })
-    ];
-}
-
-function tetrad(color) {
-    var hsl = tinycolor(color).toHsl();
-    var h = hsl.h;
-    return [
-        tinycolor(color),
-        tinycolor({ h: (h + 90) % 360, s: hsl.s, l: hsl.l }),
-        tinycolor({ h: (h + 180) % 360, s: hsl.s, l: hsl.l }),
-        tinycolor({ h: (h + 270) % 360, s: hsl.s, l: hsl.l })
-    ];
-}
-
-function splitcomplement(color) {
-    var hsl = tinycolor(color).toHsl();
-    var h = hsl.h;
-    return [
-        tinycolor(color),
-        tinycolor({ h: (h + 72) % 360, s: hsl.s, l: hsl.l}),
-        tinycolor({ h: (h + 216) % 360, s: hsl.s, l: hsl.l})
-    ];
-}
-
-function analogous(color, results, slices) {
-    results = results || 6;
-    slices = slices || 30;
-
-    var hsl = tinycolor(color).toHsl();
-    var part = 360 / slices;
-    var ret = [tinycolor(color)];
-
-    for (hsl.h = ((hsl.h - (part * results >> 1)) + 720) % 360; --results; ) {
-        hsl.h = (hsl.h + part) % 360;
-        ret.push(tinycolor(hsl));
-    }
-    return ret;
-}
-
-function monochromatic(color, results) {
-    results = results || 6;
-    var hsv = tinycolor(color).toHsv();
-    var h = hsv.h, s = hsv.s, v = hsv.v;
-    var ret = [];
-    var modification = 1 / results;
-
-    while (results--) {
-        ret.push(tinycolor({ h: h, s: s, v: v}));
-        v = (v + modification) % 1;
-    }
-
-    return ret;
-}
-
-// Utility Functions
-// ---------------------
-
-tinycolor.mix = function(color1, color2, amount) {
-    amount = (amount === 0) ? 0 : (amount || 50);
-
-    var rgb1 = tinycolor(color1).toRgb();
-    var rgb2 = tinycolor(color2).toRgb();
-
-    var p = amount / 100;
-
-    var rgba = {
-        r: ((rgb2.r - rgb1.r) * p) + rgb1.r,
-        g: ((rgb2.g - rgb1.g) * p) + rgb1.g,
-        b: ((rgb2.b - rgb1.b) * p) + rgb1.b,
-        a: ((rgb2.a - rgb1.a) * p) + rgb1.a
-    };
-
-    return tinycolor(rgba);
-};
-
-
-// Readability Functions
-// ---------------------
-// <http://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef (WCAG Version 2)
-
-// `contrast`
-// Analyze the 2 colors and returns the color contrast defined by (WCAG Version 2)
-tinycolor.readability = function(color1, color2) {
-    var c1 = tinycolor(color1);
-    var c2 = tinycolor(color2);
-    return (Math.max(c1.getLuminance(),c2.getLuminance())+0.05) / (Math.min(c1.getLuminance(),c2.getLuminance())+0.05);
-};
-
-// `isReadable`
-// Ensure that foreground and background color combinations meet WCAG2 guidelines.
-// The third argument is an optional Object.
-//      the 'level' property states 'AA' or 'AAA' - if missing or invalid, it defaults to 'AA';
-//      the 'size' property states 'large' or 'small' - if missing or invalid, it defaults to 'small'.
-// If the entire object is absent, isReadable defaults to {level:"AA",size:"small"}.
-
-// *Example*
-//    tinycolor.isReadable("#000", "#111") => false
-//    tinycolor.isReadable("#000", "#111",{level:"AA",size:"large"}) => false
-tinycolor.isReadable = function(color1, color2, wcag2) {
-    var readability = tinycolor.readability(color1, color2);
-    var wcag2Parms, out;
-
-    out = false;
-
-    wcag2Parms = validateWCAG2Parms(wcag2);
-    switch (wcag2Parms.level + wcag2Parms.size) {
-        case "AAsmall":
-        case "AAAlarge":
-            out = readability >= 4.5;
-            break;
-        case "AAlarge":
-            out = readability >= 3;
-            break;
-        case "AAAsmall":
-            out = readability >= 7;
-            break;
-    }
-    return out;
-
-};
-
-// `mostReadable`
-// Given a base color and a list of possible foreground or background
-// colors for that base, returns the most readable color.
-// Optionally returns Black or White if the most readable color is unreadable.
-// *Example*
-//    tinycolor.mostReadable(tinycolor.mostReadable("#123", ["#124", "#125"],{includeFallbackColors:false}).toHexString(); // "#112255"
-//    tinycolor.mostReadable(tinycolor.mostReadable("#123", ["#124", "#125"],{includeFallbackColors:true}).toHexString();  // "#ffffff"
-//    tinycolor.mostReadable("#a8015a", ["#faf3f3"],{includeFallbackColors:true,level:"AAA",size:"large"}).toHexString(); // "#faf3f3"
-//    tinycolor.mostReadable("#a8015a", ["#faf3f3"],{includeFallbackColors:true,level:"AAA",size:"small"}).toHexString(); // "#ffffff"
-tinycolor.mostReadable = function(baseColor, colorList, args) {
-    var bestColor = null;
-    var bestScore = 0;
-    var readability;
-    var includeFallbackColors, level, size ;
-    args = args || {};
-    includeFallbackColors = args.includeFallbackColors ;
-    level = args.level;
-    size = args.size;
-
-    for (var i= 0; i < colorList.length ; i++) {
-        readability = tinycolor.readability(baseColor, colorList[i]);
-        if (readability > bestScore) {
-            bestScore = readability;
-            bestColor = tinycolor(colorList[i]);
-        }
-    }
-
-    if (tinycolor.isReadable(baseColor, bestColor, {"level":level,"size":size}) || !includeFallbackColors) {
-        return bestColor;
-    }
-    else {
-        args.includeFallbackColors=false;
-        return tinycolor.mostReadable(baseColor,["#fff", "#000"],args);
-    }
-};
-
-
-// Big List of Colors
-// ------------------
-// <http://www.w3.org/TR/css3-color/#svg-color>
-var names = tinycolor.names = {
-    aliceblue: "f0f8ff",
-    antiquewhite: "faebd7",
-    aqua: "0ff",
-    aquamarine: "7fffd4",
-    azure: "f0ffff",
-    beige: "f5f5dc",
-    bisque: "ffe4c4",
-    black: "000",
-    blanchedalmond: "ffebcd",
-    blue: "00f",
-    blueviolet: "8a2be2",
-    brown: "a52a2a",
-    burlywood: "deb887",
-    burntsienna: "ea7e5d",
-    cadetblue: "5f9ea0",
-    chartreuse: "7fff00",
-    chocolate: "d2691e",
-    coral: "ff7f50",
-    cornflowerblue: "6495ed",
-    cornsilk: "fff8dc",
-    crimson: "dc143c",
-    cyan: "0ff",
-    darkblue: "00008b",
-    darkcyan: "008b8b",
-    darkgoldenrod: "b8860b",
-    darkgray: "a9a9a9",
-    darkgreen: "006400",
-    darkgrey: "a9a9a9",
-    darkkhaki: "bdb76b",
-    darkmagenta: "8b008b",
-    darkolivegreen: "556b2f",
-    darkorange: "ff8c00",
-    darkorchid: "9932cc",
-    darkred: "8b0000",
-    darksalmon: "e9967a",
-    darkseagreen: "8fbc8f",
-    darkslateblue: "483d8b",
-    darkslategray: "2f4f4f",
-    darkslategrey: "2f4f4f",
-    darkturquoise: "00ced1",
-    darkviolet: "9400d3",
-    deeppink: "ff1493",
-    deepskyblue: "00bfff",
-    dimgray: "696969",
-    dimgrey: "696969",
-    dodgerblue: "1e90ff",
-    firebrick: "b22222",
-    floralwhite: "fffaf0",
-    forestgreen: "228b22",
-    fuchsia: "f0f",
-    gainsboro: "dcdcdc",
-    ghostwhite: "f8f8ff",
-    gold: "ffd700",
-    goldenrod: "daa520",
-    gray: "808080",
-    green: "008000",
-    greenyellow: "adff2f",
-    grey: "808080",
-    honeydew: "f0fff0",
-    hotpink: "ff69b4",
-    indianred: "cd5c5c",
-    indigo: "4b0082",
-    ivory: "fffff0",
-    khaki: "f0e68c",
-    lavender: "e6e6fa",
-    lavenderblush: "fff0f5",
-    lawngreen: "7cfc00",
-    lemonchiffon: "fffacd",
-    lightblue: "add8e6",
-    lightcoral: "f08080",
-    lightcyan: "e0ffff",
-    lightgoldenrodyellow: "fafad2",
-    lightgray: "d3d3d3",
-    lightgreen: "90ee90",
-    lightgrey: "d3d3d3",
-    lightpink: "ffb6c1",
-    lightsalmon: "ffa07a",
-    lightseagreen: "20b2aa",
-    lightskyblue: "87cefa",
-    lightslategray: "789",
-    lightslategrey: "789",
-    lightsteelblue: "b0c4de",
-    lightyellow: "ffffe0",
-    lime: "0f0",
-    limegreen: "32cd32",
-    linen: "faf0e6",
-    magenta: "f0f",
-    maroon: "800000",
-    mediumaquamarine: "66cdaa",
-    mediumblue: "0000cd",
-    mediumorchid: "ba55d3",
-    mediumpurple: "9370db",
-    mediumseagreen: "3cb371",
-    mediumslateblue: "7b68ee",
-    mediumspringgreen: "00fa9a",
-    mediumturquoise: "48d1cc",
-    mediumvioletred: "c71585",
-    midnightblue: "191970",
-    mintcream: "f5fffa",
-    mistyrose: "ffe4e1",
-    moccasin: "ffe4b5",
-    navajowhite: "ffdead",
-    navy: "000080",
-    oldlace: "fdf5e6",
-    olive: "808000",
-    olivedrab: "6b8e23",
-    orange: "ffa500",
-    orangered: "ff4500",
-    orchid: "da70d6",
-    palegoldenrod: "eee8aa",
-    palegreen: "98fb98",
-    paleturquoise: "afeeee",
-    palevioletred: "db7093",
-    papayawhip: "ffefd5",
-    peachpuff: "ffdab9",
-    peru: "cd853f",
-    pink: "ffc0cb",
-    plum: "dda0dd",
-    powderblue: "b0e0e6",
-    purple: "800080",
-    rebeccapurple: "663399",
-    red: "f00",
-    rosybrown: "bc8f8f",
-    royalblue: "4169e1",
-    saddlebrown: "8b4513",
-    salmon: "fa8072",
-    sandybrown: "f4a460",
-    seagreen: "2e8b57",
-    seashell: "fff5ee",
-    sienna: "a0522d",
-    silver: "c0c0c0",
-    skyblue: "87ceeb",
-    slateblue: "6a5acd",
-    slategray: "708090",
-    slategrey: "708090",
-    snow: "fffafa",
-    springgreen: "00ff7f",
-    steelblue: "4682b4",
-    tan: "d2b48c",
-    teal: "008080",
-    thistle: "d8bfd8",
-    tomato: "ff6347",
-    turquoise: "40e0d0",
-    violet: "ee82ee",
-    wheat: "f5deb3",
-    white: "fff",
-    whitesmoke: "f5f5f5",
-    yellow: "ff0",
-    yellowgreen: "9acd32"
-};
-
-// Make it easy to access colors via `hexNames[hex]`
-var hexNames = tinycolor.hexNames = flip(names);
-
-
-// Utilities
-// ---------
-
-// `{ 'name1': 'val1' }` becomes `{ 'val1': 'name1' }`
-function flip(o) {
-    var flipped = { };
-    for (var i in o) {
-        if (o.hasOwnProperty(i)) {
-            flipped[o[i]] = i;
-        }
-    }
-    return flipped;
-}
-
-// Return a valid alpha value [0,1] with all invalid values being set to 1
-function boundAlpha(a) {
-    a = parseFloat(a);
-
-    if (isNaN(a) || a < 0 || a > 1) {
-        a = 1;
-    }
-
-    return a;
-}
-
-// Take input from [0, n] and return it as [0, 1]
-function bound01(n, max) {
-    if (isOnePointZero(n)) { n = "100%"; }
-
-    var processPercent = isPercentage(n);
-    n = mathMin(max, mathMax(0, parseFloat(n)));
-
-    // Automatically convert percentage into number
-    if (processPercent) {
-        n = parseInt(n * max, 10) / 100;
-    }
-
-    // Handle floating point rounding errors
-    if ((Math.abs(n - max) < 0.000001)) {
-        return 1;
-    }
-
-    // Convert into [0, 1] range if it isn't already
-    return (n % max) / parseFloat(max);
-}
-
-// Force a number between 0 and 1
-function clamp01(val) {
-    return mathMin(1, mathMax(0, val));
-}
-
-// Parse a base-16 hex value into a base-10 integer
-function parseIntFromHex(val) {
-    return parseInt(val, 16);
-}
-
-// Need to handle 1.0 as 100%, since once it is a number, there is no difference between it and 1
-// <http://stackoverflow.com/questions/7422072/javascript-how-to-detect-number-as-a-decimal-including-1-0>
-function isOnePointZero(n) {
-    return typeof n == "string" && n.indexOf('.') != -1 && parseFloat(n) === 1;
-}
-
-// Check to see if string passed in is a percentage
-function isPercentage(n) {
-    return typeof n === "string" && n.indexOf('%') != -1;
-}
-
-// Force a hex value to have 2 characters
-function pad2(c) {
-    return c.length == 1 ? '0' + c : '' + c;
-}
-
-// Replace a decimal with it's percentage value
-function convertToPercentage(n) {
-    if (n <= 1) {
-        n = (n * 100) + "%";
-    }
-
-    return n;
-}
-
-// Converts a decimal to a hex value
-function convertDecimalToHex(d) {
-    return Math.round(parseFloat(d) * 255).toString(16);
-}
-// Converts a hex value to a decimal
-function convertHexToDecimal(h) {
-    return (parseIntFromHex(h) / 255);
-}
-
-var matchers = (function() {
-
-    // <http://www.w3.org/TR/css3-values/#integers>
-    var CSS_INTEGER = "[-\\+]?\\d+%?";
-
-    // <http://www.w3.org/TR/css3-values/#number-value>
-    var CSS_NUMBER = "[-\\+]?\\d*\\.\\d+%?";
-
-    // Allow positive/negative integer/number.  Don't capture the either/or, just the entire outcome.
-    var CSS_UNIT = "(?:" + CSS_NUMBER + ")|(?:" + CSS_INTEGER + ")";
-
-    // Actual matching.
-    // Parentheses and commas are optional, but not required.
-    // Whitespace can take the place of commas or opening paren
-    var PERMISSIVE_MATCH3 = "[\\s|\\(]+(" + CSS_UNIT + ")[,|\\s]+(" + CSS_UNIT + ")[,|\\s]+(" + CSS_UNIT + ")\\s*\\)?";
-    var PERMISSIVE_MATCH4 = "[\\s|\\(]+(" + CSS_UNIT + ")[,|\\s]+(" + CSS_UNIT + ")[,|\\s]+(" + CSS_UNIT + ")[,|\\s]+(" + CSS_UNIT + ")\\s*\\)?";
-
-    return {
-        CSS_UNIT: new RegExp(CSS_UNIT),
-        rgb: new RegExp("rgb" + PERMISSIVE_MATCH3),
-        rgba: new RegExp("rgba" + PERMISSIVE_MATCH4),
-        hsl: new RegExp("hsl" + PERMISSIVE_MATCH3),
-        hsla: new RegExp("hsla" + PERMISSIVE_MATCH4),
-        hsv: new RegExp("hsv" + PERMISSIVE_MATCH3),
-        hsva: new RegExp("hsva" + PERMISSIVE_MATCH4),
-        hex3: /^#?([0-9a-fA-F]{1})([0-9a-fA-F]{1})([0-9a-fA-F]{1})$/,
-        hex6: /^#?([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/,
-        hex4: /^#?([0-9a-fA-F]{1})([0-9a-fA-F]{1})([0-9a-fA-F]{1})([0-9a-fA-F]{1})$/,
-        hex8: /^#?([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/
-    };
-})();
-
-// `isValidCSSUnit`
-// Take in a single string / number and check to see if it looks like a CSS unit
-// (see `matchers` above for definition).
-function isValidCSSUnit(color) {
-    return !!matchers.CSS_UNIT.exec(color);
-}
-
-// `stringInputToObject`
-// Permissive string parsing.  Take in a number of formats, and output an object
-// based on detected format.  Returns `{ r, g, b }` or `{ h, s, l }` or `{ h, s, v}`
-function stringInputToObject(color) {
-
-    color = color.replace(trimLeft,'').replace(trimRight, '').toLowerCase();
-    var named = false;
-    if (names[color]) {
-        color = names[color];
-        named = true;
-    }
-    else if (color == 'transparent') {
-        return { r: 0, g: 0, b: 0, a: 0, format: "name" };
-    }
-
-    // Try to match string input using regular expressions.
-    // Keep most of the number bounding out of this function - don't worry about [0,1] or [0,100] or [0,360]
-    // Just return an object and let the conversion functions handle that.
-    // This way the result will be the same whether the tinycolor is initialized with string or object.
-    var match;
-    if ((match = matchers.rgb.exec(color))) {
-        return { r: match[1], g: match[2], b: match[3] };
-    }
-    if ((match = matchers.rgba.exec(color))) {
-        return { r: match[1], g: match[2], b: match[3], a: match[4] };
-    }
-    if ((match = matchers.hsl.exec(color))) {
-        return { h: match[1], s: match[2], l: match[3] };
-    }
-    if ((match = matchers.hsla.exec(color))) {
-        return { h: match[1], s: match[2], l: match[3], a: match[4] };
-    }
-    if ((match = matchers.hsv.exec(color))) {
-        return { h: match[1], s: match[2], v: match[3] };
-    }
-    if ((match = matchers.hsva.exec(color))) {
-        return { h: match[1], s: match[2], v: match[3], a: match[4] };
-    }
-    if ((match = matchers.hex8.exec(color))) {
-        return {
-            r: parseIntFromHex(match[1]),
-            g: parseIntFromHex(match[2]),
-            b: parseIntFromHex(match[3]),
-            a: convertHexToDecimal(match[4]),
-            format: named ? "name" : "hex8"
-        };
-    }
-    if ((match = matchers.hex6.exec(color))) {
-        return {
-            r: parseIntFromHex(match[1]),
-            g: parseIntFromHex(match[2]),
-            b: parseIntFromHex(match[3]),
-            format: named ? "name" : "hex"
-        };
-    }
-    if ((match = matchers.hex4.exec(color))) {
-        return {
-            r: parseIntFromHex(match[1] + '' + match[1]),
-            g: parseIntFromHex(match[2] + '' + match[2]),
-            b: parseIntFromHex(match[3] + '' + match[3]),
-            a: convertHexToDecimal(match[4] + '' + match[4]),
-            format: named ? "name" : "hex8"
-        };
-    }
-    if ((match = matchers.hex3.exec(color))) {
-        return {
-            r: parseIntFromHex(match[1] + '' + match[1]),
-            g: parseIntFromHex(match[2] + '' + match[2]),
-            b: parseIntFromHex(match[3] + '' + match[3]),
-            format: named ? "name" : "hex"
-        };
-    }
-
-    return false;
-}
-
-function validateWCAG2Parms(parms) {
-    // return valid WCAG2 parms for isReadable.
-    // If input parms are invalid, return {"level":"AA", "size":"small"}
-    var level, size;
-    parms = parms || {"level":"AA", "size":"small"};
-    level = (parms.level || "AA").toUpperCase();
-    size = (parms.size || "small").toLowerCase();
-    if (level !== "AA" && level !== "AAA") {
-        level = "AA";
-    }
-    if (size !== "small" && size !== "large") {
-        size = "small";
-    }
-    return {"level":level, "size":size};
-}
-
-// Node: Export function
-if (typeof module !== "undefined" && module.exports) {
-    module.exports = tinycolor;
-}
-// AMD/requirejs: Define the module
-else if (typeof define === 'function' && define.amd) {
-    define(function () {return tinycolor;});
-}
-// Browser: Expose to window
-else {
-    window.tinycolor = tinycolor;
-}
-
-})(Math);
-
-},{}],375:[function(require,module,exports){
-// yy-counter
-// In-browser counter to watch changeable values like counters or FPS
-// David Figatner
-// (c) YOPEY YOPEY LLC 2017
-// MIT License
-// https://github.com/davidfig/counter
-
-module.exports = class Counter
-{
-    /**
-     * @param {object} [options]
-     * @param {string} [options.side=rightbottom] side to place the panel (combination of right/left and bottom/top)
-     * @param {number} [options.padding=7px]
-     * @param {string} [options.color=white]
-     * @param {string} [options.background=rgba(0,0,0,0.5)]
-     * @param {*} {options.xxx} where xxx is a CSS style for the div
-     */
-    constructor(options)
-    {
-        options = options || {}
-        options.side = options.side || 'rightbottom'
-        options.side.toLowerCase()
-        options.padding = options.padding || '7px'
-        options.color = options.color || 'white'
-        options.background = options.background || 'rgba(0,0,0,0.5)'
-        this.div = document.createElement('div')
-        Counter.findParent(options.side).appendChild(this.div)
-        for (let style in options)
-        {
-            if (style !== 'parent' && style !== 'side')
-            {
-                this.div.style[style] = options[style]
-            }
-        }
-    }
-
-    /**
-     * find the parent div for one of the corners
-     * @param {string} [options.side] side to place the panel (combination of right/left and bottom/top)
-     * @return {HTMLElement}
-     */
-    static findParent(side)
-    {
-        const styles = []
-        let name = 'yy-counter-'
-        if (side.indexOf('left') !== -1)
-        {
-            name += 'left-'
-            styles['left'] = 0
-        }
-        else
-        {
-            name += 'right-'
-            styles['right'] = 0
-        }
-        if (side.indexOf('top') !== -1)
-        {
-            name += 'top'
-            styles['top'] = 0
-        }
-        else
-        {
-            name += 'bottom'
-            styles['bottom'] = 0
-        }
-        const test = document.getElementById(name)
-        if (test)
-        {
-            return test
-        }
-        const container = document.createElement('div')
-        container.id = name
-        container.style.overflow = 'hidden'
-        container.style.position = 'fixed'
-        container.style.zIndex = 10000
-        container.style.pointerEvents = 'none'
-        container.style.userSelect = 'none'
-        for (let style in styles)
-        {
-            container.style[style] = styles[style]
-        }
-        document.body.appendChild(container)
-        return container
-    }
-
-    /**
-     * replaces the innerHTML of the console
-     * @param {string|number} text1
-     * @param {string|number} [text2]
-     * @param {string|number} [...textn] any number of arguments
-     */
-    log()
-    {
-        let s = ''
-        for (let arg of arguments)
-        {
-            s += '<div>' + arg + '</div>'
-        }
-        this.div.innerHTML =  s
-    }
-
-    /**
-     * appends to the innerHTML of the console
-     * @param {string|number} text1
-     * @param {string|number} [text2]
-     * @param {string|number} [...textn] any number of arguments
-     */
-    append()
-    {
-        let s = this.div.innerHTML
-        for (let arg of arguments)
-        {
-            s += '<div>' + arg + '</div>'
-        }
-        this.div.innerHTML = s
-    }
-}
-},{}],376:[function(require,module,exports){
-const Color = require('tinycolor2')
-const Counter = require('yy-counter')
-
-const STYLES = {
-    'background': 'rgba(0, 0, 0, 0.5)',
-    'color': 'white',
-}
-
-const STYLES_FPS = {
-    'padding': '0.1em 0.5em'
-}
-
-const STYLES_METER = {
-}
-
-module.exports = class FPS
-{
-    /**
-     * @param {object} [options]
-     * @param {boolean} [options.meter=true] include a meter with the FPS
-     * @param {string} [options.side=bottom-right] include any combination of left/right and top/bottom
-     * @param {number} [options.FPS=60] desired FPS
-     * @param {number} [options.tolerance=1] minimum tolerance for fluctuations in FPS number
-     * @param {number} [options.meterWidth=100] width of meter div
-     * @param {number} [options.meterHeight=25] height of meter div
-     * @param {number} [options.meterLineHeight=4] height of meter line
-     * @param {styles[]} [options.styles] CSS styles to apply to the div (in javascript format)
-     * @param {styles[]} [options.stylesFPS] CSS styles to apply to the FPS text (in javascript format)
-     * @param {styles[]} [options.stylesMeter] CSS styles to apply to the FPS meter (in javascript format)
-     * @param {string} [options.text=" FPS"] change the text to the right of the FPS
-     */
-    constructor(options)
-    {
-        this.options = options || {}
-        this.tolerance = this.options.tolerance || 1
-        this.FPS = this.options.FPS || 60
-        this.meterWidth = this.options.meterWidth || 100
-        this.meterHeight = this.options.meterHeight || 25
-        this.meterLineHeight = this.options.meterLineHeight || 4
-        this.div = document.createElement('div')
-        Counter.findParent(this.options.side || 'bottom-right').appendChild(this.div)
-        this.style(this.div, STYLES, this.options.styles)
-        this.divFPS()
-        this.meter = typeof this.options.meter === 'undefined' || this.options.meter
-        this.lastTime = 0
-        this.frameNumber = 0
-        this.lastUpdate = 0
-        this.lastFPS = '--'
-    }
-
-    /**
-     * change desired FPS
-     * @type {number}
-     */
-    get fps()
-    {
-        return this.FPS
-    }
-    set fps(value)
-    {
-        this.FPS = value
-    }
-
-    /**
-     * remove meter from DOM
-     */
-    remove()
-    {
-        this.div.remove()
-    }
-
-    /**
-     * @type {boolean} meter (the FPS graph) is on or off
-     */
-    get meter()
-    {
-        return this._meter
-    }
-    set meter(value)
-    {
-        if (value)
-        {
-            this.divMeter()
-        }
-        else if (this.meterCanvas)
-        {
-            this.meterCanvas.style.display = 'none'
-        }
-    }
-
-    style(div, style1, style2)
-    {
-        for (let style in style1)
-        {
-            div.style[style] = style1[style]
-        }
-        if (style2)
-        {
-            for (let style in style2)
-            {
-                div.style[style] = style2[style]
-            }
-        }
-    }
-
-    /**
-     * create div for text FPS
-     * @private
-     * @param {HTMLElement} div
-     * @param {object} options (see contructor)
-     */
-    divFPS()
-    {
-        const div = this.div
-        const options = this.options
-        const divFPS = document.createElement('div')
-        div.appendChild(divFPS)
-        this.fpsSpan = document.createElement('span')
-        divFPS.appendChild(this.fpsSpan)
-        const span = document.createElement('span')
-        divFPS.appendChild(span)
-        span.innerText = typeof options.text !== 'undefined' ? options.text : ' FPS'
-        this.style(div, STYLES_FPS, options.stylesFPS)
-    }
-
-    /**
-     * create div for FPS meter
-     * @private
-     * @param {HTMLElement} div
-     * @param {object} options (see contructor)
-     */
-    divMeter()
-    {
-        const div = this.div
-        const options = this.options
-        if (!this.meterCanvas)
-        {
-            this.meterCanvas = document.createElement('canvas')
-            div.appendChild(this.meterCanvas)
-            this.meterCanvas.width = this.meterWidth
-            this.meterCanvas.height = this.meterHeight
-            this.meterCanvas.style.width = div.width + 'px'
-            this.meterCanvas.style.height = div.height + 'px'
-            this.style(this.meterCanvas, STYLES_METER, options.stylesMeter)
-        }
-        else
-        {
-            this.meterCanvas.style.display = 'block'
-        }
-    }
-
-    /**
-     * call this at the start of the frame to calculate FPS
-     */
-    frame()
-    {
-        this.frameNumber++
-        const currentTime = performance.now() - this.lastTime
-
-        // skip large differences to remove garbage
-        if (currentTime > 500)
-        {
-            if (this.lastTime !== 0)
-            {
-                this.lastFPS = Math.floor(this.frameNumber / (currentTime / 1000))
-                if (this.lastFPS >= this.FPS - this.tolerance && this.lastFPS <= this.FPS + this.tolerance)
-                {
-                    this.lastFPS = this.FPS
-                }
-            }
-            this.lastTime = performance.now()
-            this.frameNumber = 0
-        }
-        this.fpsSpan.innerText = this.lastFPS
-        if (this.meterCanvas && this.lastFPS !== '--')
-        {
-            this.meterUpdate(this.lastFPS / this.FPS)
-        }
-    }
-
-    meterUpdate(percent)
-    {
-        const c = this.meterCanvas.getContext('2d')
-        const data = c.getImageData(0, 0, this.meterCanvas.width, this.meterCanvas.height)
-        c.putImageData(data, -1, 0)
-        c.clearRect(this.meterCanvas.width - 1, 0, 1, this.meterCanvas.height)
-        if (percent < 0.5)
-        {
-            c.fillStyle = Color.mix('#ff0000', '0xffa500', percent * 200).toHexString()
-        }
-        else
-        {
-            c.fillStyle = Color.mix('#ffa500', '#00ff00', (percent - 0.5) * 200).toHexString()
-        }
-        const height = (this.meterCanvas.height - this.meterLineHeight) * (1 - percent)
-        c.fillRect(this.meterCanvas.width - 1, height, 1, this.meterLineHeight)
-    }
-
-    side(options)
-    {
-        if (options.side)
-        {
-            options.side = options.side.toLowerCase()
-            if (options.side.indexOf('left') !== -1)
-            {
-                STYLES['left'] = 0
-                delete STYLES['right']
-            }
-            else
-            {
-                STYLES['right'] = 0
-                delete STYLES['left']
-            }
-            if (options.side.indexOf('top') !== -1)
-            {
-                STYLES['top'] = 0
-                delete STYLES['bottom']
-            }
-            else
-            {
-                STYLES['bottom'] = 0
-                delete STYLES['top']
-            }
-        }
-        else
-        {
-            STYLES['right'] = 0
-            STYLES['bottom'] = 0
-        }
-    }
-}
-},{"tinycolor2":374,"yy-counter":375}],377:[function(require,module,exports){
-const Loop = require('./src/loop')
-Loop.entry = require('./src/entry')
-
-module.exports = Loop
-},{"./src/entry":378,"./src/loop":379}],378:[function(require,module,exports){
-const Events = require('eventemitter3')
-
-/** Entry class for Loop */
-class Entry extends Events
-{
-    /**
-     * create an entry in the update loop
-     * used by Loop
-     * @param {function} callback
-     * @param {number} [time=0] in milliseconds to call this update
-     * @param {number} [count] number of times to run this update (undefined=infinite)
-     */
-    constructor(callback, time, count)
-    {
-        super()
-        this.callback = callback
-        this.time = time
-        this.current = 0
-        this.count = count
-    }
-
-    /**
-     * run the callback if available
-     * @private
-     * @param {number} elapsed
-     */
-    _update(elapsed)
-    {
-        let result
-        if (this.callback)
-        {
-            result = this.callback(elapsed, this)
-        }
-        this.emit('each', elapsed, this)
-        if (result || (!isNaN(this.count) && !--this.count))
-        {
-            this.emit('done', this)
-            return true
-        }
-    }
-
-    /**
-     * update checks time and runs the callback
-     * @param {number} elapsed
-     * @return {boolean} whether entry is complete and may be removed from list
-     */
-    update(elapsed)
-    {
-        if (!this._pause)
-        {
-            if (this.time)
-            {
-                this.current += elapsed
-                if (this.current >= this.time)
-                {
-                    this.current -= this.time
-                    return this._update(elapsed)
-                }
-            }
-            else
-            {
-                return this._update(elapsed)
-            }
-        }
-    }
-
-    /**
-     * @type {boolean} pause this entry
-     */
-    set pause(value)
-    {
-        this._pause = value
-    }
-    get pause()
-    {
-        return this._pause
-    }
-}
-
-module.exports = Entry
-},{"eventemitter3":7}],379:[function(require,module,exports){
-/* Copyright (c) 2017 YOPEY YOPEY LLC */
-
-const Events = require('eventemitter3')
-
-class Loop extends Events
-{
-    /**
-     * basic loop support
-     * @param {object} [options]
-     * @param {number} [options.maxFrameTime=1000/60] maximum time in milliseconds for a frame
-     * @param {object} [options.pauseOnBlur] pause loop when app loses focus, start it when app regains focus
-     *
-     * @event each(elapsed, Loop)
-     * @event start(Loop)
-     * @event stop(Loop)
-     */
-    constructor(options)
-    {
-        super()
-        options = options || {}
-        this.maxFrameTime = options.maxFrameTime || 1000 / 60
-        if (options.pauseOnBlur)
-        {
-            window.addEventListener('blur', () => this.stopBlur())
-            window.addEventListener('focus', () => this.startBlur())
-        }
-        this.list = []
-    }
-
-    /**
-     * start requestAnimationFrame() loop
-     * @return {Loop} this
-     */
-    start()
-    {
-        if (!this.running)
-        {
-            this.running = true
-            this.loop(0)
-            this.emit('start', this)
-        }
-        return this
-    }
-
-    /**
-     * handler for focus event
-     * @private
-     */
-    startBlur()
-    {
-        if (this.blurred)
-        {
-            this.start()
-            this.blurred = false
-        }
-    }
-
-    /**
-     * handler for blur event
-     * @private
-     */
-    stopBlur()
-    {
-        if (this.running)
-        {
-            this.stop()
-            this.blurred = true
-        }
-    }
-
-    /**
-     * stop loop
-     * @return {Loop} this
-     */
-    stop()
-    {
-        if (this.handle)
-        {
-            window.cancelAnimationFrame(this.handle)
-            this.handle = null
-        }
-        this.running = false
-        this.blurred = false
-        this.emit('stop', this)
-        return this
-    }
-
-    /**
-     * loop through updates; can be called manually each frame, or called automatically as part of start()
-     * @param {number} elapsed time since last call (will be clamped to this.maxFrameTime)
-     */
-    update(elapsed)
-    {
-        const maxFrameTime = this.maxFrameTime
-        elapsed = elapsed > maxFrameTime ? maxFrameTime : elapsed
-        for (let i = 0, _i = this.list.length; i < _i; i++)
-        {
-            if (this.list[i].update(elapsed))
-            {
-                this.list.splice(i, 1)
-                i--
-                _i--
-            }
-        }
-        this.emit('each', elapsed, this)
-    }
-
-    /**
-     * internal loop through animations
-     * @private
-     */
-    loop(elapsed)
-    {
-        if (this.running)
-        {
-            this.update(elapsed)
-            this.handle = requestAnimationFrame((elapsed) => this.loop(elapsed))
-        }
-    }
-
-    /**
-     * adds a callback to the loop
-     * @deprecated use add() instead
-     * @param {function} callback
-     * @param {number} [time=0] in milliseconds to call this update (0=every frame)
-     * @param {number} [count=0] number of times to run this update (0=infinite)
-     * @return {object} entry - used to remove or change the parameters of the update
-     */
-    interval(callback, time, count)
-    {
-        console.warn('yy-loop: interval() deprecated. Use add() instead.')
-        this.add(callback, time, count)
-    }
-
-    /**
-     * adds a callback to the loop
-     * @param {function} callback
-     * @param {number} [time=0] in milliseconds to call this update (0=every frame)
-     * @param {number} [count=0] number of times to run this update (0=infinite)
-     * @return {object} entry - used to remove or change the parameters of the update
-     */
-    add(callback, time, count)
-    {
-        const entry = new Entry(callback, time, count)
-        this.list.push(entry)
-        return entry
-    }
-
-    /**
-     * adds a one-time callback to the loop
-     * @param {function} callback
-     * @param {number} time in milliseconds to call this update
-     * @return {object} entry - used to remove or change the parameters of the update
-     */
-    timeout(callback, time)
-    {
-        return this.add(callback, time, 1)
-    }
-
-    /**
-     * remove a callback from the loop
-     * @param {object} entry - returned by add()
-     */
-    remove(entry)
-    {
-        const index = this.list.indexOf(entry)
-        if (index !== -1)
-        {
-            this.list.splice(index, 1)
-        }
-    }
-
-    /**
-     * removes all callbacks from the loop
-     */
-    removeAll()
-    {
-        this.list = []
-    }
-
-    /**
-     * @type {number} count of all animations
-     */
-    get count()
-    {
-        return this.list.length
-    }
-
-    /**
-     * @type {number} count of running animations
-     */
-    get countRunning()
-    {
-        let count = 0
-        for (let entry of this.list)
-        {
-            if (!entry.pause)
-            {
-                count++
-            }
-        }
-        return count
-    }
-}
-
-const Entry = require('./entry')
-
-Loop.entry = Entry
-module.exports = Loop
-},{"./entry":378,"eventemitter3":7}],380:[function(require,module,exports){
-// yy-random
-// by David Figatner
-// MIT license
-// copyright YOPEY YOPEY LLC 2016-17
-// https://github.com/davidfig/random
-
-const seedrandom = require('seedrandom')
-
-class Random
-{
-    constructor()
-    {
-        this.generator = Math.random
-    }
-
-    /**
-     * generates a seeded number
-     * @param {number} seed
-     * @param {object} [options]
-     * @param {string} [PRNG="alea"] - name of algorithm, see https://github.com/davidbau/seedrandom
-     * @param {boolean} [save=true]
-     */
-    seed(seed, options)
-    {
-        options = options || {}
-        this.generator = seedrandom[options.PRNG || 'alea'](seed, { state: options.state })
-        this.options = options
-    }
-
-    /**
-     * saves the state of the random generator
-     * can only be used after Random.seed() is called
-     * @returns {number} state
-     */
-    save()
-    {
-        if (this.generator !== Math.random)
-        {
-            return this.generator.state()
-        }
-    }
-
-    /**
-     * restores the state of the random generator
-     * @param {number} state
-     */
-    restore(state)
-    {
-        this.generator = seedrandom[this.options.PRNG || 'alea']('', { state })
-    }
-
-    /**
-     * changes the generator to use the old Math.sin-based random function
-     * based on : http://stackoverflow.com/questions/521295/javascript-random-seeds
-     * (deprecated) Use only for compatibility purposes
-     * @param {number} seed
-     */
-    seedOld(seed)
-    {
-        this.generator = function()
-        {
-            const x = Math.sin(seed++) * 10000
-            return x - Math.floor(x)
-        }
-    }
-
-    /**
-     * create a separate random generator using the seed
-     * @param {number} seed
-     * @return {object}
-     */
-    separateSeed(seed)
-    {
-        const random = new Random()
-        random.seed(seed)
-        return random
-    }
-
-    /**
-     * resets the random number this.generator to Math.random()
-     */
-    reset()
-    {
-        this.generator = Math.random
-    }
-
-    /**
-     * returns a random number using the this.generator between [0, ceiling - 1]
-     * @param {number} ceiling
-     * @param {boolean} [useFloat=false]
-     * @return {number}
-     */
-    get(ceiling, useFloat)
-    {
-        const negative = ceiling < 0 ? -1 : 1
-        ceiling *= negative
-        let result
-        if (useFloat)
-        {
-            result = this.generator() * ceiling
-        }
-        else
-        {
-            result = Math.floor(this.generator() * ceiling)
-        }
-        return result * negative
-    }
-
-    /**
-     * returns a random integer between 0 - Number.MAX_SAFE_INTEGER
-     * @return {number}
-     */
-    getHuge()
-    {
-        return this.get(Number.MAX_SAFE_INTEGER)
-    }
-
-    /**
-     * random number [middle - range, middle + range]
-     * @param {number} middle
-     * @param {number} delta
-     * @param {boolean} [useFloat=false]
-     * @return {number}
-     */
-    middle(middle, delta, useFloat)
-    {
-        const half = delta / 2
-        return this.range(middle - half, middle + half, useFloat)
-    }
-
-    /**
-     * random number [start, end]
-     * @param {number} start
-     * @param {number} end
-     * @param {boolean} [useFloat=false] if true, then range is (start, end)--i.e., not inclusive to start and end
-     * @return {number}
-     */
-    range(start, end, useFloat)
-    {
-        // case where there is no range
-        if (end === start)
-        {
-            return end
-        }
-
-        if (useFloat)
-        {
-            return this.get(end - start, true) + start
-        }
-        else
-        {
-            let range
-            if (start < 0 && end > 0)
-            {
-                range = -start + end + 1
-            }
-            else if (start === 0 && end > 0)
-            {
-                range = end + 1
-            }
-            else if (start < 0 && end === 0)
-            {
-                range = start - 1
-                start = 1
-            }
-            else if (start < 0 && end < 0)
-            {
-                range = end - start - 1
-            }
-            else
-            {
-                range = end - start + 1
-            }
-            return Math.floor(this.generator() * range) + start
-        }
-    }
-
-    /**
-     * an array of random numbers between [start, end]
-     * @param {number} start
-     * @param {number} end
-     * @param {number} count
-     * @param {boolean} [useFloat=false]
-     * @return {number[]}
-     */
-    rangeMultiple(start, end, count, useFloat)
-    {
-        var array = []
-        for (let i = 0; i < count; i++)
-        {
-            array.push(this.range(start, end, useFloat))
-        }
-        return array
-    }
-
-    /**
-     * an array of random numbers between [middle - range, middle + range]
-     * @param {number} middle
-     * @param {number} range
-     * @param {number} count
-     * @param {boolean} [useFloat=false]
-     * @return {number[]}
-     */
-    middleMultiple(middle, range, count, useFloat)
-    {
-        const array = []
-        for (let i = 0; i < count; i++)
-        {
-            array.push(middle(middle, range, useFloat))
-        }
-        return array
-    }
-
-    /**
-     * @param {number} [chance=0.5]
-     * returns random sign (either +1 or -1)
-     * @return {number}
-     */
-    sign(chance)
-    {
-        chance = chance || 0.5
-        return this.generator() < chance ? 1 : -1
-    }
-
-    /**
-     * tells you whether a random chance was achieved
-     * @param {number} [percent=0.5]
-     * @return {boolean}
-     */
-    chance(percent)
-    {
-        return this.generator() < (percent || 0.5)
-    }
-
-    /**
-     * returns a random angle in radians [0 - 2 * Math.PI)
-     */
-    angle()
-    {
-        return this.get(Math.PI * 2, true)
-    }
-
-    /**
-     * Shuffle array (either in place or copied)
-     * from http://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
-     * @param {Array} array
-     * @param {boolean} [copy=false] whether to shuffle in place (default) or return a new shuffled array
-     * @return {Array} a shuffled array
-     */
-    shuffle(array, copy)
-    {
-        if (copy)
-        {
-            array = array.slice()
-        }
-        if (array.length === 0)
-        {
-            return array
-        }
-
-        let currentIndex = array.length, temporaryValue, randomIndex
-
-        // While there remain elements to shuffle...
-        while (0 !== currentIndex)
-        {
-            // Pick a remaining element...
-            randomIndex = this.get(currentIndex)
-            currentIndex -= 1
-
-            // And swap it with the current element.
-            temporaryValue = array[currentIndex]
-            array[currentIndex] = array[randomIndex]
-            array[randomIndex] = temporaryValue
-        }
-        return array
-    }
-
-    /**
-     * picks a random element from an array
-     * @param {Array} array
-     * @return {*}
-     */
-    pick(array, remove)
-    {
-        if (!remove)
-        {
-            return array[this.get(array.length)]
-        }
-        else
-        {
-            const pick = this.get(array.length)
-            const temp = array[pick]
-            array.splice(pick, 1)
-            return temp
-        }
-    }
-
-    /**
-     * returns a random property from an object
-     * from http://stackoverflow.com/questions/2532218/pick-random-property-from-a-javascript-object
-     * @param {object} obj
-     * @return {*}
-     */
-    property(obj)
-    {
-        var result
-        var count = 0
-        for (var prop in obj)
-        {
-            if (this.chance(1 / ++count))
-            {
-                result = prop
-            }
-        }
-        return result
-    }
-
-    /**
-     * creates a random set where each entry is a value between [min, max]
-     * @param {number} min
-     * @param {number} max
-     * @param {number} amount of numbers in set
-     * @param {number[]}
-     */
-    set(min, max, amount)
-    {
-        var set = [], all = [], i
-        for (i = min; i < max; i++)
-        {
-            all.push(i)
-        }
-
-        for (i = 0; i < amount; i++)
-        {
-            var found = this.get(all.length)
-            set.push(all[found])
-            all.splice(found, 1)
-        }
-        return set
-    }
-
-
-    /**
-     * returns a set of numbers with a randomly even distribution (i.e., no overlapping and filling the space)
-     * @param {number} start position
-     * @param {number} end position
-     * @param {number} count of non-start/end points
-     * @param {boolean} [includeStart=false] includes start point (count++)
-     * @param {boolean} [includeEnd=false] includes end point (count++)
-     * @param {boolean} [useFloat=false]
-     * @param {number[]}
-     */
-    distribution(start, end, count, includeStart, includeEnd, useFloat)
-    {
-        var interval = Math.floor((end - start) / count)
-        var halfInterval = interval / 2
-        var quarterInterval = interval / 4
-        var set = []
-        if (includeStart)
-        {
-            set.push(start)
-        }
-        for (var i = 0; i < count; i++)
-        {
-            set.push(start + i * interval + halfInterval + this.range(-quarterInterval, quarterInterval, useFloat))
-        }
-        if (includeEnd)
-        {
-            set.push(end)
-        }
-        return set
-    }
-
-    /**
-     * returns a random number based on weighted probability between [min, max]
-     * from http://stackoverflow.com/questions/22656126/javascript-random-number-with-weighted-probability
-     * @param {number} min value
-     * @param {number} max value
-     * @param {number} target for average value
-     * @param {number} stddev - standard deviation
-     */
-    weightedProbabilityInt(min, max, target, stddev)
-    {
-        function normRand()
-        {
-            let x1, x2, rad
-            do
-            {
-                x1 = 2 * this.get(1, true) - 1
-                x2 = 2 * this.get(1, true) - 1
-                rad = x1 * x1 + x2 * x2
-            } while (rad >= 1 || rad === 0)
-            const c = Math.sqrt(-2 * Math.log(rad) / rad)
-            return x1 * c
-        }
-
-        stddev = stddev || 1
-        if (Math.random() < 0.81546)
-        {
-            while (true)
-            {
-                const sample = ((normRand() * stddev) + target)
-                if (sample >= min && sample <= max)
-                {
-                    return sample
-                }
-            }
-        }
-        else
-        {
-            return this.range(min, max)
-        }
-    }
-
-    /*
-     * returns a random hex color (0 - 0xffffff)
-     * @return {number}
-     */
-    color()
-    {
-        return this.get(0xffffff)
-    }
-}
-
-module.exports = new Random()
-},{"seedrandom":366}],381:[function(require,module,exports){
-// yy-renderer
-// by David Figatner
-// (c) YOPEY YOPEY LLC 2017
-// MIT License
-// https://github.com/davidfig/update
-
-const PIXI = require('pixi.js')
-const FPS = require('yy-fps')
-const Loop = require('yy-loop')
-const exists = require('exists')
-
-class Renderer
-{
-    /**
-     * Wrapper for a pixi.js Renderer
-     * @param {object} [options]
-     * @param {boolean} [options.alwaysRender=false] update renderer every update tick
-     * @param {number} [options.FPS=60] desired FPS for rendering (otherwise render on every tick)
-     *
-     * @param {HTMLCanvasElement} [options.canvas] place renderer in this canvas
-     * @param {HTMLElement} [options.parent=document.body] if no canvas is provided, use parent to provide parent for generated canvas otherwise uses document.body
-     * @param {object} [options.styles] apply these CSS styles to the div
-     *
-     * @param {number} [options.aspectRatio] resizing will maintain aspect ratio by ensuring that the smaller dimension fits
-     * @param {boolean} [options.autoresize=false] automatically calls resize during resize events
-     * @param {number} [options.color=0xffffff] background color in hex
-     *
-     * @param {boolean} [options.turnOffTicker] turn off PIXI.shared.ticker
-     * @param {boolean} [options.turnOffInteraction] turn off PIXI.Interaction manager (saves cycles)
-     *
-     * @param {boolean} [options.noWebGL=false] use the PIXI.CanvasRenderer instead of PIXI.WebGLRenderer
-     * @param {boolean} [options.antialias=true] turn on antialias if native antialias is not used, uses FXAA
-     * @param {boolean} [options.forceFXAA=false] forces FXAA antialiasing to be used over native. FXAA is faster, but may not always look as great
-     * @param {number} [options.resolution=window.devicePixelRatio] / device pixel ratio of the renderer (e.g., original retina is 2)
-     * @param {boolean} [options.clearBeforeRender=true] sets if the CanvasRenderer will clear the canvas or before the render pass. If you wish to set this to false, you *must* set preserveDrawingBuffer to `true`.
-     * @param {boolean} [options.preserveDrawingBuffer=false] enables drawing buffer preservation, enable this if you need to call toDataUrl on the webgl context.
-     * @param {boolean} [options.roundPixels=false] if true PIXI will Math.floor() x/y values when rendering, stopping pixel interpolation
-     *
-     * @param {boolean|string} [options.debug] false, true, or some combination of 'fps', 'dirty', and 'count' (e.g., 'count-dirty' or 'dirty')
-     * @param {object} [options.fpsOptions] options from yy-fps (https://github.com/davidfig/fps)
-     *
-     * @param {number} [options.maxFrameTime=1000/60] maximum time in milliseconds for a frame
-     * @param {object} [options.pauseOnBlur] pause loop when app loses focus, start it when app regains focus
-     *
-     * @event each(elapsed, Loop, elapsedInLoop)
-     * @event start(Loop)
-     * @event stop(Loop)
-     */
-    constructor(options)
-    {
-        options = options || {}
-        this.options = options
-        this.loop = new Loop({ pauseOnBlur: options.pauseOnBlur, maxFrameTime: options.maxFrameTime })
-        this.canvas = options.canvas
-        this.autoResize = options.autoresize
-        this.aspectRatio = options.aspectRatio
-        this.FPS = exists(options.FPS) ? 1000 / options.FPS : 0
-        options.resolution = this.resolution = options.resolution || window.devicePixelRatio || 1
-        options.antialias = exists(options.antialias) ? options.antialias : true
-        options.transparent = true
-        if (!this.canvas) this.createCanvas(options)
-        options.view = this.canvas
-
-        if (options.turnoffTicker)
-        {
-            const ticker = PIXI.ticker.shared
-            ticker.autoStart = false
-            ticker.stop()
-        }
-
-        const noWebGL = options.noWebGL || false
-        options.noWebGL = null
-        options.autoresize = null
-        const Renderer = noWebGL ? PIXI.CanvasRenderer : PIXI.WebGLRenderer
-
-        this.renderer = new Renderer(options)
-        if (options.turnOffInteraction)
-        {
-            this.renderer.plugins.interaction.destroy()
-        }
-        if (options.color)
-        {
-            this.canvas.style.backgroundColor = options.color
-        }
-        if (options.styles)
-        {
-            for (let style in options.styles)
-            {
-                this.canvas.style[style] = options.styles[style]
-            }
-        }
-
-        if (options.debug) this.createDebug(options)
-        if (this.autoResize) window.addEventListener('resize', () => this.resize())
-        this.time = 0
-        this.stage = new PIXI.Container()
-        this.dirty = this.alwaysRender = options.alwaysRender || false
-        this.resize(true)
-    }
-
-    /**
-     * create canvas if one is not provided
-     * @private
-     */
-    createCanvas(options)
-    {
-        this.canvas = document.createElement('canvas')
-        this.canvas.style.width = '100vw'
-        this.canvas.style.height = '100vh'
-        if (options.parent)
-        {
-            options.parent.appendChild(this.canvas)
-            options.parent = null
-        }
-        else
-        {
-            document.body.appendChild(this.canvas)
-        }
-        var width = this.canvas.offsetWidth
-        var height = this.canvas.offsetHeight
-        this.canvas.style.position = 'absolute'
-        this.canvas.width = width * this.resolution
-        this.canvas.height = height * this.resolution
-        this.canvas.style.left = this.canvas.style.top = '0px'
-        this.canvas.style.overflow = 'auto'
-    }
-
-    /**
-     * create FPS meter and render indicator
-     * @param {object} options
-     */
-    createDebug(options)
-    {
-        this.debug = options.debug
-        const fpsOptions = options.fpsOptions || {}
-        fpsOptions.FPS = options.FPS
-        this.fpsMeter = new FPS(fpsOptions)
-        const indicator = document.createElement('div')
-        indicator.style.display = 'flex'
-        indicator.style.justifyContent = 'space-between'
-        this.fpsMeter.div.prepend(indicator)
-        if (options.debug === true || options.debug === 1 || options.debug.toLowerCase().indexOf('dirty') !== -1)
-        {
-            this.dirtyIndicator = document.createElement('div')
-            indicator.appendChild(this.dirtyIndicator)
-            this.dirtyIndicator.innerHTML = '&#9624; '
-        }
-        if (options.debug === true || options.debug === 1 || options.debug.toLowerCase().indexOf('count') !== -1)
-        {
-            this.countIndicator = document.createElement('div')
-            indicator.appendChild(this.countIndicator)
-        }
-    }
-
-    debugUpdate()
-    {
-        this.dirtyIndicator.color = this.dirty
-    }
-
-    /**
-     * immediately render without checking dirty flag
-     */
-    render()
-    {
-        this.renderer.render(this.stage)
-        this.dirty = this.alwaysRender
-    }
-
-    /**
-     * @private
-     */
-    update()
-    {
-        if (this.fpsMeter)
-        {
-            this.fpsMeter.frame()
-            if (this.dirtyIndicator && this.lastDirty !== this.dirty)
-            {
-                this.dirtyIndicator.style.color = this.dirty ? 'white' : 'black'
-                this.lastDirty = this.dirty
-            }
-            if (this.countIndicator)
-            {
-                const count = this.countObjects()
-                if (this.lastCount !== count)
-                {
-                    this.countIndicator.innerText = count
-                    this.lastCount = count
-                }
-            }
-        }
-        if (this.dirty)
-        {
-            this.render()
-            this.dirty = this.alwaysRender
-        }
-    }
-
-    /**
-     * counts visible objects
-     */
-    countObjects()
-    {
-        function count(object)
-        {
-            if (!object.visible)
-            {
-                return
-            }
-            total++
-            for (let i = 0, _i = object.children.length; i < _i; i++)
-            {
-                count(object.children[i])
-            }
-        }
-
-        var total = 0
-        count(this.stage)
-        return total
-    }
-
-    /**
-     * sets the background color
-     * @param {string} color in CSS format
-     */
-    background(color)
-    {
-        this.canvas.style.backgroundColor = color
-    }
-
-    /**
-     * adds object to stage
-     * @param {PIXI.DisplayObject} object
-     * @param {number} [to] index to add
-     */
-    add(object, to)
-    {
-        if (typeof to === 'undefined')
-        {
-            to = this.stage.children.length
-        }
-        this.stage.addChildAt(object, to)
-        return object
-    }
-
-    /**
-     * alias for add
-     * @param {PIXI.DisplayObject} object
-     */
-    addChild(object)
-    {
-        return this.add(object)
-    }
-
-    /**
-     * alias for add
-     * @param {PIXI.DisplayObject} object
-     * @param {number} to - index to add
-     */
-    addChildTo(object, to)
-    {
-        return this.add(object, to)
-    }
-
-    /**
-     * remove child from stage
-     * @param {PIXI.DisplayObject} object
-     */
-    removeChild(object)
-    {
-        this.stage.removeChild(object)
-    }
-
-    /**
-     * clears the stage
-     */
-    clear()
-    {
-        this.stage.removeChildren()
-    }
-
-    /**
-     * resize
-     * @param {boolean} [force] resize, even if cached width/height remain unchanged
-     */
-    resize(force)
-    {
-        var width = this.canvas.offsetWidth
-        var height = this.canvas.offsetHeight
-        if (this.aspectRatio)
-        {
-            if (width > height)
-            {
-                width = height * this.aspectRatio
-            }
-            else
-            {
-                height = width / this.aspectRatio
-            }
-        }
-        if (force || width !== this.width || height !== this.height)
-        {
-            this.width = width
-            this.height = height
-            this.canvas.width = width * this.resolution
-            this.canvas.height = height * this.resolution
-            this.renderer.resize(this.width, this.height)
-            this.landscape = this.width > this.height
-            this.dirty = true
-        }
-    }
-
-    /**
-     * returns the smaller of the width/height based
-     * @return {number}
-     */
-    dimensionSmall()
-    {
-        return (this.landscape ? this.height : this.width)
-    }
-
-    /**
-     * returns the larger of the width/height based
-     * @return {number}
-     */
-    dimensionBig()
-    {
-        return (this.landscape ? this.width : this.height)
-    }
-
-    /**
-     * getter/setter to change desired FPS of renderer
-     */
-    get fps()
-    {
-        return this.FPS
-    }
-    set fps(value)
-    {
-        this.FPS = 1000 / value
-        if (this.loop)
-        {
-            this.loop.remove(this.loopSave)
-            this.loopSave = this.loop.add(() => this.update(), this.FPS)
-        }
-        if (this.fpsMeter)
-        {
-            this.fpsMeter.fps = value
-        }
-    }
-
-    /**
-     * Add a listener for a given event to yy-loop
-     * @param {(String|Symbol)} event The event name.
-     * @param {Function} fn The listener function.
-     * @param {*} [context=this] The context to invoke the listener with.
-     * @returns {EventEmitter} `this`.
-     */
-    on()
-    {
-        this.loop.on(...arguments)
-    }
-
-    /**
-     * Add a one-time listener for a given event to yy-loop
-     * @param {(String|Symbol)} event The event name.
-     * @param {Function} fn The listener function.
-     * @param {*} [context=this] The context to invoke the listener with.
-     * @returns {EventEmitter} `this`.
-     * @public
-     */
-    once()
-    {
-        this.loop.once(...arguments)
-    }
-
-    /**
-     * start the internal loop
-     * @returns {Renderer} this
-     */
-    start()
-    {
-        this.loopSave = this.loop.add(() => this.update(), this.FPS)
-        this.loop.start()
-        return this
-    }
-
-    /**
-     * stop the internal loop
-     * @inherited from yy-loop
-     * @returns {Renderer} this
-     */
-    stop()
-    {
-        this.loop.stop()
-    }
-}
-
-module.exports = Renderer
-},{"exists":8,"pixi.js":324,"yy-fps":376,"yy-loop":377}],382:[function(require,module,exports){
-/**
- * @file simple-packer.js
- * @author David Figatner
- * @license MIT
- * @copyright YOPEY YOPEY LLC 2016
- * {@link https://github.com/davidfig/rendersheet}
- */
-
-module.exports = class SimplePacker
-{
-    /**
-     * ridiculously simple packer, optimized (if you can call it that) only for speed
-     * @param {number} max size
-     * @param {boolean} first block
-     * @param {number} buffer between each block
-     */
-    constructor(max, first, buffer)
-    {
-        this.max = max
-        this.buffer = buffer
-        this.list = []
-        this.x = 0
-        this.y = 0
-        this.largest = 0
-    }
-
-    finish(maxSize)
-    {
-        let n = 1, next
-        const squared = []
-        do
-        {
-            next = Math.pow(2, n++)
-            squared.push(next)
-        } while (next <= maxSize)
-
-        const max = Math.max(this.x - this.buffer, this.y - this.buffer)
-
-        for (let i = squared.length - 1; i >= 0; i--)
-        {
-            if (squared[i] < max)
-            {
-                return squared[i + 1]
-            }
-        }
-    }
-
-    add(block, canvasNumber)
-    {
-        if (this.x + block.width < this.max)
-        {
-            if (this.y + block.height < this.max)
-            {
-                block.x = this.x
-                block.y = this.y
-                block.canvas = canvasNumber
-                this.largest = block.height > this.largest ? block.height : this.largest
-                this.x += block.width + this.buffer
-                return true
-            }
-            else
-            {
-                return false
-            }
-        }
-        else
-        {
-            this.y += this.largest + this.buffer
-            if (this.y > this.max)
-            {
-                return false
-            }
-            this.x = 0
-            this.largest = 0
-            return this.add(block, canvasNumber)
-        }
-    }
-}
-},{}],383:[function(require,module,exports){
-
-},{}],384:[function(require,module,exports){
-(function (process){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-// resolves . and .. elements in a path array with directory names there
-// must be no slashes, empty elements, or device names (c:\) in the array
-// (so also no leading and trailing slashes - it does not distinguish
-// relative and absolute paths)
-function normalizeArray(parts, allowAboveRoot) {
-  // if the path tries to go above the root, `up` ends up > 0
-  var up = 0;
-  for (var i = parts.length - 1; i >= 0; i--) {
-    var last = parts[i];
-    if (last === '.') {
-      parts.splice(i, 1);
-    } else if (last === '..') {
-      parts.splice(i, 1);
-      up++;
-    } else if (up) {
-      parts.splice(i, 1);
-      up--;
-    }
-  }
-
-  // if the path is allowed to go above the root, restore leading ..s
-  if (allowAboveRoot) {
-    for (; up--; up) {
-      parts.unshift('..');
-    }
-  }
-
-  return parts;
-}
-
-// Split a filename into [root, dir, basename, ext], unix version
-// 'root' is just a slash, or nothing.
-var splitPathRe =
-    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
-var splitPath = function(filename) {
-  return splitPathRe.exec(filename).slice(1);
-};
-
-// path.resolve([from ...], to)
-// posix version
-exports.resolve = function() {
-  var resolvedPath = '',
-      resolvedAbsolute = false;
-
-  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-    var path = (i >= 0) ? arguments[i] : process.cwd();
-
-    // Skip empty and invalid entries
-    if (typeof path !== 'string') {
-      throw new TypeError('Arguments to path.resolve must be strings');
-    } else if (!path) {
-      continue;
-    }
-
-    resolvedPath = path + '/' + resolvedPath;
-    resolvedAbsolute = path.charAt(0) === '/';
-  }
-
-  // At this point the path should be resolved to a full absolute path, but
-  // handle relative paths to be safe (might happen when process.cwd() fails)
-
-  // Normalize the path
-  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
-    return !!p;
-  }), !resolvedAbsolute).join('/');
-
-  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
-};
-
-// path.normalize(path)
-// posix version
-exports.normalize = function(path) {
-  var isAbsolute = exports.isAbsolute(path),
-      trailingSlash = substr(path, -1) === '/';
-
-  // Normalize the path
-  path = normalizeArray(filter(path.split('/'), function(p) {
-    return !!p;
-  }), !isAbsolute).join('/');
-
-  if (!path && !isAbsolute) {
-    path = '.';
-  }
-  if (path && trailingSlash) {
-    path += '/';
-  }
-
-  return (isAbsolute ? '/' : '') + path;
-};
-
-// posix version
-exports.isAbsolute = function(path) {
-  return path.charAt(0) === '/';
-};
-
-// posix version
-exports.join = function() {
-  var paths = Array.prototype.slice.call(arguments, 0);
-  return exports.normalize(filter(paths, function(p, index) {
-    if (typeof p !== 'string') {
-      throw new TypeError('Arguments to path.join must be strings');
-    }
-    return p;
-  }).join('/'));
-};
-
-
-// path.relative(from, to)
-// posix version
-exports.relative = function(from, to) {
-  from = exports.resolve(from).substr(1);
-  to = exports.resolve(to).substr(1);
-
-  function trim(arr) {
-    var start = 0;
-    for (; start < arr.length; start++) {
-      if (arr[start] !== '') break;
-    }
-
-    var end = arr.length - 1;
-    for (; end >= 0; end--) {
-      if (arr[end] !== '') break;
-    }
-
-    if (start > end) return [];
-    return arr.slice(start, end - start + 1);
-  }
-
-  var fromParts = trim(from.split('/'));
-  var toParts = trim(to.split('/'));
-
-  var length = Math.min(fromParts.length, toParts.length);
-  var samePartsLength = length;
-  for (var i = 0; i < length; i++) {
-    if (fromParts[i] !== toParts[i]) {
-      samePartsLength = i;
-      break;
-    }
-  }
-
-  var outputParts = [];
-  for (var i = samePartsLength; i < fromParts.length; i++) {
-    outputParts.push('..');
-  }
-
-  outputParts = outputParts.concat(toParts.slice(samePartsLength));
-
-  return outputParts.join('/');
-};
-
-exports.sep = '/';
-exports.delimiter = ':';
-
-exports.dirname = function(path) {
-  var result = splitPath(path),
-      root = result[0],
-      dir = result[1];
-
-  if (!root && !dir) {
-    // No dirname whatsoever
-    return '.';
-  }
-
-  if (dir) {
-    // It has a dirname, strip trailing slash
-    dir = dir.substr(0, dir.length - 1);
-  }
-
-  return root + dir;
-};
-
-
-exports.basename = function(path, ext) {
-  var f = splitPath(path)[2];
-  // TODO: make this comparison case-insensitive on windows?
-  if (ext && f.substr(-1 * ext.length) === ext) {
-    f = f.substr(0, f.length - ext.length);
-  }
-  return f;
-};
-
-
-exports.extname = function(path) {
-  return splitPath(path)[3];
-};
-
-function filter (xs, f) {
-    if (xs.filter) return xs.filter(f);
-    var res = [];
-    for (var i = 0; i < xs.length; i++) {
-        if (f(xs[i], i, xs)) res.push(xs[i]);
-    }
-    return res;
-}
-
-// String.prototype.substr - negative index don't work in IE8
-var substr = 'ab'.substr(-1) === 'b'
-    ? function (str, start, len) { return str.substr(start, len) }
-    : function (str, start, len) {
-        if (start < 0) start = str.length + start;
-        return str.substr(start, len);
-    }
-;
-
-}).call(this,require('_process'))
-},{"_process":385}],385:[function(require,module,exports){
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-},{}],386:[function(require,module,exports){
-(function (global){
-/*! https://mths.be/punycode v1.4.1 by @mathias */
-;(function(root) {
-
-	/** Detect free variables */
-	var freeExports = typeof exports == 'object' && exports &&
-		!exports.nodeType && exports;
-	var freeModule = typeof module == 'object' && module &&
-		!module.nodeType && module;
-	var freeGlobal = typeof global == 'object' && global;
-	if (
-		freeGlobal.global === freeGlobal ||
-		freeGlobal.window === freeGlobal ||
-		freeGlobal.self === freeGlobal
-	) {
-		root = freeGlobal;
-	}
-
-	/**
-	 * The `punycode` object.
-	 * @name punycode
-	 * @type Object
-	 */
-	var punycode,
-
-	/** Highest positive signed 32-bit float value */
-	maxInt = 2147483647, // aka. 0x7FFFFFFF or 2^31-1
-
-	/** Bootstring parameters */
-	base = 36,
-	tMin = 1,
-	tMax = 26,
-	skew = 38,
-	damp = 700,
-	initialBias = 72,
-	initialN = 128, // 0x80
-	delimiter = '-', // '\x2D'
-
-	/** Regular expressions */
-	regexPunycode = /^xn--/,
-	regexNonASCII = /[^\x20-\x7E]/, // unprintable ASCII chars + non-ASCII chars
-	regexSeparators = /[\x2E\u3002\uFF0E\uFF61]/g, // RFC 3490 separators
-
-	/** Error messages */
-	errors = {
-		'overflow': 'Overflow: input needs wider integers to process',
-		'not-basic': 'Illegal input >= 0x80 (not a basic code point)',
-		'invalid-input': 'Invalid input'
-	},
-
-	/** Convenience shortcuts */
-	baseMinusTMin = base - tMin,
-	floor = Math.floor,
-	stringFromCharCode = String.fromCharCode,
-
-	/** Temporary variable */
-	key;
-
-	/*--------------------------------------------------------------------------*/
-
-	/**
-	 * A generic error utility function.
-	 * @private
-	 * @param {String} type The error type.
-	 * @returns {Error} Throws a `RangeError` with the applicable error message.
-	 */
-	function error(type) {
-		throw new RangeError(errors[type]);
-	}
-
-	/**
-	 * A generic `Array#map` utility function.
-	 * @private
-	 * @param {Array} array The array to iterate over.
-	 * @param {Function} callback The function that gets called for every array
-	 * item.
-	 * @returns {Array} A new array of values returned by the callback function.
-	 */
-	function map(array, fn) {
-		var length = array.length;
-		var result = [];
-		while (length--) {
-			result[length] = fn(array[length]);
-		}
-		return result;
-	}
-
-	/**
-	 * A simple `Array#map`-like wrapper to work with domain name strings or email
-	 * addresses.
-	 * @private
-	 * @param {String} domain The domain name or email address.
-	 * @param {Function} callback The function that gets called for every
-	 * character.
-	 * @returns {Array} A new string of characters returned by the callback
-	 * function.
-	 */
-	function mapDomain(string, fn) {
-		var parts = string.split('@');
-		var result = '';
-		if (parts.length > 1) {
-			// In email addresses, only the domain name should be punycoded. Leave
-			// the local part (i.e. everything up to `@`) intact.
-			result = parts[0] + '@';
-			string = parts[1];
-		}
-		// Avoid `split(regex)` for IE8 compatibility. See #17.
-		string = string.replace(regexSeparators, '\x2E');
-		var labels = string.split('.');
-		var encoded = map(labels, fn).join('.');
-		return result + encoded;
-	}
-
-	/**
-	 * Creates an array containing the numeric code points of each Unicode
-	 * character in the string. While JavaScript uses UCS-2 internally,
-	 * this function will convert a pair of surrogate halves (each of which
-	 * UCS-2 exposes as separate characters) into a single code point,
-	 * matching UTF-16.
-	 * @see `punycode.ucs2.encode`
-	 * @see <https://mathiasbynens.be/notes/javascript-encoding>
-	 * @memberOf punycode.ucs2
-	 * @name decode
-	 * @param {String} string The Unicode input string (UCS-2).
-	 * @returns {Array} The new array of code points.
-	 */
-	function ucs2decode(string) {
-		var output = [],
-		    counter = 0,
-		    length = string.length,
-		    value,
-		    extra;
-		while (counter < length) {
-			value = string.charCodeAt(counter++);
-			if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
-				// high surrogate, and there is a next character
-				extra = string.charCodeAt(counter++);
-				if ((extra & 0xFC00) == 0xDC00) { // low surrogate
-					output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
-				} else {
-					// unmatched surrogate; only append this code unit, in case the next
-					// code unit is the high surrogate of a surrogate pair
-					output.push(value);
-					counter--;
-				}
-			} else {
-				output.push(value);
-			}
-		}
-		return output;
-	}
-
-	/**
-	 * Creates a string based on an array of numeric code points.
-	 * @see `punycode.ucs2.decode`
-	 * @memberOf punycode.ucs2
-	 * @name encode
-	 * @param {Array} codePoints The array of numeric code points.
-	 * @returns {String} The new Unicode string (UCS-2).
-	 */
-	function ucs2encode(array) {
-		return map(array, function(value) {
-			var output = '';
-			if (value > 0xFFFF) {
-				value -= 0x10000;
-				output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
-				value = 0xDC00 | value & 0x3FF;
-			}
-			output += stringFromCharCode(value);
-			return output;
-		}).join('');
-	}
-
-	/**
-	 * Converts a basic code point into a digit/integer.
-	 * @see `digitToBasic()`
-	 * @private
-	 * @param {Number} codePoint The basic numeric code point value.
-	 * @returns {Number} The numeric value of a basic code point (for use in
-	 * representing integers) in the range `0` to `base - 1`, or `base` if
-	 * the code point does not represent a value.
-	 */
-	function basicToDigit(codePoint) {
-		if (codePoint - 48 < 10) {
-			return codePoint - 22;
-		}
-		if (codePoint - 65 < 26) {
-			return codePoint - 65;
-		}
-		if (codePoint - 97 < 26) {
-			return codePoint - 97;
-		}
-		return base;
-	}
-
-	/**
-	 * Converts a digit/integer into a basic code point.
-	 * @see `basicToDigit()`
-	 * @private
-	 * @param {Number} digit The numeric value of a basic code point.
-	 * @returns {Number} The basic code point whose value (when used for
-	 * representing integers) is `digit`, which needs to be in the range
-	 * `0` to `base - 1`. If `flag` is non-zero, the uppercase form is
-	 * used; else, the lowercase form is used. The behavior is undefined
-	 * if `flag` is non-zero and `digit` has no uppercase form.
-	 */
-	function digitToBasic(digit, flag) {
-		//  0..25 map to ASCII a..z or A..Z
-		// 26..35 map to ASCII 0..9
-		return digit + 22 + 75 * (digit < 26) - ((flag != 0) << 5);
-	}
-
-	/**
-	 * Bias adaptation function as per section 3.4 of RFC 3492.
-	 * https://tools.ietf.org/html/rfc3492#section-3.4
-	 * @private
-	 */
-	function adapt(delta, numPoints, firstTime) {
-		var k = 0;
-		delta = firstTime ? floor(delta / damp) : delta >> 1;
-		delta += floor(delta / numPoints);
-		for (/* no initialization */; delta > baseMinusTMin * tMax >> 1; k += base) {
-			delta = floor(delta / baseMinusTMin);
-		}
-		return floor(k + (baseMinusTMin + 1) * delta / (delta + skew));
-	}
-
-	/**
-	 * Converts a Punycode string of ASCII-only symbols to a string of Unicode
-	 * symbols.
-	 * @memberOf punycode
-	 * @param {String} input The Punycode string of ASCII-only symbols.
-	 * @returns {String} The resulting string of Unicode symbols.
-	 */
-	function decode(input) {
-		// Don't use UCS-2
-		var output = [],
-		    inputLength = input.length,
-		    out,
-		    i = 0,
-		    n = initialN,
-		    bias = initialBias,
-		    basic,
-		    j,
-		    index,
-		    oldi,
-		    w,
-		    k,
-		    digit,
-		    t,
-		    /** Cached calculation results */
-		    baseMinusT;
-
-		// Handle the basic code points: let `basic` be the number of input code
-		// points before the last delimiter, or `0` if there is none, then copy
-		// the first basic code points to the output.
-
-		basic = input.lastIndexOf(delimiter);
-		if (basic < 0) {
-			basic = 0;
-		}
-
-		for (j = 0; j < basic; ++j) {
-			// if it's not a basic code point
-			if (input.charCodeAt(j) >= 0x80) {
-				error('not-basic');
-			}
-			output.push(input.charCodeAt(j));
-		}
-
-		// Main decoding loop: start just after the last delimiter if any basic code
-		// points were copied; start at the beginning otherwise.
-
-		for (index = basic > 0 ? basic + 1 : 0; index < inputLength; /* no final expression */) {
-
-			// `index` is the index of the next character to be consumed.
-			// Decode a generalized variable-length integer into `delta`,
-			// which gets added to `i`. The overflow checking is easier
-			// if we increase `i` as we go, then subtract off its starting
-			// value at the end to obtain `delta`.
-			for (oldi = i, w = 1, k = base; /* no condition */; k += base) {
-
-				if (index >= inputLength) {
-					error('invalid-input');
-				}
-
-				digit = basicToDigit(input.charCodeAt(index++));
-
-				if (digit >= base || digit > floor((maxInt - i) / w)) {
-					error('overflow');
-				}
-
-				i += digit * w;
-				t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
-
-				if (digit < t) {
-					break;
-				}
-
-				baseMinusT = base - t;
-				if (w > floor(maxInt / baseMinusT)) {
-					error('overflow');
-				}
-
-				w *= baseMinusT;
-
-			}
-
-			out = output.length + 1;
-			bias = adapt(i - oldi, out, oldi == 0);
-
-			// `i` was supposed to wrap around from `out` to `0`,
-			// incrementing `n` each time, so we'll fix that now:
-			if (floor(i / out) > maxInt - n) {
-				error('overflow');
-			}
-
-			n += floor(i / out);
-			i %= out;
-
-			// Insert `n` at position `i` of the output
-			output.splice(i++, 0, n);
-
-		}
-
-		return ucs2encode(output);
-	}
-
-	/**
-	 * Converts a string of Unicode symbols (e.g. a domain name label) to a
-	 * Punycode string of ASCII-only symbols.
-	 * @memberOf punycode
-	 * @param {String} input The string of Unicode symbols.
-	 * @returns {String} The resulting Punycode string of ASCII-only symbols.
-	 */
-	function encode(input) {
-		var n,
-		    delta,
-		    handledCPCount,
-		    basicLength,
-		    bias,
-		    j,
-		    m,
-		    q,
-		    k,
-		    t,
-		    currentValue,
-		    output = [],
-		    /** `inputLength` will hold the number of code points in `input`. */
-		    inputLength,
-		    /** Cached calculation results */
-		    handledCPCountPlusOne,
-		    baseMinusT,
-		    qMinusT;
-
-		// Convert the input in UCS-2 to Unicode
-		input = ucs2decode(input);
-
-		// Cache the length
-		inputLength = input.length;
-
-		// Initialize the state
-		n = initialN;
-		delta = 0;
-		bias = initialBias;
-
-		// Handle the basic code points
-		for (j = 0; j < inputLength; ++j) {
-			currentValue = input[j];
-			if (currentValue < 0x80) {
-				output.push(stringFromCharCode(currentValue));
-			}
-		}
-
-		handledCPCount = basicLength = output.length;
-
-		// `handledCPCount` is the number of code points that have been handled;
-		// `basicLength` is the number of basic code points.
-
-		// Finish the basic string - if it is not empty - with a delimiter
-		if (basicLength) {
-			output.push(delimiter);
-		}
-
-		// Main encoding loop:
-		while (handledCPCount < inputLength) {
-
-			// All non-basic code points < n have been handled already. Find the next
-			// larger one:
-			for (m = maxInt, j = 0; j < inputLength; ++j) {
-				currentValue = input[j];
-				if (currentValue >= n && currentValue < m) {
-					m = currentValue;
-				}
-			}
-
-			// Increase `delta` enough to advance the decoder's <n,i> state to <m,0>,
-			// but guard against overflow
-			handledCPCountPlusOne = handledCPCount + 1;
-			if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
-				error('overflow');
-			}
-
-			delta += (m - n) * handledCPCountPlusOne;
-			n = m;
-
-			for (j = 0; j < inputLength; ++j) {
-				currentValue = input[j];
-
-				if (currentValue < n && ++delta > maxInt) {
-					error('overflow');
-				}
-
-				if (currentValue == n) {
-					// Represent delta as a generalized variable-length integer
-					for (q = delta, k = base; /* no condition */; k += base) {
-						t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
-						if (q < t) {
-							break;
-						}
-						qMinusT = q - t;
-						baseMinusT = base - t;
-						output.push(
-							stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0))
-						);
-						q = floor(qMinusT / baseMinusT);
-					}
-
-					output.push(stringFromCharCode(digitToBasic(q, 0)));
-					bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
-					delta = 0;
-					++handledCPCount;
-				}
-			}
-
-			++delta;
-			++n;
-
-		}
-		return output.join('');
-	}
-
-	/**
-	 * Converts a Punycode string representing a domain name or an email address
-	 * to Unicode. Only the Punycoded parts of the input will be converted, i.e.
-	 * it doesn't matter if you call it on a string that has already been
-	 * converted to Unicode.
-	 * @memberOf punycode
-	 * @param {String} input The Punycoded domain name or email address to
-	 * convert to Unicode.
-	 * @returns {String} The Unicode representation of the given Punycode
-	 * string.
-	 */
-	function toUnicode(input) {
-		return mapDomain(input, function(string) {
-			return regexPunycode.test(string)
-				? decode(string.slice(4).toLowerCase())
-				: string;
-		});
-	}
-
-	/**
-	 * Converts a Unicode string representing a domain name or an email address to
-	 * Punycode. Only the non-ASCII parts of the domain name will be converted,
-	 * i.e. it doesn't matter if you call it with a domain that's already in
-	 * ASCII.
-	 * @memberOf punycode
-	 * @param {String} input The domain name or email address to convert, as a
-	 * Unicode string.
-	 * @returns {String} The Punycode representation of the given domain name or
-	 * email address.
-	 */
-	function toASCII(input) {
-		return mapDomain(input, function(string) {
-			return regexNonASCII.test(string)
-				? 'xn--' + encode(string)
-				: string;
-		});
-	}
-
-	/*--------------------------------------------------------------------------*/
-
-	/** Define the public API */
-	punycode = {
-		/**
-		 * A string representing the current Punycode.js version number.
-		 * @memberOf punycode
-		 * @type String
-		 */
-		'version': '1.4.1',
-		/**
-		 * An object of methods to convert from JavaScript's internal character
-		 * representation (UCS-2) to Unicode code points, and back.
-		 * @see <https://mathiasbynens.be/notes/javascript-encoding>
-		 * @memberOf punycode
-		 * @type Object
-		 */
-		'ucs2': {
-			'decode': ucs2decode,
-			'encode': ucs2encode
-		},
-		'decode': decode,
-		'encode': encode,
-		'toASCII': toASCII,
-		'toUnicode': toUnicode
-	};
-
-	/** Expose `punycode` */
-	// Some AMD build optimizers, like r.js, check for specific condition patterns
-	// like the following:
-	if (
-		typeof define == 'function' &&
-		typeof define.amd == 'object' &&
-		define.amd
-	) {
-		define('punycode', function() {
-			return punycode;
-		});
-	} else if (freeExports && freeModule) {
-		if (module.exports == freeExports) {
-			// in Node.js, io.js, or RingoJS v0.8.0+
-			freeModule.exports = punycode;
-		} else {
-			// in Narwhal or RingoJS v0.7.0-
-			for (key in punycode) {
-				punycode.hasOwnProperty(key) && (freeExports[key] = punycode[key]);
-			}
-		}
-	} else {
-		// in Rhino or a web browser
-		root.punycode = punycode;
-	}
-
-}(this));
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],387:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-'use strict';
-
-// If obj.hasOwnProperty has been overridden, then calling
-// obj.hasOwnProperty(prop) will break.
-// See: https://github.com/joyent/node/issues/1707
-function hasOwnProperty(obj, prop) {
-  return Object.prototype.hasOwnProperty.call(obj, prop);
-}
-
-module.exports = function(qs, sep, eq, options) {
-  sep = sep || '&';
-  eq = eq || '=';
-  var obj = {};
-
-  if (typeof qs !== 'string' || qs.length === 0) {
-    return obj;
-  }
-
-  var regexp = /\+/g;
-  qs = qs.split(sep);
-
-  var maxKeys = 1000;
-  if (options && typeof options.maxKeys === 'number') {
-    maxKeys = options.maxKeys;
-  }
-
-  var len = qs.length;
-  // maxKeys <= 0 means that we should not limit keys count
-  if (maxKeys > 0 && len > maxKeys) {
-    len = maxKeys;
-  }
-
-  for (var i = 0; i < len; ++i) {
-    var x = qs[i].replace(regexp, '%20'),
-        idx = x.indexOf(eq),
-        kstr, vstr, k, v;
-
-    if (idx >= 0) {
-      kstr = x.substr(0, idx);
-      vstr = x.substr(idx + 1);
-    } else {
-      kstr = x;
-      vstr = '';
-    }
-
-    k = decodeURIComponent(kstr);
-    v = decodeURIComponent(vstr);
-
-    if (!hasOwnProperty(obj, k)) {
-      obj[k] = v;
-    } else if (isArray(obj[k])) {
-      obj[k].push(v);
-    } else {
-      obj[k] = [obj[k], v];
-    }
-  }
-
-  return obj;
-};
-
-var isArray = Array.isArray || function (xs) {
-  return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-},{}],388:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-'use strict';
-
-var stringifyPrimitive = function(v) {
-  switch (typeof v) {
-    case 'string':
-      return v;
-
-    case 'boolean':
-      return v ? 'true' : 'false';
-
-    case 'number':
-      return isFinite(v) ? v : '';
-
-    default:
-      return '';
-  }
-};
-
-module.exports = function(obj, sep, eq, name) {
-  sep = sep || '&';
-  eq = eq || '=';
-  if (obj === null) {
-    obj = undefined;
-  }
-
-  if (typeof obj === 'object') {
-    return map(objectKeys(obj), function(k) {
-      var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
-      if (isArray(obj[k])) {
-        return map(obj[k], function(v) {
-          return ks + encodeURIComponent(stringifyPrimitive(v));
-        }).join(sep);
-      } else {
-        return ks + encodeURIComponent(stringifyPrimitive(obj[k]));
-      }
-    }).join(sep);
-
-  }
-
-  if (!name) return '';
-  return encodeURIComponent(stringifyPrimitive(name)) + eq +
-         encodeURIComponent(stringifyPrimitive(obj));
-};
-
-var isArray = Array.isArray || function (xs) {
-  return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-function map (xs, f) {
-  if (xs.map) return xs.map(f);
-  var res = [];
-  for (var i = 0; i < xs.length; i++) {
-    res.push(f(xs[i], i));
-  }
-  return res;
-}
-
-var objectKeys = Object.keys || function (obj) {
-  var res = [];
-  for (var key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) res.push(key);
-  }
-  return res;
-};
-
-},{}],389:[function(require,module,exports){
-'use strict';
-
-exports.decode = exports.parse = require('./decode');
-exports.encode = exports.stringify = require('./encode');
-
-},{"./decode":387,"./encode":388}],390:[function(require,module,exports){
+},{"crypto":7}],381:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -62413,7 +59815,7 @@ Url.prototype.parseHost = function() {
   if (host) this.hostname = host;
 };
 
-},{"./util":391,"punycode":386,"querystring":389}],391:[function(require,module,exports){
+},{"./util":382,"punycode":362,"querystring":365}],382:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -62431,4 +59833,548 @@ module.exports = {
   }
 };
 
-},{}]},{},[1]);
+},{}],383:[function(require,module,exports){
+// yy-counter
+// In-browser counter to watch changeable values like counters or FPS
+// David Figatner
+// (c) YOPEY YOPEY LLC 2017
+// MIT License
+// https://github.com/davidfig/counter
+
+module.exports = class Counter
+{
+    /**
+     * @param {object} [options]
+     * @param {string} [options.side=rightbottom] side to place the panel (combination of right/left and bottom/top)
+     * @param {number} [options.padding=7px]
+     * @param {string} [options.color=white]
+     * @param {string} [options.background=rgba(0,0,0,0.5)]
+     * @param {*} {options.xxx} where xxx is a CSS style for the div
+     */
+    constructor(options)
+    {
+        options = options || {}
+        options.side = options.side || 'rightbottom'
+        options.side.toLowerCase()
+        options.padding = options.padding || '7px'
+        options.color = options.color || 'white'
+        options.background = options.background || 'rgba(0,0,0,0.5)'
+        this.div = document.createElement('div')
+        Counter.findParent(options.side).appendChild(this.div)
+        for (let style in options)
+        {
+            if (style !== 'parent' && style !== 'side')
+            {
+                this.div.style[style] = options[style]
+            }
+        }
+    }
+
+    /**
+     * find the parent div for one of the corners
+     * @param {string} [options.side] side to place the panel (combination of right/left and bottom/top)
+     * @return {HTMLElement}
+     */
+    static findParent(side)
+    {
+        const styles = []
+        let name = 'yy-counter-'
+        if (side.indexOf('left') !== -1)
+        {
+            name += 'left-'
+            styles['left'] = 0
+        }
+        else
+        {
+            name += 'right-'
+            styles['right'] = 0
+        }
+        if (side.indexOf('top') !== -1)
+        {
+            name += 'top'
+            styles['top'] = 0
+        }
+        else
+        {
+            name += 'bottom'
+            styles['bottom'] = 0
+        }
+        const test = document.getElementById(name)
+        if (test)
+        {
+            return test
+        }
+        const container = document.createElement('div')
+        container.id = name
+        container.style.overflow = 'hidden'
+        container.style.position = 'fixed'
+        container.style.zIndex = 10000
+        container.style.pointerEvents = 'none'
+        container.style.userSelect = 'none'
+        for (let style in styles)
+        {
+            container.style[style] = styles[style]
+        }
+        document.body.appendChild(container)
+        return container
+    }
+
+    /**
+     * replaces the innerHTML of the console
+     * @param {string|number} text1
+     * @param {string|number} [text2]
+     * @param {string|number} [...textn] any number of arguments
+     */
+    log()
+    {
+        let s = ''
+        for (let arg of arguments)
+        {
+            s += '<div>' + arg + '</div>'
+        }
+        this.div.innerHTML =  s
+    }
+
+    /**
+     * appends to the innerHTML of the console
+     * @param {string|number} text1
+     * @param {string|number} [text2]
+     * @param {string|number} [...textn] any number of arguments
+     */
+    append()
+    {
+        let s = this.div.innerHTML
+        for (let arg of arguments)
+        {
+            s += '<div>' + arg + '</div>'
+        }
+        this.div.innerHTML = s
+    }
+}
+},{}],384:[function(require,module,exports){
+// yy-random
+// by David Figatner
+// MIT license
+// copyright YOPEY YOPEY LLC 2016-17
+// https://github.com/davidfig/random
+
+const seedrandom = require('seedrandom')
+
+class Random
+{
+    constructor()
+    {
+        this.generator = Math.random
+    }
+
+    /**
+     * generates a seeded number
+     * @param {number} seed
+     * @param {object} [options]
+     * @param {string} [PRNG="alea"] - name of algorithm, see https://github.com/davidbau/seedrandom
+     * @param {boolean} [save=true]
+     */
+    seed(seed, options)
+    {
+        options = options || {}
+        this.generator = seedrandom[options.PRNG || 'alea'](seed, { state: options.state })
+        this.options = options
+    }
+
+    /**
+     * saves the state of the random generator
+     * can only be used after Random.seed() is called
+     * @returns {number} state
+     */
+    save()
+    {
+        if (this.generator !== Math.random)
+        {
+            return this.generator.state()
+        }
+    }
+
+    /**
+     * restores the state of the random generator
+     * @param {number} state
+     */
+    restore(state)
+    {
+        this.generator = seedrandom[this.options.PRNG || 'alea']('', { state })
+    }
+
+    /**
+     * changes the generator to use the old Math.sin-based random function
+     * based on : http://stackoverflow.com/questions/521295/javascript-random-seeds
+     * (deprecated) Use only for compatibility purposes
+     * @param {number} seed
+     */
+    seedOld(seed)
+    {
+        this.generator = function()
+        {
+            const x = Math.sin(seed++) * 10000
+            return x - Math.floor(x)
+        }
+    }
+
+    /**
+     * create a separate random generator using the seed
+     * @param {number} seed
+     * @return {object}
+     */
+    separateSeed(seed)
+    {
+        const random = new Random()
+        random.seed(seed)
+        return random
+    }
+
+    /**
+     * resets the random number this.generator to Math.random()
+     */
+    reset()
+    {
+        this.generator = Math.random
+    }
+
+    /**
+     * returns a random number using the this.generator between [0, ceiling - 1]
+     * @param {number} ceiling
+     * @param {boolean} [useFloat=false]
+     * @return {number}
+     */
+    get(ceiling, useFloat)
+    {
+        const negative = ceiling < 0 ? -1 : 1
+        ceiling *= negative
+        let result
+        if (useFloat)
+        {
+            result = this.generator() * ceiling
+        }
+        else
+        {
+            result = Math.floor(this.generator() * ceiling)
+        }
+        return result * negative
+    }
+
+    /**
+     * returns a random integer between 0 - Number.MAX_SAFE_INTEGER
+     * @return {number}
+     */
+    getHuge()
+    {
+        return this.get(Number.MAX_SAFE_INTEGER)
+    }
+
+    /**
+     * random number [middle - range, middle + range]
+     * @param {number} middle
+     * @param {number} delta
+     * @param {boolean} [useFloat=false]
+     * @return {number}
+     */
+    middle(middle, delta, useFloat)
+    {
+        const half = delta / 2
+        return this.range(middle - half, middle + half, useFloat)
+    }
+
+    /**
+     * random number [start, end]
+     * @param {number} start
+     * @param {number} end
+     * @param {boolean} [useFloat=false] if true, then range is (start, end)--i.e., not inclusive to start and end
+     * @return {number}
+     */
+    range(start, end, useFloat)
+    {
+        // case where there is no range
+        if (end === start)
+        {
+            return end
+        }
+
+        if (useFloat)
+        {
+            return this.get(end - start, true) + start
+        }
+        else
+        {
+            let range
+            if (start < 0 && end > 0)
+            {
+                range = -start + end + 1
+            }
+            else if (start === 0 && end > 0)
+            {
+                range = end + 1
+            }
+            else if (start < 0 && end === 0)
+            {
+                range = start - 1
+                start = 1
+            }
+            else if (start < 0 && end < 0)
+            {
+                range = end - start - 1
+            }
+            else
+            {
+                range = end - start + 1
+            }
+            return Math.floor(this.generator() * range) + start
+        }
+    }
+
+    /**
+     * an array of random numbers between [start, end]
+     * @param {number} start
+     * @param {number} end
+     * @param {number} count
+     * @param {boolean} [useFloat=false]
+     * @return {number[]}
+     */
+    rangeMultiple(start, end, count, useFloat)
+    {
+        var array = []
+        for (let i = 0; i < count; i++)
+        {
+            array.push(this.range(start, end, useFloat))
+        }
+        return array
+    }
+
+    /**
+     * an array of random numbers between [middle - range, middle + range]
+     * @param {number} middle
+     * @param {number} range
+     * @param {number} count
+     * @param {boolean} [useFloat=false]
+     * @return {number[]}
+     */
+    middleMultiple(middle, range, count, useFloat)
+    {
+        const array = []
+        for (let i = 0; i < count; i++)
+        {
+            array.push(middle(middle, range, useFloat))
+        }
+        return array
+    }
+
+    /**
+     * @param {number} [chance=0.5]
+     * returns random sign (either +1 or -1)
+     * @return {number}
+     */
+    sign(chance)
+    {
+        chance = chance || 0.5
+        return this.generator() < chance ? 1 : -1
+    }
+
+    /**
+     * tells you whether a random chance was achieved
+     * @param {number} [percent=0.5]
+     * @return {boolean}
+     */
+    chance(percent)
+    {
+        return this.generator() < (percent || 0.5)
+    }
+
+    /**
+     * returns a random angle in radians [0 - 2 * Math.PI)
+     */
+    angle()
+    {
+        return this.get(Math.PI * 2, true)
+    }
+
+    /**
+     * Shuffle array (either in place or copied)
+     * from http://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+     * @param {Array} array
+     * @param {boolean} [copy=false] whether to shuffle in place (default) or return a new shuffled array
+     * @return {Array} a shuffled array
+     */
+    shuffle(array, copy)
+    {
+        if (copy)
+        {
+            array = array.slice()
+        }
+        if (array.length === 0)
+        {
+            return array
+        }
+
+        let currentIndex = array.length, temporaryValue, randomIndex
+
+        // While there remain elements to shuffle...
+        while (0 !== currentIndex)
+        {
+            // Pick a remaining element...
+            randomIndex = this.get(currentIndex)
+            currentIndex -= 1
+
+            // And swap it with the current element.
+            temporaryValue = array[currentIndex]
+            array[currentIndex] = array[randomIndex]
+            array[randomIndex] = temporaryValue
+        }
+        return array
+    }
+
+    /**
+     * picks a random element from an array
+     * @param {Array} array
+     * @return {*}
+     */
+    pick(array, remove)
+    {
+        if (!remove)
+        {
+            return array[this.get(array.length)]
+        }
+        else
+        {
+            const pick = this.get(array.length)
+            const temp = array[pick]
+            array.splice(pick, 1)
+            return temp
+        }
+    }
+
+    /**
+     * returns a random property from an object
+     * from http://stackoverflow.com/questions/2532218/pick-random-property-from-a-javascript-object
+     * @param {object} obj
+     * @return {*}
+     */
+    property(obj)
+    {
+        var result
+        var count = 0
+        for (var prop in obj)
+        {
+            if (this.chance(1 / ++count))
+            {
+                result = prop
+            }
+        }
+        return result
+    }
+
+    /**
+     * creates a random set where each entry is a value between [min, max]
+     * @param {number} min
+     * @param {number} max
+     * @param {number} amount of numbers in set
+     * @param {number[]}
+     */
+    set(min, max, amount)
+    {
+        var set = [], all = [], i
+        for (i = min; i < max; i++)
+        {
+            all.push(i)
+        }
+
+        for (i = 0; i < amount; i++)
+        {
+            var found = this.get(all.length)
+            set.push(all[found])
+            all.splice(found, 1)
+        }
+        return set
+    }
+
+
+    /**
+     * returns a set of numbers with a randomly even distribution (i.e., no overlapping and filling the space)
+     * @param {number} start position
+     * @param {number} end position
+     * @param {number} count of non-start/end points
+     * @param {boolean} [includeStart=false] includes start point (count++)
+     * @param {boolean} [includeEnd=false] includes end point (count++)
+     * @param {boolean} [useFloat=false]
+     * @param {number[]}
+     */
+    distribution(start, end, count, includeStart, includeEnd, useFloat)
+    {
+        var interval = Math.floor((end - start) / count)
+        var halfInterval = interval / 2
+        var quarterInterval = interval / 4
+        var set = []
+        if (includeStart)
+        {
+            set.push(start)
+        }
+        for (var i = 0; i < count; i++)
+        {
+            set.push(start + i * interval + halfInterval + this.range(-quarterInterval, quarterInterval, useFloat))
+        }
+        if (includeEnd)
+        {
+            set.push(end)
+        }
+        return set
+    }
+
+    /**
+     * returns a random number based on weighted probability between [min, max]
+     * from http://stackoverflow.com/questions/22656126/javascript-random-number-with-weighted-probability
+     * @param {number} min value
+     * @param {number} max value
+     * @param {number} target for average value
+     * @param {number} stddev - standard deviation
+     */
+    weightedProbabilityInt(min, max, target, stddev)
+    {
+        function normRand()
+        {
+            let x1, x2, rad
+            do
+            {
+                x1 = 2 * this.get(1, true) - 1
+                x2 = 2 * this.get(1, true) - 1
+                rad = x1 * x1 + x2 * x2
+            } while (rad >= 1 || rad === 0)
+            const c = Math.sqrt(-2 * Math.log(rad) / rad)
+            return x1 * c
+        }
+
+        stddev = stddev || 1
+        if (Math.random() < 0.81546)
+        {
+            while (true)
+            {
+                const sample = ((normRand() * stddev) + target)
+                if (sample >= min && sample <= max)
+                {
+                    return sample
+                }
+            }
+        }
+        else
+        {
+            return this.range(min, max)
+        }
+    }
+
+    /*
+     * returns a random hex color (0 - 0xffffff)
+     * @return {number}
+     */
+    color()
+    {
+        return this.get(0xffffff)
+    }
+}
+
+module.exports = new Random()
+},{"seedrandom":373}]},{},[4]);
