@@ -1,8 +1,8 @@
 {
   "name": "yy-rendersheet",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Generate on-the-fly spritesheets for pixi.js",
-  "main": "dist/index.js",
+  "main": "dist/rendersheet.js",
   "scripts": {
     "test": "./node_modules/.bin/budo docs/code.js:index.js --dir docs --live",
     "build-demo": "./node_modules/.bin/browserify docs/code.js -o docs/index.js",
