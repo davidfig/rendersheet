@@ -12,11 +12,17 @@ I needed a way to generate spritesheets based on canvas drawings and/or images. 
     // draw triangle textures on rendersheet
     sheet.add('triangle', triangleDraw, triangleMeasure, {size: 50, 'red'});
 
+    // image texture on rendersheet
+    sheet.addImage('image', 'images/test.png');
+
     // render the sheet
     sheet.render();
 
     // create a PIXI.Sprite using the rendersheet
     var sprite = stage.addChild(sheet.get('triangle'));
+
+    // use a PIXI.Texture from the rendershet
+    var image = stage.addChild(new PIXI.Sprite(sheet.getTexture('image')));
 
     // drawing function to generate the canvas triangle
     function triangleDraw(c, params)

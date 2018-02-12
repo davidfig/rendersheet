@@ -139,7 +139,6 @@ function tests()
 {
     testTextures()
     testChangingTextures()
-    renderer.start()
 }
 
 window.onload = function ()
