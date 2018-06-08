@@ -442,7 +442,7 @@ class RenderSheet extends Events
         {
             const entry = (x + y * texture.width) * 4
             const d = data.data
-            return 'rgba(' + d[entry] + ',' + d[entry + 1] + ',' + d[entry + 2] + ',' + d[entry + 3] + ')'
+            return 'rgba(' + d[entry] + ',' + d[entry + 1] + ',' + d[entry + 2] + ',' + (d[entry + 3] / 0xff) + ')'
         }
 
         const canvas = this.canvases[current]

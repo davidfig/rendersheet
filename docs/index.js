@@ -626,7 +626,7 @@ var RenderSheet = function (_Events) {
             function get(x, y) {
                 var entry = (x + y * texture.width) * 4;
                 var d = data.data;
-                return 'rgba(' + d[entry] + ',' + d[entry + 1] + ',' + d[entry + 2] + ',' + d[entry + 3] + ')';
+                return 'rgba(' + d[entry] + ',' + d[entry + 1] + ',' + d[entry + 2] + ',' + d[entry + 3] / 0xff + ')';
             }
 
             var canvas = this.canvases[current];
@@ -980,7 +980,6 @@ function tests()
 {
     testTextures()
     testChangingTextures()
-    renderer.start()
 }
 
 window.onload = function ()
