@@ -507,7 +507,7 @@ var RenderSheet = function (_Events) {
                 var texture = this.textures[key];
                 switch (texture.type) {
                     case CANVAS:
-                        var size = texture.measure(context, texture.param);
+                        var size = texture.measure(context, texture.param, c);
                         texture.width = Math.ceil(size.width * multiplier);
                         texture.height = Math.ceil(size.height * multiplier);
                         break;
@@ -598,7 +598,7 @@ var RenderSheet = function (_Events) {
                 }
                 switch (texture.type) {
                     case CANVAS:
-                        texture.draw(context, texture.param);
+                        texture.draw(context, texture.param, current);
                         break;
 
                     case IMAGE:case DATA:

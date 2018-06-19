@@ -322,7 +322,7 @@ class RenderSheet extends Events
             switch (texture.type)
             {
                 case CANVAS:
-                    const size = texture.measure(context, texture.param)
+                    const size = texture.measure(context, texture.param, c)
                     texture.width = Math.ceil(size.width * multiplier)
                     texture.height = Math.ceil(size.height * multiplier)
                     break
@@ -414,7 +414,7 @@ class RenderSheet extends Events
             switch (texture.type)
             {
                 case CANVAS:
-                    texture.draw(context, texture.param)
+                    texture.draw(context, texture.param, current)
                     break
 
                 case IMAGE: case DATA:
