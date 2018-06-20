@@ -414,7 +414,7 @@ class RenderSheet extends Events
             switch (texture.type)
             {
                 case CANVAS:
-                    texture.draw(context, texture.param, current)
+                    texture.draw(context, texture.param, this.canvases[current])
                     break
 
                 case IMAGE: case DATA:
