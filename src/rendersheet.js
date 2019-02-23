@@ -279,7 +279,7 @@ class RenderSheet extends Events
         }
         if (!this.checkLoaded())
         {
-            window.setTimeout(() => this.render(), WAIT)
+            setTimeout(() => this.render(), WAIT)
             return
         }
         this.canvases = []
@@ -502,7 +502,8 @@ class RenderSheet extends Events
         }
         for (let i = 0; i < this.canvases.length; i++)
         {
-            const base = PIXI.BaseTexture.fromCanvas(this.canvases[i])
+            const from = PIXI.BaseTexture.fromCanvas || PIXI.BaseTexture.from
+            const base = from(this.canvases[i])
             if (this.scaleMode)
             {
                 base.scaleMode = this.scaleMode

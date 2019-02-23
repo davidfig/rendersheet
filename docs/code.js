@@ -2,7 +2,8 @@ const PIXI = require('pixi.js')
 const Counter = require('yy-counter')
 const Random = require('yy-random')
 
-const RenderSheet = require('../dist/rendersheet')
+const RenderSheet = require('../src/rendersheet')
+const Ticker = PIXI.ticker ? PIXI.ticker : PIXI.Ticker
 
 let renderer, counter, n = 0, size = 500, total
 
@@ -64,7 +65,7 @@ function testTextures()
 
     // cycle the texture of the sprite from all textures in the rendersheet
     let time = 0
-    PIXI.ticker.shared.add((t) =>
+    Ticker.shared.add((t) =>
     {
         time += t
         if (time > 5)
@@ -124,7 +125,7 @@ function testChangingTextures()
 
     let time = 0
 
-    PIXI.ticker.shared.add((t) =>
+    Ticker.shared.add((t) =>
     {
         time += t
         if (time > 10)
