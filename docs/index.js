@@ -69097,7 +69097,14 @@ class RenderSheet extends Events
         const object = this.textures[name] = { name, type: DATA, texture: new PIXI.Texture(PIXI.Texture.EMPTY) }
         object.image = new Image()
         object.image.src = header + data
-        object.image.onload = () => object.loaded = true
+        if (object.image.complete)
+        {
+            object.loaded = true
+        }
+        else
+        {
+            object.image.onload = () => object.loaded = true
+        }
         return object
     }
 
