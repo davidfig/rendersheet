@@ -56,4 +56,4 @@ https://davidfig.github.io/rendersheet/jsdoc
 
 ## license  
 MIT License  
-(c) 2018 [YOPEY YOPEY LLC](https://yopeyopey.com/) by [David Figatner](https://twitter.com/yopey_yopey/)
+(c) 2019 [YOPEY YOPEY LLC](https://yopeyopey.com/) by [David Figatner](https://twitter.com/yopey_yopey/)

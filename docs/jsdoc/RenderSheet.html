@@ -82,6 +82,8 @@
             
                 <li class="parent  " data-name="RenderSheet#addImage"><a href="RenderSheet.html#addImage">addImage</a></li>
             
+                <li class="parent  " data-name="RenderSheet#asyncRender"><a href="RenderSheet.html#asyncRender">asyncRender</a></li>
+            
                 <li class="parent  " data-name="RenderSheet#changeDraw"><a href="RenderSheet.html#changeDraw">changeDraw</a></li>
             
                 <li class="parent  " data-name="RenderSheet#checkLoaded"><a href="RenderSheet.html#checkLoaded">checkLoaded</a></li>
@@ -1244,6 +1246,127 @@
             
 <dt>
     <div class="nameContainer">
+        <h4 class="name" id="asyncRender">
+            <a class="share-icon" href="#asyncRender"><span class="glyphicon glyphicon-link"></span></a>
+            <span class="">
+                asyncRender
+            </span>
+            <span class="signature">(skipTextures)</span>
+            
+            
+            
+            
+        </h4>
+
+        
+        <div class="tag-source">
+            <a href="-_mnt_c_Users_dsfig_programming_components_rendersheet_src_rendersheet.js.html#line269">rendersheet.js:269</a>
+        </div>
+        
+    </div>
+
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>create (or refresh) the rendersheet (supports async instead of callback)</p>
+    </div>
+    
+
+    
+
+    
+
+    
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>skipTextures</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>don't create PIXI.BaseTextures and PIXI.Textures (useful for generating external spritesheets)</p></td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <div class="nameContainer">
         <h4 class="name" id="changeDraw">
             <a class="share-icon" href="#changeDraw"><span class="glyphicon glyphicon-link"></span></a>
             <span class="">
@@ -1258,7 +1381,7 @@
 
         
         <div class="tag-source">
-            <a href="-_mnt_c_Users_dsfig_programming_components_rendersheet_src_rendersheet.js.html#line563">rendersheet.js:563</a>
+            <a href="-_mnt_c_Users_dsfig_programming_components_rendersheet_src_rendersheet.js.html#line579">rendersheet.js:579</a>
         </div>
         
     </div>
@@ -2425,7 +2548,7 @@ NOTE: this only works if the texture remains the same size; use Sheet.render() t
             <span class="">
                 render
             </span>
-            <span class="signature">(callback)</span>
+            <span class="signature">(skipTextures, callback)</span>
             
             
             
@@ -2434,7 +2557,7 @@ NOTE: this only works if the texture remains the same size; use Sheet.render() t
 
         
         <div class="tag-source">
-            <a href="-_mnt_c_Users_dsfig_programming_components_rendersheet_src_rendersheet.js.html#line269">rendersheet.js:269</a>
+            <a href="-_mnt_c_Users_dsfig_programming_components_rendersheet_src_rendersheet.js.html#line282">rendersheet.js:282</a>
         </div>
         
     </div>
@@ -2472,6 +2595,29 @@ NOTE: this only works if the texture remains the same size; use Sheet.render() t
 	</thead>
 	
 	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>skipTextures</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>don't create PIXI.BaseTextures and PIXI.Textures (useful for generating external spritesheets)</p></td>
+        </tr>
+	
 	
 	
         <tr>
@@ -2565,7 +2711,7 @@ NOTE: this only works if the texture remains the same size; use Sheet.render() t
 
         
         <div class="tag-source">
-            <a href="-_mnt_c_Users_dsfig_programming_components_rendersheet_src_rendersheet.js.html#line585">rendersheet.js:585</a>
+            <a href="-_mnt_c_Users_dsfig_programming_components_rendersheet_src_rendersheet.js.html#line601">rendersheet.js:601</a>
         </div>
         
     </div>
@@ -2637,7 +2783,7 @@ NOTE: this only works if the texture remains the same size; use Sheet.render() t
 
         <footer class="content-size">
             <div class="footer">
-                Documentation generated by <a target="_blank" href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu May 02 2019 09:42:24 GMT+0800 (GMT+08:00)
+                Documentation generated by <a target="_blank" href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat May 04 2019 09:03:23 GMT+0800 (GMT+08:00)
             </div>
         </footer>
     </div>

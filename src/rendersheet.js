@@ -1,6 +1,6 @@
 // yy-rendersheet
 // by David Figatner
-// (c) YOPEY YOPEY LLC 2017
+// (c) YOPEY YOPEY LLC 2019
 // MIT License
 // https://github.com/davidfig/rendersheet
 
@@ -263,10 +263,23 @@ class RenderSheet extends Events
     }
 
     /**
+     * create (or refresh) the rendersheet (supports async instead of callback)
+     * @param {boolean} skipTextures - don't create PIXI.BaseTextures and PIXI.Textures (useful for generating external spritesheets)
+     */
+    asyncRender(skipTextures)
+    {
+        return new Promise(resolve =>
+        {
+            this.render(resolve, skipTextures)
+        })
+    }
+
+    /**
      * create (or refresh) the rendersheet
+     * @param {boolean} skipTextures - don't create PIXI.BaseTextures and PIXI.Textures (useful for generating external spritesheets)
      * @param {function} callback - convenience function that calls RenderSheet.once('render', callback)
      */
-    render(callback)
+    render(callback, skipTextures)
     {
         if (callback)
         {
@@ -289,14 +302,17 @@ class RenderSheet extends Events
         this.sort()
         this.pack()
         this.draw()
-        this.createBaseTextures()
-
-        for (let key in this.textures)
+        if (!skipTextures)
         {
-            const current = this.textures[key]
-            current.texture.baseTexture = this.baseTextures[current.canvas]
-            current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height)
-            current.texture.update()
+            this.createBaseTextures()
+
+            for (let key in this.textures)
+            {
+                const current = this.textures[key]
+                current.texture.baseTexture = this.baseTextures[current.canvas]
+                current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height)
+                current.texture.update()
+            }
         }
         if (this.show)
         {
