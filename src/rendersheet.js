@@ -52,6 +52,14 @@ class RenderSheet extends Events
             this.buffer = 2
         }
         this.packer = options.useSimplePacker ? SimplePacker : GrowingPacker
+        this.clear()
+    }
+
+    /**
+     * removes all textures from rendersheets
+     */
+    clear()
+    {
         this.canvases = []
         this.baseTextures = []
         this.textures = {}
@@ -527,10 +535,7 @@ class RenderSheet extends Events
         {
             const from = PIXI.BaseTexture.fromCanvas || PIXI.BaseTexture.from
             const base = from(this.canvases[i])
-            if (this.scaleMode)
-            {
-                base.scaleMode = this.scaleMode
-            }
+            base.scaleMode = this.scaleMode
             this.baseTextures.push(base)
         }
     }
