@@ -26,7 +26,7 @@
     "babel-preset-env": "^1.6.1",
     "budo": "^11.6.3",
     "fork-me-github": "^1.0.3",
-    "highlight.js": "^9.16.2",
+    "highlight.js": "^10.4.1",
     "jsdoc": "^3.6.3",
     "pixi.js": "^5.2.0",
     "yy-counter": "^2.1.0",
