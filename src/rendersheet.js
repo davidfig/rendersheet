@@ -29,7 +29,7 @@ class RenderSheet extends Events
      * @param {number} [options.extrude] the edges--useful for removing gaps in sprites when tiling
      * @param {number} [options.wait=250] number of milliseconds to wait between checks for onload of addImage images before rendering
      * @param {boolean} [options.testBoxes] draw a different colored boxes behind each rendering (useful for debugging)
-     * @param {number|boolean} [options.scaleMode] PIXI.settings.SCALE_MODE to set for rendersheet (use =true for PIXI.SCALE_MODES.NEAREST for pixel art)
+     * @param {number|boolean} [options.scaleMode] scale mode ('nearest' or 'linear') for rendersheet (use =true for 'nearest' for pixel art)
      * @param {boolean} [options.useSimplePacker] use a stupidly simple packer instead of growing packer algorithm
      * @param {boolean|object} [options.show] set to true or a CSS object (e.g., {zIndex: 10, background: 'blue'}) to attach the final canvas to document.body--useful for debugging
      * @fire render
@@ -43,7 +43,7 @@ class RenderSheet extends Events
         this.maxSize = options.maxSize || 2048
         this.buffer = options.buffer || 5
         this.scale = options.scale || 1
-        this.scaleMode = options.scaleMode === true ? PIXI.SCALE_MODES.NEAREST : options.scaleMode
+        this.scaleMode = options.scaleMode === true ? 'nearest' : options.scaleMode
         this.resolution = options.resolution || 1
         this.show = options.show
         this.extrude = options.extrude
@@ -75,7 +75,7 @@ class RenderSheet extends Events
      */
     add(name, draw, measure, param)
     {
-        const object = this.textures[name] = { name: name, draw: draw, measure: measure, param: param, type: CANVAS, texture: new PIXI.Texture(PIXI.Texture.EMPTY) }
+        const object = this.textures[name] = { name: name, draw: draw, measure: measure, param: param, type: CANVAS, texture: new PIXI.Texture({ dynamic: true }) }
         return object
     }
 
@@ -87,7 +87,7 @@ class RenderSheet extends Events
      */
     addImage(name, src)
     {
-        const object = this.textures[name] = { name, file: src, type: IMAGE, texture: new PIXI.Texture(PIXI.Texture.EMPTY)  }
+        const object = this.textures[name] = { name, file: src, type: IMAGE, texture: new PIXI.Texture({ dynamic: true })  }
         object.image = new Image()
         object.image.onload = () => object.loaded = true
         object.image.src = src
@@ -103,7 +103,7 @@ class RenderSheet extends Events
     addData(name, data, header)
     {
         header = typeof header !== 'undefined' ? header : 'data:image/png;base64,'
-        const object = this.textures[name] = { name, type: DATA, texture: new PIXI.Texture(PIXI.Texture.EMPTY) }
+        const object = this.textures[name] = { name, type: DATA, texture: new PIXI.Texture({ dynamic: true }) }
         object.image = new Image()
         object.image.src = header + data
         if (object.image.complete)
@@ -147,7 +147,7 @@ class RenderSheet extends Events
             style.width = 'auto'
             style.height = Math.round(percent * 100) + '%'
             style.zIndex = 1000
-            if (this.scaleMode === PIXI.SCALE_MODES.NEAREST)
+            if (this.scaleMode === 'nearest')
             {
                 style.imageRendering = 'pixelated'
             }
@@ -279,7 +279,7 @@ class RenderSheet extends Events
 
     /**
      * create (or refresh) the rendersheet (supports async instead of callback)
-     * @param {boolean} skipTextures - don't create PIXI.BaseTextures and PIXI.Textures (useful for generating external spritesheets)
+     * @param {boolean} skipTextures - don't create PIXI.TextureSources and PIXI.Textures (useful for generating external spritesheets)
      */
     asyncRender(skipTextures)
     {
@@ -291,7 +291,7 @@ class RenderSheet extends Events
 
     /**
      * create (or refresh) the rendersheet
-     * @param {boolean} skipTextures - don't create PIXI.BaseTextures and PIXI.Textures (useful for generating external spritesheets)
+     * @param {boolean} skipTextures - don't create PIXI.TextureSources and PIXI.Textures (useful for generating external spritesheets)
      * @param {function} callback - convenience function that calls RenderSheet.once('render', callback)
      */
     render(callback, skipTextures)
@@ -324,9 +324,11 @@ class RenderSheet extends Events
             for (let key in this.textures)
             {
                 const current = this.textures[key]
-                current.texture.baseTexture = this.baseTextures[current.canvas]
-                current.texture.frame = new PIXI.Rectangle(current.x, current.y, current.width, current.height)
-                current.texture.update()
+                const texture = current.texture
+                texture.source = this.baseTextures[current.canvas]
+                texture.noFrame = false
+                texture.frame.copyFrom(new PIXI.Rectangle(current.x, current.y, current.width, current.height))
+                texture.update()
             }
         }
         if (this.show)
@@ -533,9 +535,11 @@ class RenderSheet extends Events
         }
         for (let i = 0; i < this.canvases.length; i++)
         {
-            const from = PIXI.BaseTexture.fromCanvas || PIXI.BaseTexture.from
-            const base = from(this.canvases[i])
-            base.scaleMode = this.scaleMode
+            const base = new PIXI.CanvasSource({ resource: this.canvases[i], resolution: 1 })
+            if (this.scaleMode)
+            {
+                base.scaleMode = this.scaleMode
+            }
             this.baseTextures.push(base)
         }
     }
@@ -604,7 +608,7 @@ class RenderSheet extends Events
         context.translate(texture.x / multiplier, texture.y / multiplier)
         texture.draw(context, texture.param)
         context.restore()
-        texture.texture.update()
+        texture.texture.source.update()
     }
 }
 

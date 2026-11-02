@@ -1,9 +1,8 @@
 const PIXI = require('pixi.js')
 const Counter = require('yy-counter')
-const Random = require('yy-random')
 
 const RenderSheet = require('../src/rendersheet')
-const Ticker = PIXI.ticker ? PIXI.ticker : PIXI.Ticker
+const Ticker = PIXI.Ticker
 
 let renderer, counter, n = 0, size = 500, total
 
@@ -65,13 +64,13 @@ function testTextures()
 
     // cycle the texture of the sprite from all textures in the rendersheet
     let time = 0
-    Ticker.shared.add((t) =>
+    Ticker.shared.add((ticker) =>
     {
-        time += t
+        time += ticker.deltaTime
         if (time > 5)
         {
             time = 0
-            const n = Random.get(total)
+            const n = Math.floor(Math.random() * total)
             sprite.texture = sheet.getTexture('texture_' + n)
             counter.log('texture #' + n)
         }
@@ -110,7 +109,7 @@ function draw(c, params)
     const size = params.size
     c.beginPath()
     c.rect(0, 0, size, size)
-    c.fillStyle = '#' + Random.color().toString(16)
+    c.fillStyle = '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')
     c.fill()
 }
 
@@ -125,9 +124,9 @@ function testChangingTextures()
 
     let time = 0
 
-    Ticker.shared.add((t) =>
+    Ticker.shared.add((ticker) =>
     {
-        time += t
+        time += ticker.deltaTime
         if (time > 10)
         {
             time = 0
@@ -142,10 +141,11 @@ function tests()
     testChangingTextures()
 }
 
-window.onload = function ()
+window.onload = async function ()
 {
-    renderer = new PIXI.Application({ transparent: true, width: window.innerWidth, height: window.innerHeight, autoResize: true })
-    document.body.appendChild(renderer.view)
+    renderer = new PIXI.Application()
+    await renderer.init({ backgroundAlpha: 0, resizeTo: window })
+    document.body.appendChild(renderer.canvas)
 
     counter = new Counter({ side: 'bottom-left' })
     setupSheet()
