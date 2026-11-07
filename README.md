@@ -48,6 +48,8 @@ I needed a way to generate spritesheets based on canvas drawings and/or images. 
 
     npm i yy-rendersheet
 
+Requires pixi.js v8. For pixi.js v4-v7, use yy-rendersheet@5.0.5.
+
 ## Live Example
 https://davidfig.github.io/rendersheet/
 
